@@ -1,0 +1,584 @@
+{
+  "project": {
+    "name": "TricksLand Academy Management System",
+    "type": "production-ready full-stack web application",
+    "purpose": "Internal operations platform for managing coaches, courses, session tracking, and monthly payroll invoicing",
+    "constraints": [
+      "No placeholder logic — all features must be fully implemented",
+      "Clean, scalable architecture from day one",
+      "Zero assumptions left to the developer — all business rules are specified here"
+    ]
+  },
+
+  "i18n": {
+    "strategy": "User-selectable language at runtime",
+    "supported_languages": [
+      {
+        "code": "en",
+        "name": "English",
+        "direction": "ltr"
+      },
+      {
+        "code": "ar",
+        "name": "Arabic",
+        "direction": "rtl",
+        "locale": "ar-EG"
+      }
+    ],
+    "default_language": "en",
+    "persistence": "localStorage (key: 'tricksland_lang')",
+    "implementation": {
+      "library": "i18next + react-i18next",
+      "structure": "Translation files in /src/locales/en.json and /src/locales/ar.json",
+      "coverage": [
+        "All UI labels, buttons, and placeholders",
+        "All validation error messages",
+        "All toast/notification messages",
+        "All email templates (Arabic and English versions)",
+        "Date and number formatting per locale"
+      ],
+      "rtl_handling": "Tailwind CSS dir-aware classes (rtl: prefix). Layout mirrors automatically when AR is active.",
+      "language_switcher": "Persistent toggle in top navbar, visible on all pages including the login screen"
+    }
+  },
+
+  "tech_stack": {
+    "frontend": {
+      "framework": "React 18",
+      "bundler": "Vite",
+      "language": "TypeScript",
+      "styling": "TailwindCSS with custom design tokens",
+      "component_library": "shadcn/ui",
+      "routing": "React Router v6",
+      "state_management": "React Query (server state) + Zustand (UI state)",
+      "form_handling": "React Hook Form + Zod validation",
+      "i18n": "i18next + react-i18next",
+      "notes": "No Next.js. Pure Vite SPA."
+    },
+    "backend": {
+      "platform": "Supabase",
+      "database": "PostgreSQL (via Supabase)",
+      "auth": "Supabase Auth — Email OTP / Magic Link",
+      "security": "Row-Level Security (RLS) on all tables",
+      "server_logic": "Postgres triggers + Supabase Edge Functions",
+      "email_service": "Resend (invoked from Edge Functions)"
+    },
+    "deployment": {
+      "frontend": "Vercel",
+      "backend": "Supabase (hosted)",
+      "env_file": ".env.example must list all variables with descriptions"
+    }
+  },
+
+  "design_system": {
+    "style": "Glossy Glassmorphism",
+    "description": "Frosted glass cards, soft shadows, smooth gradients, modern SaaS dashboard aesthetic",
+    "colors": {
+      "primary_blue": "#5BC0EB",
+      "primary_orange": "#FF7A00",
+      "background": "Dark or light with glassmorphic overlays",
+      "surface": "rgba(255,255,255,0.08) with backdrop-blur"
+    },
+    "layout": {
+      "approach": "Mobile-first responsive",
+      "rtl_support": "Full RTL layout mirroring when Arabic is active",
+      "animations": "Smooth CSS transitions and micro-animations throughout"
+    },
+    "typography": {
+      "en": "Inter or similar modern sans-serif",
+      "ar": "Cairo or Tajawal (Google Fonts)"
+    }
+  },
+
+  "roles": {
+    "note": "MVP has exactly 2 roles. Students are NOT users.",
+    "admin": {
+      "description": "Full access to all system features",
+      "capabilities": [
+        "Create, edit, archive courses",
+        "Assign and remove coaches from courses",
+        "Manage student names inside courses",
+        "Set and update coach rates per course",
+        "View full rate history",
+        "Log and edit any session",
+        "Add bonus and discount adjustments per coach per month",
+        "Preview and send monthly invoices",
+        "Override paid_coach on any session"
+      ]
+    },
+    "coach": {
+      "description": "Limited access scoped to own data only",
+      "capabilities": [
+        "View assigned courses only",
+        "Manage student names in assigned courses",
+        "Log and edit own sessions only",
+        "View own adjustments (read-only)",
+        "View own invoices (read-only)"
+      ]
+    },
+    "students": {
+      "type": "data only",
+      "description": "Stored as plain text name strings inside courses. No login, no profile, no portal."
+    }
+  },
+
+  "database_schema": {
+    "notes": "All tables must have RLS enabled. Computed fields on sessions are server-protected.",
+    "tables": {
+      "profiles": {
+        "columns": {
+          "id": "uuid PRIMARY KEY REFERENCES auth.users(id)",
+          "full_name": "text NOT NULL",
+          "email": "text UNIQUE NOT NULL",
+          "role": "text CHECK (role IN ('admin','coach')) NOT NULL",
+          "avatar_url": "text",
+          "created_at": "timestamptz DEFAULT now()"
+        }
+      },
+      "courses": {
+        "columns": {
+          "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+          "name": "text NOT NULL",
+          "description": "text",
+          "status": "text CHECK (status IN ('active','archived')) DEFAULT 'active'",
+          "created_by": "uuid REFERENCES profiles(id)",
+          "created_at": "timestamptz DEFAULT now()"
+        }
+      },
+      "course_coaches": {
+        "columns": {
+          "course_id": "uuid REFERENCES courses(id) ON DELETE CASCADE",
+          "coach_id": "uuid REFERENCES profiles(id) ON DELETE CASCADE",
+          "assigned_at": "timestamptz DEFAULT now()"
+        },
+        "primary_key": ["course_id", "coach_id"]
+      },
+      "course_students": {
+        "columns": {
+          "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+          "course_id": "uuid REFERENCES courses(id) ON DELETE CASCADE",
+          "student_name": "text NOT NULL",
+          "added_at": "timestamptz DEFAULT now()"
+        }
+      },
+      "course_coach_rates": {
+        "description": "CRITICAL: Rate is per (course_id + coach_id) combination and tracked over time. Never delete old rates — append-only history.",
+        "columns": {
+          "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+          "course_id": "uuid REFERENCES courses(id) ON DELETE CASCADE",
+          "coach_id": "uuid REFERENCES profiles(id) ON DELETE CASCADE",
+          "rate": "numeric(10,2) NOT NULL CHECK (rate > 0)",
+          "effective_from": "date NOT NULL",
+          "created_by": "uuid REFERENCES profiles(id)",
+          "created_at": "timestamptz DEFAULT now()"
+        },
+        "unique_constraint": "UNIQUE(course_id, coach_id, effective_from)"
+      },
+      "sessions": {
+        "description": "computed_hours, applied_rate, and subtotal are populated by a Postgres BEFORE INSERT OR UPDATE trigger. Client must never be able to write these fields.",
+        "columns": {
+          "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+          "course_id": "uuid REFERENCES courses(id)",
+          "originally_scheduled_coach_id": "uuid REFERENCES profiles(id) — nullable",
+          "paid_coach_id": "uuid REFERENCES profiles(id) NOT NULL",
+          "session_date": "date NOT NULL",
+          "start_time": "time NOT NULL",
+          "end_time": "time NOT NULL",
+          "session_type": "text CHECK (session_type IN ('online_session','offline_meeting')) NOT NULL",
+          "notes": "text",
+          "computed_hours": "numeric GENERATED/trigger-managed",
+          "applied_rate": "numeric GENERATED/trigger-managed",
+          "subtotal": "numeric GENERATED/trigger-managed",
+          "created_by": "uuid REFERENCES profiles(id)",
+          "created_at": "timestamptz DEFAULT now()"
+        }
+      },
+      "adjustments": {
+        "columns": {
+          "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+          "coach_id": "uuid REFERENCES profiles(id)",
+          "month": "text NOT NULL CHECK (month ~ '^[0-9]{4}-(0[1-9]|1[0-2])$')",
+          "type": "text CHECK (type IN ('bonus','discount')) NOT NULL",
+          "amount": "numeric(10,2) NOT NULL CHECK (amount > 0)",
+          "notes": "text",
+          "created_by": "uuid REFERENCES profiles(id)",
+          "created_at": "timestamptz DEFAULT now()"
+        }
+      }
+    }
+  },
+
+  "rls_policies": {
+    "note": "Provide full SQL for every policy. Enable RLS on all tables.",
+    "profiles": {
+      "admin": "Full SELECT, INSERT, UPDATE, DELETE",
+      "coach": "SELECT and UPDATE own row only (WHERE id = auth.uid())"
+    },
+    "courses": {
+      "admin": "Full CRUD",
+      "coach": "SELECT only WHERE id IN (SELECT course_id FROM course_coaches WHERE coach_id = auth.uid())"
+    },
+    "course_coaches": {
+      "admin": "Full CRUD",
+      "coach": "SELECT only WHERE coach_id = auth.uid()"
+    },
+    "course_students": {
+      "admin": "Full CRUD",
+      "coach": "Full CRUD WHERE course_id IN (SELECT course_id FROM course_coaches WHERE coach_id = auth.uid())"
+    },
+    "course_coach_rates": {
+      "admin": "Full CRUD",
+      "coach": "SELECT only WHERE coach_id = auth.uid()"
+    },
+    "sessions": {
+      "admin": "Full CRUD",
+      "coach": "Full CRUD WHERE paid_coach_id = auth.uid()"
+    },
+    "adjustments": {
+      "admin": "Full CRUD",
+      "coach": "SELECT only WHERE coach_id = auth.uid()"
+    }
+  },
+
+  "business_logic": {
+    "rate_resolution": {
+      "description": "Server-side only. Runs as a Postgres BEFORE INSERT OR UPDATE trigger on sessions table.",
+      "algorithm": [
+        "Step 1: Compute hours = EXTRACT(EPOCH FROM (end_time - start_time)) / 3600",
+        "Step 2: Find applied_rate = SELECT rate FROM course_coach_rates WHERE course_id = NEW.course_id AND coach_id = NEW.paid_coach_id AND effective_from <= NEW.session_date ORDER BY effective_from DESC LIMIT 1",
+        "Step 3: If no rate found, RAISE EXCEPTION 'No rate defined for this coach and course on this date'",
+        "Step 4: SET NEW.computed_hours = hours, NEW.applied_rate = applied_rate, NEW.subtotal = hours * applied_rate"
+      ],
+      "client_protection": "computed_hours, applied_rate, subtotal must be excluded from all INSERT/UPDATE RLS policies for non-admin roles. The trigger overwrites any client-supplied values."
+    },
+    "session_validation": {
+      "rules": [
+        "end_time must be strictly greater than start_time — enforce in DB constraint AND frontend",
+        "Sessions must not cross midnight (MVP) — enforce: end_time > start_time without date rollover",
+        "No overlapping sessions for same paid_coach_id on same session_date — enforce via Postgres trigger or EXCLUDE constraint"
+      ]
+    },
+    "replacement_coach": {
+      "description": "When a coach substitutes for another",
+      "fields": {
+        "originally_scheduled_coach_id": "The coach originally assigned (nullable)",
+        "paid_coach_id": "The coach who actually taught and gets paid (required)"
+      },
+      "rate_rule": "Rate is always resolved from paid_coach_id, not originally_scheduled_coach_id",
+      "admin_override": "Admin can set both fields freely when editing any session"
+    },
+    "invoice_calculation": {
+      "formula": "Total = SUM(session subtotals for month) + SUM(bonuses for month) - SUM(discounts for month)",
+      "scope": "Per coach, per calendar month (YYYY-MM)",
+      "breakdown_fields": [
+        "course_name",
+        "session_date",
+        "start_time",
+        "end_time",
+        "computed_hours",
+        "applied_rate",
+        "subtotal"
+      ],
+      "summary_fields": [
+        "total_sessions",
+        "total_hours",
+        "total_session_amount",
+        "total_bonuses",
+        "total_discounts",
+        "final_payable_amount"
+      ]
+    }
+  },
+
+  "frontend_pages": {
+    "auth": {
+      "login": "Magic link / Email OTP. Language switcher visible here. Glassmorphism card centered on page.",
+      "profile_settings": "Update full name and email. Password reset link."
+    },
+    "admin": {
+      "dashboard": {
+        "widgets": [
+          "Total sessions this month",
+          "Total payout this month (EGP)",
+          "Active coaches count",
+          "Active courses count"
+        ],
+        "charts": "Monthly payout trend (bar chart), Sessions by type (pie chart)"
+      },
+      "courses": {
+        "list": "Table with name, status badge, coach count, student count, actions",
+        "create_edit_modal": "Name, description, status fields",
+        "coach_assignment_panel": "Assign/remove coaches per course",
+        "student_management": "Add/edit/remove student names per course",
+        "rate_management": "Set rate per (coach, course) with effective_from date. Show full rate history per pair."
+      },
+      "sessions": {
+        "list": "Filterable by coach, course, date range, session type",
+        "log_session_form": "All fields including replacement coach fields",
+        "edit_delete": "Admin can edit or delete any session"
+      },
+      "adjustments": {
+        "list": "Filter by coach, month",
+        "add_form": "Coach selector, month, type (bonus/discount), amount, notes"
+      },
+      "invoices": {
+        "month_picker": "Select any YYYY-MM",
+        "per_coach_preview": "Full breakdown before sending",
+        "send_button": "Triggers Edge Function to send all coach emails + admin summary",
+        "history": "Log of previously sent invoices with timestamps"
+      }
+    },
+    "coach": {
+      "dashboard": "My courses this month, my hours this month, my estimated payout",
+      "my_courses": "List of assigned courses with student names",
+      "my_sessions": "Log new session, view/edit/delete own sessions",
+      "my_adjustments": "Read-only list of bonuses and discounts",
+      "my_invoices": "Read-only monthly invoice view"
+    }
+  },
+
+  "email_system": {
+    "trigger": "Admin clicks 'Send Invoices' button for a selected month",
+    "delivery": "Supabase Edge Function calls Resend API",
+    "emails": {
+      "coach_invoice": {
+        "recipient": "Coach's email",
+        "language": "Matches coach's saved language preference (AR or EN)",
+        "content": [
+          "Academy logo and header",
+          "Coach name and month",
+          "Full session breakdown table",
+          "Adjustments section",
+          "Final payable amount",
+          "Footer with contact info"
+        ]
+      },
+      "admin_summary": {
+        "recipient": "Admin's email",
+        "language": "Admin's language preference",
+        "content": [
+          "Month summary",
+          "Table: coach name, total hours, total amount, adjustments, final amount",
+          "Grand total across all coaches"
+        ]
+      }
+    },
+    "templates": "HTML email templates provided in both EN and AR. Professional, clean, mobile-friendly."
+  },
+
+  "deliverables": {
+    "required": [
+      {
+        "item": "Full React + Vite + TypeScript application",
+        "details": "All pages, components, hooks, types, i18n files (en.json + ar.json)"
+      },
+      {
+        "item": "Supabase SQL migrations",
+        "details": "Numbered files: 001_schema.sql, 002_rls.sql, 003_triggers.sql, 004_functions.sql"
+      },
+      {
+        "item": "Postgres trigger",
+        "details": "Server-side computation of computed_hours, applied_rate, subtotal on sessions"
+      },
+      {
+        "item": "Overlap prevention trigger",
+        "details": "Prevent two sessions for same paid_coach_id overlapping on same date"
+      },
+      {
+        "item": "RLS policy SQL",
+        "details": "Complete policies for all tables and all roles"
+      },
+      {
+        "item": "Supabase Edge Function",
+        "details": "Invoice email dispatch using Resend — handles both coach and admin emails"
+      },
+      {
+        "item": "Email templates",
+        "details": "HTML templates in English and Arabic for coach invoice and admin summary"
+      },
+      {
+        "item": ".env.example",
+        "details": "All environment variables listed with type and description"
+      },
+      {
+        "item": "README.md",
+        "details": "Full beginner-friendly Supabase setup guide (see setup_guide section)"
+      },
+      {
+        "item": "Test plan",
+        "details": "All scenarios from test_plan section with inputs and expected outputs"
+      }
+    ]
+  },
+
+  "setup_guide": {
+    "audience": "Complete beginner — assume zero Supabase knowledge",
+    "steps": [
+      {
+        "step": 1,
+        "title": "Create Supabase account",
+        "details": "Go to supabase.com → Sign Up → Verify email"
+      },
+      {
+        "step": 2,
+        "title": "Create a new project",
+        "details": "Click 'New Project' → Enter project name 'tricksland' → Set a strong database password (save it) → Choose region closest to your users (recommend eu-central-1 for Egypt)"
+      },
+      {
+        "step": 3,
+        "title": "Choose region",
+        "details": "For Egypt-based users, select Europe (Frankfurt) or Middle East region if available. This reduces latency."
+      },
+      {
+        "step": 4,
+        "title": "Get API keys",
+        "details": "Go to Project Settings → API → Copy: Project URL, anon/public key, service_role key (keep service_role secret — never expose in frontend)"
+      },
+      {
+        "step": 5,
+        "title": "Create .env file",
+        "details": "Copy .env.example to .env → Fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY from step 4"
+      },
+      {
+        "step": 6,
+        "title": "Enable Email OTP",
+        "details": "Go to Authentication → Providers → Email → Enable 'Magic Link' → Disable 'Email + Password' if OTP-only is preferred → Save"
+      },
+      {
+        "step": 7,
+        "title": "Run SQL migrations",
+        "details": "Go to SQL Editor in Supabase Dashboard → Open each migration file in order (001, 002, 003, 004) → Paste content → Click Run → Verify no errors"
+      },
+      {
+        "step": 8,
+        "title": "Create first Admin user",
+        "details": "Go to Authentication → Users → Invite User → Enter admin email. Then go to SQL Editor and run: UPDATE profiles SET role = 'admin' WHERE email = 'your-admin@email.com';"
+      },
+      {
+        "step": 9,
+        "title": "Test authentication",
+        "details": "Run the frontend locally (npm run dev) → Go to login page → Enter admin email → Check email for magic link → Click link → Verify redirect to dashboard"
+      },
+      {
+        "step": 10,
+        "title": "Deploy to Vercel",
+        "details": "Push code to GitHub → Go to vercel.com → Import repository → Set environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) → Deploy → Set Supabase Auth redirect URL to your Vercel domain under Authentication → URL Configuration"
+      }
+    ]
+  },
+
+  "test_plan": {
+    "scenarios": [
+      {
+        "id": "T01",
+        "name": "Different rate per course — same coach",
+        "setup": "Coach Ahmed assigned to Course A at 50 EGP/hr and Course B at 75 EGP/hr",
+        "action": "Log one session in Course A and one in Course B",
+        "expected": "Session in Course A shows applied_rate=50. Session in Course B shows applied_rate=75."
+      },
+      {
+        "id": "T02",
+        "name": "Rate change mid-month",
+        "setup": "Coach rate for Course A: 50 EGP effective 2024-01-01, then 65 EGP effective 2024-01-15",
+        "action": "Log session on 2024-01-10 and another on 2024-01-20",
+        "expected": "Session on Jan 10 → applied_rate=50. Session on Jan 20 → applied_rate=65."
+      },
+      {
+        "id": "T03",
+        "name": "Replacement coach",
+        "setup": "Coach Ali (originally_scheduled) replaced by Coach Omar (paid_coach) in Course A. Omar's rate = 80 EGP/hr",
+        "action": "Log session with originally_scheduled_coach_id=Ali, paid_coach_id=Omar",
+        "expected": "applied_rate=80 (Omar's rate). Invoice charges Omar, not Ali."
+      },
+      {
+        "id": "T04",
+        "name": "Bonus added to invoice",
+        "setup": "Coach has 3 sessions totaling 450 EGP. Admin adds bonus of 100 EGP for that month.",
+        "action": "View invoice for that month",
+        "expected": "Invoice shows total = 450 + 100 = 550 EGP"
+      },
+      {
+        "id": "T05",
+        "name": "Discount applied to invoice",
+        "setup": "Coach has sessions totaling 600 EGP. Admin adds discount of 50 EGP.",
+        "action": "View invoice for that month",
+        "expected": "Invoice shows total = 600 - 50 = 550 EGP"
+      },
+      {
+        "id": "T06",
+        "name": "Offline meeting session type",
+        "setup": "Coach logs session with session_type = offline_meeting",
+        "action": "View session in list",
+        "expected": "Session type displayed as 'Offline Meeting' (EN) or 'اجتماع حضوري' (AR)"
+      },
+      {
+        "id": "T07",
+        "name": "Overlapping session prevention",
+        "setup": "Coach has a session 10:00–12:00 on 2024-01-10",
+        "action": "Attempt to log another session 11:00–13:00 same coach same date",
+        "expected": "System rejects with error: 'Session overlaps with an existing session'"
+      },
+      {
+        "id": "T08",
+        "name": "No cross-midnight session",
+        "setup": "Coach attempts to log session with start_time=23:00 and end_time=01:00",
+        "action": "Submit session form",
+        "expected": "Validation error: 'End time must be after start time. Cross-midnight sessions are not allowed.'"
+      },
+      {
+        "id": "T09",
+        "name": "RLS isolation between coaches",
+        "setup": "Coach A and Coach B both logged in on separate sessions",
+        "action": "Coach A attempts to query sessions table",
+        "expected": "Coach A sees only their own sessions. Coach B's sessions are invisible."
+      },
+      {
+        "id": "T10",
+        "name": "Admin invoice send",
+        "setup": "Month has sessions for 3 coaches with various bonuses/discounts",
+        "action": "Admin clicks 'Send Invoices' for the month",
+        "expected": "Each coach receives a correctly calculated invoice email. Admin receives summary email. All amounts match the in-app preview."
+      },
+      {
+        "id": "T11",
+        "name": "Language switch EN to AR",
+        "setup": "App loaded in English",
+        "action": "Click language toggle → switch to Arabic",
+        "expected": "All UI text changes to Arabic. Layout direction flips to RTL. Preference saved in localStorage."
+      },
+      {
+        "id": "T12",
+        "name": "Language switch AR to EN",
+        "setup": "App loaded in Arabic",
+        "action": "Click language toggle → switch to English",
+        "expected": "All UI text changes to English. Layout direction flips to LTR."
+      }
+    ]
+  },
+
+  "mvp_assumptions": [
+    "Sessions do not cross midnight",
+    "Single currency: EGP (Egyptian Pound)",
+    "No attendance tracking — session logging only",
+    "No student-facing features or portal",
+    "No push notifications — only invoice emails",
+    "Coach deactivation = remove from future assignments, existing session data preserved",
+    "Rate history is append-only — never delete old rates, only add new entries with a later effective_from",
+    "Invoice sending is always triggered manually by admin — no scheduled automation in MVP",
+    "One admin account initially; additional admins added via SQL"
+  ],
+
+  "env_variables": {
+    "frontend": {
+      "VITE_SUPABASE_URL": "Your Supabase project URL — found in Project Settings → API",
+      "VITE_SUPABASE_ANON_KEY": "Your Supabase anon/public key — safe to expose in frontend"
+    },
+    "edge_functions": {
+      "SUPABASE_SERVICE_ROLE_KEY": "Service role key — server-side only, never expose to client",
+      "RESEND_API_KEY": "Your Resend.com API key for sending emails",
+      "ADMIN_EMAIL": "Email address to receive admin invoice summaries",
+      "APP_URL": "Production URL of the deployed frontend (e.g. https://tricksland.vercel.app)"
+    }
+  }
+}
+
