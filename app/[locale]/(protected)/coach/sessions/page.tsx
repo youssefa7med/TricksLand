@@ -30,7 +30,8 @@ export default async function CoachSessionsPage() {
       originally_scheduled_coach:profiles!sessions_originally_scheduled_coach_id_fkey (full_name)
     `)
         .eq('paid_coach_id', user.id)
-        .order('session_date', { ascending: false });
+        .order('session_date', { ascending: false })
+        .order('start_time', { ascending: false });
 
     // Get assigned courses for the add session form
     const { data: assignedCourses } = await supabase
@@ -109,8 +110,8 @@ export default async function CoachSessionsPage() {
                                                 <td className="py-3 px-4 text-white text-sm">{session.start_time} - {session.end_time}</td>
                                                 <td className="py-3 px-4">
                                                     <span className={`text-xs px-2 py-1 rounded ${session.session_type === 'online_session'
-                                                            ? 'bg-blue-500/20 text-blue-300'
-                                                            : 'bg-purple-500/20 text-purple-300'
+                                                        ? 'bg-blue-500/20 text-blue-300'
+                                                        : 'bg-purple-500/20 text-purple-300'
                                                         }`}>
                                                         {session.session_type === 'online_session' ? 'Online' : 'Offline'}
                                                     </span>

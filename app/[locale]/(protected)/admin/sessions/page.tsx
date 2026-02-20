@@ -32,7 +32,8 @@ export default function AdminSessionsPage() {
                 paid_coach:profiles!sessions_paid_coach_id_fkey (id, full_name),
                 original_coach:profiles!sessions_originally_scheduled_coach_id_fkey (full_name)
             `)
-            .order('session_date', { ascending: false });
+            .order('session_date', { ascending: false })
+            .order('start_time', { ascending: false });
 
         if (filterCoach) query = query.eq('paid_coach_id', filterCoach);
         if (filterCourse) query = query.eq('course_id', filterCourse);
