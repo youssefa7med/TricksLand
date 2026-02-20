@@ -27,6 +27,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
         { name: t('dashboard'), href: `/${locale}/admin/dashboard` },
         { name: t('courses'), href: `/${locale}/admin/courses` },
         { name: t('sessions'), href: `/${locale}/admin/sessions` },
+        { name: '📍 Attendance', href: `/${locale}/admin/attendance` },
         { name: t('adjustments'), href: `/${locale}/admin/adjustments` },
         { name: t('coaches'), href: `/${locale}/admin/coaches` },
         { name: t('students'), href: `/${locale}/admin/students` },
@@ -36,6 +37,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
     const coachNav = [
         { name: t('dashboard'), href: `/${locale}/coach/dashboard` },
         { name: t('sessions'), href: `/${locale}/coach/sessions` },
+        { name: '📍 Attendance', href: `/${locale}/coach/attendance` },
         { name: t('myCourses'), href: `/${locale}/coach/courses` },
         { name: t('adjustments'), href: `/${locale}/coach/adjustments` },
         { name: t('invoices'), href: `/${locale}/coach/invoices` },
@@ -54,9 +56,14 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                     {/* Logo */}
                     <Link
                         href={`/${locale}`}
-                        className="text-lg md:text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent shrink-0"
+                        className="shrink-0"
                     >
-                        TricksLand
+                        <img
+                            src="/images/logo.jpg"
+                            alt="TricksLand Steam Academy"
+                            style={{ height: '40px', width: 'auto', objectFit: 'contain' }}
+                            suppressHydrationWarning
+                        />
                     </Link>
 
                     {/* Desktop nav links */}

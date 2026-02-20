@@ -155,10 +155,15 @@ export default function AdminNewSessionPage() {
                         </div>
 
                         <div>
-                            <label className={labelClass}>Session Type <span className="text-red-400">*</span></label>
+                            <label className={labelClass}>Activity Type <span className="text-red-400">*</span></label>
                             <select value={form.session_type} onChange={(e) => setForm({ ...form, session_type: e.target.value as any })} className={selectClass}>
                                 <option value="online_session" className="bg-gray-900">Online Session</option>
                                 <option value="offline_meeting" className="bg-gray-900">Offline Meeting</option>
+                                <option value="training" className="bg-gray-900">Training</option>
+                                <option value="consultation" className="bg-gray-900">Consultation</option>
+                                <option value="workshop" className="bg-gray-900">Workshop</option>
+                                <option value="tutoring" className="bg-gray-900">Tutoring</option>
+                                <option value="other" className="bg-gray-900">Other</option>
                             </select>
                         </div>
 

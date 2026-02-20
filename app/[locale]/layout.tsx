@@ -3,6 +3,7 @@ import { Cairo, Inter } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { Toaster } from 'sonner';
+import { RecoveryRedirect } from '@/components/auth/RecoveryRedirect';
 import "../globals.css";
 
 const inter = Inter({
@@ -18,8 +19,8 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "TricksLand Academy",
-  description: "Session tracking and invoicing system for TricksLand Academy coaches",
+  title: "TricksLand Steam Academy",
+  description: "Session tracking and invoicing system for TricksLand Steam Academy coaches",
 };
 
 export default async function RootLayout({
@@ -40,6 +41,7 @@ export default async function RootLayout({
     <html lang={locale} dir={dir} className={fontClass}>
       <body className="bg-animated-gradient min-h-screen">
         <NextIntlClientProvider messages={messages} locale={locale}>
+          <RecoveryRedirect />
           {children}
         </NextIntlClientProvider>
         <Toaster richColors position="top-right" />

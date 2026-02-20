@@ -1,7 +1,7 @@
 {
     "common": {
         "appName": "TricksLand",
-        "academy": "TricksLand Academy",
+        "academy": "TricksLand Steam Academy",
         "loading": "Loading...",
         "error": "Error",
         "success": "Success",
@@ -65,7 +65,15 @@
         "emailRequiredForReset": "Enter your email first, then click Forgot password",
         "resetEmailSent": "Password reset email sent",
         "resetEmailSentDetail": "Check your email for a password reset link. You can close this and log in after resetting.",
-        "backToLogin": "Back to login"
+        "backToLogin": "Back to login",
+        "resetPassword": "Reset Password",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm Password",
+        "enterNewPassword": "Enter new password",
+        "confirmNewPassword": "Confirm new password",
+        "resettingPassword": "Resetting Password...",
+        "passwordResetSuccess": "Password reset successfully! Redirecting to login...",
+        "rememberPassword": "Remember your password?"
     },
     "dashboard": {
         "admin": "Admin Dashboard",

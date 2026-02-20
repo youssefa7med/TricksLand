@@ -1,7 +1,7 @@
 {
     "common": {
         "appName": "تريكس لاند",
-        "academy": "أكاديمية تريكس لاند",
+        "academy": "أكاديمية تريكس لاند ستيم",
         "loading": "جاري التحميل...",
         "error": "خطأ",
         "success": "نجح",
@@ -52,7 +52,15 @@
         "loginError": "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى.",
         "noAccount": "ليس لديك حساب؟",
         "createOne": "أنشئ حساباً",
-        "nameRequired": "يرجى إدخال اسمك الكامل"
+        "nameRequired": "يرجى إدخال اسمك الكامل",
+        "resetPassword": "إعادة تعيين كلمة المرور",
+        "newPassword": "كلمة المرور الجديدة",
+        "confirmPassword": "تأكيد كلمة المرور",
+        "enterNewPassword": "أدخل كلمة المرور الجديدة",
+        "confirmNewPassword": "أكد كلمة المرور الجديدة",
+        "resettingPassword": "جاري إعادة تعيين كلمة المرور...",
+        "passwordResetSuccess": "تم إعادة تعيين كلمة المرور بنجاح! جاري إعادة التوجيه إلى تسجيل الدخول...",
+        "rememberPassword": "هل تتذكر كلمة المرور؟"
     },
     "dashboard": {
         "admin": "لوحة تحكم المسؤول",

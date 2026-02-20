@@ -85,7 +85,12 @@ export default function LoginPage() {
             return;
         }
         setLoading(true);
-        const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim());
+        const { error } = await supabase.auth.resetPasswordForEmail(
+            email.toLowerCase().trim(),
+            {
+                redirectTo: `https://tricks-land.vercel.app/ar/auth/callback?type=recovery`,
+            }
+        );
         setLoading(false);
         if (error) {
             toast.error(error.message);
@@ -99,9 +104,12 @@ export default function LoginPage() {
             <GlassCard className="w-full max-w-md">
                 {/* Header */}
                 <div className="mb-8 text-center">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
-                        TricksLand
-                    </h1>
+                    <img
+                        src="/images/logo.jpg"
+                        alt="TricksLand Steam Academy"
+                        style={{ height: 'auto', width: 'auto', maxWidth: '280px', objectFit: 'contain', margin: '0 auto 16px' }}
+                        suppressHydrationWarning
+                    />
                     <p className="text-white/60 text-sm">{t('subtitle')}</p>
                 </div>
 
@@ -136,78 +144,78 @@ export default function LoginPage() {
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-4">
-                    {mode === 'register' && (
+                        {mode === 'register' && (
+                            <div>
+                                <label className={labelClass}>{t('fullName')} *</label>
+                                <input
+                                    type="text"
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    placeholder={t('fullNamePlaceholder')}
+                                    className={inputClass}
+                                    required
+                                    disabled={loading}
+                                />
+                            </div>
+                        )}
+
                         <div>
-                            <label className={labelClass}>{t('fullName')} *</label>
+                            <label className={labelClass}>{t('emailLabel')} *</label>
                             <input
-                                type="text"
-                                value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
-                                placeholder={t('fullNamePlaceholder')}
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder={t('emailPlaceholder')}
                                 className={inputClass}
                                 required
                                 disabled={loading}
                             />
                         </div>
-                    )}
 
-                    <div>
-                        <label className={labelClass}>{t('emailLabel')} *</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder={t('emailPlaceholder')}
-                            className={inputClass}
-                            required
-                            disabled={loading}
-                        />
-                    </div>
-
-                    <div>
-                        <div className="flex justify-between items-center mb-2">
-                            <label className="text-white/80 text-sm font-medium">{t('passwordLabel')} *</label>
-                            {mode === 'login' && (
-                                <button
-                                    type="button"
-                                    onClick={handleForgotPassword}
-                                    disabled={loading}
-                                    className="text-white/40 hover:text-primary text-xs transition-colors"
-                                >
-                                    {t('forgotPassword')}
-                                </button>
+                        <div>
+                            <div className="flex justify-between items-center mb-2">
+                                <label className="text-white/80 text-sm font-medium">{t('passwordLabel')} *</label>
+                                {mode === 'login' && (
+                                    <button
+                                        type="button"
+                                        onClick={handleForgotPassword}
+                                        disabled={loading}
+                                        className="text-white/40 hover:text-primary text-xs transition-colors"
+                                    >
+                                        {t('forgotPassword')}
+                                    </button>
+                                )}
+                            </div>
+                            <input
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder={mode === 'register' ? t('passwordPlaceholderNew') : t('passwordPlaceholder')}
+                                className={inputClass}
+                                required
+                                disabled={loading}
+                                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                            />
+                            {mode === 'register' && (
+                                <p className="text-white/40 text-xs mt-1">{t('passwordHint')}</p>
                             )}
                         </div>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder={mode === 'register' ? t('passwordPlaceholderNew') : t('passwordPlaceholder')}
-                            className={inputClass}
-                            required
-                            disabled={loading}
-                            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                        />
-                        {mode === 'register' && (
-                            <p className="text-white/40 text-xs mt-1">{t('passwordHint')}</p>
+
+                        <button type="submit" disabled={loading} className="w-full btn-glossy disabled:opacity-50">
+                            {loading
+                                ? (mode === 'login' ? t('signingIn') : t('creating'))
+                                : (mode === 'login' ? t('signIn') : t('createAccount'))}
+                        </button>
+
+                        {mode === 'login' && (
+                            <p className="text-center text-white/40 text-xs">
+                                {t('noAccount')}{' '}
+                                <button type="button" onClick={() => switchMode('register')} className="text-primary hover:underline">
+                                    {t('createOne')}
+                                </button>
+                            </p>
                         )}
-                    </div>
-
-                    <button type="submit" disabled={loading} className="w-full btn-glossy disabled:opacity-50">
-                        {loading
-                            ? (mode === 'login' ? t('signingIn') : t('creating'))
-                            : (mode === 'login' ? t('signIn') : t('createAccount'))}
-                    </button>
-
-                    {mode === 'login' && (
-                        <p className="text-center text-white/40 text-xs">
-                            {t('noAccount')}{' '}
-                            <button type="button" onClick={() => switchMode('register')} className="text-primary hover:underline">
-                                {t('createOne')}
-                            </button>
-                        </p>
-                    )}
-                </form>
+                    </form>
                 )}
             </GlassCard>
         </div>

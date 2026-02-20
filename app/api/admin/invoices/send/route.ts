@@ -33,16 +33,69 @@ function buildEmailHtml(params: {
 }) {
     const { coachName, monthLabel, sessions, adjustments, grossTotal, totalBonuses, totalDiscounts, netTotal, sessionCount, appUrl, year } = params;
 
-    const sessionsHtml = sessions.map((s: any) => `
-        <tr>
-            <td style="padding:8px;border-bottom:1px solid #eee">${s.session_date}</td>
-            <td style="padding:8px;border-bottom:1px solid #eee">${s.courses?.name || '-'}</td>
-            <td style="padding:8px;border-bottom:1px solid #eee">${s.start_time}–${s.end_time}</td>
-            <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${s.computed_hours}h</td>
-            <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${Number(s.applied_rate).toFixed(2)} EGP</td>
-            <td style="padding:8px;border-bottom:1px solid #eee;text-align:right"><strong>${Number(s.subtotal).toFixed(2)} EGP</strong></td>
-        </tr>
-    `).join('');
+    // Group sessions by activity type
+    const activityTypes = ['online_session', 'offline_meeting', 'training', 'consultation', 'workshop', 'tutoring', 'other'];
+    const sessionsByType = activityTypes.reduce((acc: any, type) => {
+        acc[type] = sessions.filter((s: any) => s.session_type === type);
+        return acc;
+    }, {});
+
+    // Activity type display names
+    const typeDisplayNames: any = {
+        'online_session': 'Online Sessions',
+        'offline_meeting': 'Offline Meetings',
+        'training': 'Training',
+        'consultation': 'Consultations',
+        'workshop': 'Workshops',
+        'tutoring': 'Tutoring',
+        'other': 'Other Activities'
+    };
+
+    // Build HTML for each activity type that has sessions
+    const typesSectionsHtml = Object.entries(sessionsByType)
+        .filter(([_, typeSessions]: any) => typeSessions.length > 0)
+        .map(([type, typeSessions]: any) => {
+            const typeTotal = (typeSessions as any[]).reduce((sum: number, s: any) => sum + Number(s.subtotal), 0);
+            const typeHours = (typeSessions as any[]).reduce((sum: number, s: any) => sum + Number(s.computed_hours), 0);
+            
+            const typeSessionsHtml = (typeSessions as any[]).map((s: any) => `
+                <tr>
+                    <td style="padding:8px;border-bottom:1px solid #eee">${s.session_date}</td>
+                    <td style="padding:8px;border-bottom:1px solid #eee">${s.courses?.name || '-'}</td>
+                    <td style="padding:8px;border-bottom:1px solid #eee">${s.start_time}–${s.end_time}</td>
+                    <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${s.computed_hours}h</td>
+                    <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${Number(s.applied_rate).toFixed(2)} EGP</td>
+                    <td style="padding:8px;border-bottom:1px solid #eee;text-align:right"><strong>${Number(s.subtotal).toFixed(2)} EGP</strong></td>
+                </tr>
+            `).join('');
+
+            return `
+                <div style="margin-bottom:24px">
+                    <h4 style="color:#374151;margin:0 0 8px 0;padding:8px;background:#f3f4f6;border-radius:4px">${typeDisplayNames[type]} (${typeSessions.length} sessions · ${typeHours}h)</h4>
+                    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px">
+                        <thead>
+                            <tr style="background:#f9fafb">
+                                <th style="padding:8px;text-align:left;color:#6b7280;border-bottom:2px solid #e5e7eb">Date</th>
+                                <th style="padding:8px;text-align:left;color:#6b7280;border-bottom:2px solid #e5e7eb">Course</th>
+                                <th style="padding:8px;text-align:left;color:#6b7280;border-bottom:2px solid #e5e7eb">Time</th>
+                                <th style="padding:8px;text-align:center;color:#6b7280;border-bottom:2px solid #e5e7eb">Hours</th>
+                                <th style="padding:8px;text-align:right;color:#6b7280;border-bottom:2px solid #e5e7eb">Rate</th>
+                                <th style="padding:8px;text-align:right;color:#6b7280;border-bottom:2px solid #e5e7eb">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>${typeSessionsHtml}</tbody>
+                        <tfoot>
+                            <tr style="background:#f9fafb;border-top:2px solid #e5e7eb">
+                                <td colspan="3" style="padding:8px;color:#6b7280"><strong>Subtotal for ${typeDisplayNames[type]}</strong></td>
+                                <td style="padding:8px;text-align:center;color:#374151"><strong>${typeHours}h</strong></td>
+                                <td style="padding:8px"></td>
+                                <td style="padding:8px;text-align:right;color:#374151"><strong>${typeTotal.toFixed(2)} EGP</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `;
+        }).join('');
 
     const adjustmentsHtml = adjustments.length > 0 ? `
         <h3 style="color:#374151;margin-top:24px">Adjustments</h3>
@@ -66,26 +119,14 @@ function buildEmailHtml(params: {
 <body style="font-family:Arial,sans-serif;background:#f9fafb;margin:0;padding:20px">
     <div style="max-width:680px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1)">
         <div style="background:linear-gradient(135deg,#5BC0EB,#FF7A00);padding:32px;text-align:center">
-            <h1 style="color:#fff;margin:0;font-size:28px">TricksLand Academy</h1>
+            <h1 style="color:#fff;margin:0;font-size:28px">TricksLand Steam Academy</h1>
             <p style="color:rgba(255,255,255,0.9);margin:8px 0 0">Monthly Invoice — ${monthLabel}</p>
         </div>
         <div style="padding:32px">
             <p style="color:#374151">Hi <strong>${coachName}</strong>,</p>
             <p style="color:#6b7280">Here is your earnings breakdown for <strong>${monthLabel}</strong>.</p>
-            <h3 style="color:#374151;margin-top:24px">Sessions (${sessionCount})</h3>
-            <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px">
-                <thead>
-                    <tr style="background:#f3f4f6">
-                        <th style="padding:8px;text-align:left;color:#6b7280">Date</th>
-                        <th style="padding:8px;text-align:left;color:#6b7280">Course</th>
-                        <th style="padding:8px;text-align:left;color:#6b7280">Time</th>
-                        <th style="padding:8px;text-align:center;color:#6b7280">Hours</th>
-                        <th style="padding:8px;text-align:right;color:#6b7280">Rate</th>
-                        <th style="padding:8px;text-align:right;color:#6b7280">Amount</th>
-                    </tr>
-                </thead>
-                <tbody>${sessionsHtml}</tbody>
-            </table>
+            <h3 style="color:#374151;margin-top:24px">Activities (${sessionCount})</h3>
+            ${typesSectionsHtml}
             ${adjustmentsHtml}
             <div style="background:#f9fafb;border-radius:8px;padding:20px;margin-top:24px">
                 <table width="100%" cellpadding="0" cellspacing="0">
