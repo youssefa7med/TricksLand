@@ -137,7 +137,7 @@ export default function CoachNewSessionPage() {
                             <div>
                                 <label className={labelClass}>Activity Type *</label>
                                 <select value={form.session_type} onChange={(e) => setForm({ ...form, session_type: e.target.value as any })} className={selectClass}>
-                                    <option value="online_session" className="bg-gray-900">Online Session</option>
+                                    <option value="online_session" className="bg-gray-900">Session</option>
                                     <option value="offline_meeting" className="bg-gray-900">Offline Meeting</option>
                                     <option value="training" className="bg-gray-900">Training</option>
                                     <option value="consultation" className="bg-gray-900">Consultation</option>
