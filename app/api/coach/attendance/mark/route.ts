@@ -1,5 +1,6 @@
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import type { Profile, Session, CoachAttendance } from '@/types/database';
 
 // Academy location constants (backend source of truth)
 const ACADEMY_LOCATION = {
@@ -26,9 +27,9 @@ function haversineDistance(
     const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
         Math.cos(toRad(lat1)) *
-            Math.cos(toRad(lat2)) *
-            Math.sin(dLon / 2) *
-            Math.sin(dLon / 2);
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
 
     const c = 2 * Math.asin(Math.sqrt(a));
     return Math.round(EARTH_RADIUS_METERS * c * 100) / 100;
@@ -86,11 +87,13 @@ export async function POST(request: NextRequest) {
         }
 
         // Check user is a coach
-        const { data: profile, error: profileError } = await supabase
+        const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', user.id)
             .single();
+
+        const profile = profileData as Pick<Profile, 'role'> | null;
 
         if (profileError || profile?.role !== 'coach') {
             return NextResponse.json(
@@ -119,11 +122,13 @@ export async function POST(request: NextRequest) {
         }
 
         // ============ Check Session Exists ============
-        const { data: session, error: sessionError } = await supabase
+        const { data: sessionData, error: sessionError } = await supabase
             .from('sessions')
             .select('id, session_date, paid_coach_id')
             .eq('id', sessionId)
             .single();
+
+        const session = sessionData as Pick<Session, 'id' | 'session_date' | 'paid_coach_id'> | null;
 
         if (sessionError || !session) {
             return NextResponse.json(
@@ -159,7 +164,8 @@ export async function POST(request: NextRequest) {
         }
 
         // ============ Insert Attendance Record ============
-        const { data: attendance, error: insertError } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: attendanceData, error: insertError } = await (supabase as any)
             .from('coach_attendance')
             .insert({
                 coach_id: user.id,
@@ -172,6 +178,8 @@ export async function POST(request: NextRequest) {
             })
             .select()
             .single();
+
+        const attendance = attendanceData as Pick<CoachAttendance, 'id' | 'attendance_timestamp'> | null;
 
         if (insertError) {
             console.error('Attendance insert error:', insertError);
@@ -186,9 +194,9 @@ export async function POST(request: NextRequest) {
                 success: true,
                 message: 'Attendance marked successfully',
                 attendance: {
-                    id: attendance.id,
+                    id: attendance?.id,
                     distance,
-                    timestamp: attendance.attendance_timestamp,
+                    timestamp: attendance?.attendance_timestamp,
                 },
             },
             { status: 201 }

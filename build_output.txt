@@ -1,0 +1,61 @@
+﻿
+> treeks-land@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env.local, .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 6.0s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/6) ...
+  Generating static pages using 11 workers (1/6) 
+  Generating static pages using 11 workers (2/6) 
+  Generating static pages using 11 workers (4/6) 
+Γ£ô Generating static pages using 11 workers (6/6) in 278.6ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî Γùï /_not-found
+Γö£ ╞Æ /[locale]
+Γö£ ╞Æ /[locale]/admin/adjustments
+Γö£ ╞Æ /[locale]/admin/attendance
+Γö£ ╞Æ /[locale]/admin/coaches
+Γö£ ╞Æ /[locale]/admin/courses
+Γö£ ╞Æ /[locale]/admin/courses/[id]/coaches
+Γö£ ╞Æ /[locale]/admin/courses/[id]/students
+Γö£ ╞Æ /[locale]/admin/courses/edit/[id]
+Γö£ ╞Æ /[locale]/admin/courses/new
+Γö£ ╞Æ /[locale]/admin/dashboard
+Γö£ ╞Æ /[locale]/admin/invoices
+Γö£ ╞Æ /[locale]/admin/invoices/preview
+Γö£ ╞Æ /[locale]/admin/sessions
+Γö£ ╞Æ /[locale]/admin/sessions/edit/[id]
+Γö£ ╞Æ /[locale]/admin/sessions/new
+Γö£ ╞Æ /[locale]/admin/students
+Γö£ ╞Æ /[locale]/admin/students/[id]/edit
+Γö£ ╞Æ /[locale]/admin/students/new
+Γö£ ╞Æ /[locale]/auth/callback
+Γö£ ╞Æ /[locale]/coach/adjustments
+Γö£ ╞Æ /[locale]/coach/attendance
+Γö£ ╞Æ /[locale]/coach/courses
+Γö£ ╞Æ /[locale]/coach/dashboard
+Γö£ ╞Æ /[locale]/coach/invoices
+Γö£ ╞Æ /[locale]/coach/sessions
+Γö£ ╞Æ /[locale]/coach/sessions/edit/[id]
+Γö£ ╞Æ /[locale]/coach/sessions/new
+Γö£ ╞Æ /[locale]/login
+Γö£ ╞Æ /[locale]/reset-password
+Γö£ ╞Æ /[locale]/settings
+Γö£ ╞Æ /api/admin/coaches
+Γö£ ╞Æ /api/admin/coaches/[id]
+Γö£ ╞Æ /api/admin/invoices/send
+Γöö ╞Æ /api/coach/attendance/mark
+
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

@@ -66,8 +66,9 @@ export default function CoachAttendancePage() {
             // Load attendance for each session
             if (sessionsData && sessionsData.length > 0) {
                 const attendanceData: { [key: string]: AttendanceRecord[] } = {};
+                const typedSessions = sessionsData as Session[];
 
-                for (const session of sessionsData) {
+                for (const session of typedSessions) {
                     const { data: attData } = await supabase
                         .from('coach_attendance')
                         .select('id, attendance_timestamp, status, distance_from_academy')
@@ -172,10 +173,9 @@ export default function CoachAttendancePage() {
                                             onClick={() => setSelectedSession(session)}
                                             className={`
                                                 p-4 rounded-lg border transition-all cursor-pointer
-                                                ${
-                                                    selectedSession?.id === session.id
-                                                        ? 'bg-primary/20 border-primary/50'
-                                                        : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                                                ${selectedSession?.id === session.id
+                                                    ? 'bg-primary/20 border-primary/50'
+                                                    : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                                                 }
                                             `}
                                         >

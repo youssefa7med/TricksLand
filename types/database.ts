@@ -77,6 +77,18 @@ export interface Session {
     created_at: string;
 }
 
+export interface CoachAttendance {
+    id: string;
+    coach_id: string;
+    session_id: string;
+    latitude: number;
+    longitude: number;
+    distance_from_academy: number;
+    attendance_timestamp: string;
+    status: string;
+    created_at: string;
+}
+
 export interface Adjustment {
     id: string;
     coach_id: string;
@@ -148,6 +160,7 @@ export interface AdjustmentFormData {
 
 // Database schema for Supabase client (supabase-js v2 format)
 export interface Database {
+    __InternalSupabase: { PostgrestVersion: "12" };
     public: {
         Tables: {
             profiles: {
@@ -190,6 +203,12 @@ export interface Database {
                 Row: Adjustment;
                 Insert: Omit<Adjustment, 'id' | 'created_at'>;
                 Update: Partial<Omit<Adjustment, 'id' | 'created_at'>>;
+                Relationships: [];
+            };
+            coach_attendance: {
+                Row: CoachAttendance;
+                Insert: Omit<CoachAttendance, 'id' | 'created_at'>;
+                Update: Partial<Omit<CoachAttendance, 'id' | 'created_at'>>;
                 Relationships: [];
             };
         };
