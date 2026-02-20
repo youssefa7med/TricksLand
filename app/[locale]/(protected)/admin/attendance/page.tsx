@@ -58,10 +58,11 @@ export default function AdminAttendanceViewPage() {
                 )
                 .order('attendance_timestamp', { ascending: false });
 
-            // Filter by month
+            // Filter by month (use real last day of month)
             const [year, month] = filter.month.split('-');
             const startDate = `${filter.month}-01`;
-            const endDate = `${year}-${month}-31`;
+            const lastDay = new Date(Number(year), Number(month), 0).getDate();
+            const endDate = `${filter.month}-${String(lastDay).padStart(2, '0')}`;
 
             query = query
                 .gte('attendance_timestamp', startDate)
