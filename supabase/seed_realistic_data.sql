@@ -1,6 +1,10 @@
 -- Comprehensive Seed Data Script
 -- Creates ~100 realistic records for testing and demonstration
 -- Run this AFTER applying all migrations
+--
+-- IMPORTANT: This script UPDATES existing coach profiles with base rates.
+-- It does NOT create new profiles (profiles must be created via auth first).
+-- If you want to create new coaches, use the admin UI or API.
 
 -- ============================================================================
 -- CLEAR EXISTING DATA (Optional - uncomment if you want to start fresh)
@@ -12,16 +16,17 @@
 -- DELETE FROM course_students;
 -- DELETE FROM courses;
 -- DELETE FROM adjustments;
--- DELETE FROM profiles WHERE role = 'coach';
 
 -- ============================================================================
--- COACHES (15 coaches with base rates)
+-- UPDATE EXISTING COACHES WITH BASE RATES
 -- ============================================================================
+-- This updates existing coach profiles with base rates.
+-- If coaches don't exist, create them first via admin UI or API.
 
--- Get admin user ID (assuming one exists)
 DO $$
 DECLARE
     admin_id UUID;
+    coach_ids UUID[];
     coach1_id UUID;
     coach2_id UUID;
     coach3_id UUID;
@@ -37,6 +42,16 @@ DECLARE
     coach13_id UUID;
     coach14_id UUID;
     coach15_id UUID;
+    course1_id UUID;
+    course2_id UUID;
+    course3_id UUID;
+    course4_id UUID;
+    course5_id UUID;
+    course6_id UUID;
+    course7_id UUID;
+    course8_id UUID;
+    course9_id UUID;
+    course10_id UUID;
 BEGIN
     -- Get admin ID
     SELECT id INTO admin_id FROM profiles WHERE role = 'admin' LIMIT 1;
@@ -45,42 +60,86 @@ BEGIN
         RAISE EXCEPTION 'No admin user found. Please create an admin user first.';
     END IF;
 
-    -- Create coaches with base rates
-    INSERT INTO profiles (full_name, email, role, base_hourly_rate, rate_effective_from, created_by_admin)
-    VALUES 
-        ('أحمد محمد علي', 'ahmed.mohamed@example.com', 'coach', 50.00, '2024-01-01', true),
-        ('فاطمة أحمد', 'fatima.ahmed@example.com', 'coach', 55.00, '2024-01-15', true),
-        ('محمد خالد', 'mohamed.khaled@example.com', 'coach', 60.00, '2023-06-01', true),
-        ('سارة محمود', 'sara.mahmoud@example.com', 'coach', 65.00, '2024-02-01', true),
-        ('علي حسن', 'ali.hassan@example.com', 'coach', 70.00, '2023-01-01', true),
-        ('مريم إبراهيم', 'mariam.ibrahim@example.com', 'coach', 45.00, '2024-03-01', true),
-        ('يوسف عبدالله', 'youssef.abdullah@example.com', 'coach', 75.00, '2022-01-01', true),
-        ('نورا سعيد', 'nora.saeed@example.com', 'coach', 58.00, '2024-01-10', true),
-        ('خالد أمين', 'khaled.amin@example.com', 'coach', 62.00, '2023-09-01', true),
-        ('ليلى فؤاد', 'layla.fouad@example.com', 'coach', 68.00, '2023-03-15', true),
-        ('طارق رشيد', 'tarek.rashid@example.com', 'coach', 52.00, '2024-02-15', true),
-        ('هدى كمال', 'huda.kamal@example.com', 'coach', 72.00, '2022-06-01', true),
-        ('عمر ناصر', 'omar.nasser@example.com', 'coach', 48.00, '2024-04-01', true),
-        ('رانيا شريف', 'rania.sharif@example.com', 'coach', 66.00, '2023-11-01', true),
-        ('محمود عادل', 'mahmoud.adel@example.com', 'coach', 80.00, '2021-01-01', true)
-    RETURNING id INTO coach1_id, coach2_id, coach3_id, coach4_id, coach5_id, coach6_id, coach7_id, coach8_id, coach9_id, coach10_id, coach11_id, coach12_id, coach13_id, coach14_id, coach15_id;
+    -- Get existing coach IDs (limit to 15)
+    SELECT ARRAY_AGG(id) INTO coach_ids
+    FROM profiles
+    WHERE role = 'coach'
+    LIMIT 15;
+
+    IF coach_ids IS NULL OR array_length(coach_ids, 1) IS NULL THEN
+        RAISE NOTICE 'No existing coaches found. Please create coaches first via admin UI.';
+        RAISE NOTICE 'This script only updates existing coaches with base rates.';
+        RETURN;
+    END IF;
+
+    -- Assign coach IDs
+    coach1_id := coach_ids[1];
+    coach2_id := coach_ids[2];
+    coach3_id := coach_ids[3];
+    coach4_id := coach_ids[4];
+    coach5_id := coach_ids[5];
+    coach6_id := coach_ids[6];
+    coach7_id := coach_ids[7];
+    coach8_id := coach_ids[8];
+    coach9_id := coach_ids[9];
+    coach10_id := coach_ids[10];
+    coach11_id := coach_ids[11];
+    coach12_id := coach_ids[12];
+    coach13_id := coach_ids[13];
+    coach14_id := coach_ids[14];
+    coach15_id := coach_ids[15];
+
+    -- Update coaches with base rates (only if they don't already have one)
+    UPDATE profiles
+    SET 
+        base_hourly_rate = CASE 
+            WHEN id = coach1_id THEN 50.00
+            WHEN id = coach2_id THEN 55.00
+            WHEN id = coach3_id THEN 60.00
+            WHEN id = coach4_id THEN 65.00
+            WHEN id = coach5_id THEN 70.00
+            WHEN id = coach6_id THEN 45.00
+            WHEN id = coach7_id THEN 75.00
+            WHEN id = coach8_id THEN 58.00
+            WHEN id = coach9_id THEN 62.00
+            WHEN id = coach10_id THEN 68.00
+            WHEN id = coach11_id THEN 52.00
+            WHEN id = coach12_id THEN 72.00
+            WHEN id = coach13_id THEN 48.00
+            WHEN id = coach14_id THEN 66.00
+            WHEN id = coach15_id THEN 80.00
+        END,
+        rate_effective_from = CASE 
+            WHEN id = coach1_id THEN '2024-01-01'
+            WHEN id = coach2_id THEN '2024-01-15'
+            WHEN id = coach3_id THEN '2023-06-01'
+            WHEN id = coach4_id THEN '2024-02-01'
+            WHEN id = coach5_id THEN '2023-01-01'
+            WHEN id = coach6_id THEN '2024-03-01'
+            WHEN id = coach7_id THEN '2022-01-01'
+            WHEN id = coach8_id THEN '2024-01-10'
+            WHEN id = coach9_id THEN '2023-09-01'
+            WHEN id = coach10_id THEN '2023-03-15'
+            WHEN id = coach11_id THEN '2024-02-15'
+            WHEN id = coach12_id THEN '2022-06-01'
+            WHEN id = coach13_id THEN '2024-04-01'
+            WHEN id = coach14_id THEN '2023-11-01'
+            WHEN id = coach15_id THEN '2021-01-01'
+        END
+    WHERE id = ANY(coach_ids)
+    AND base_hourly_rate IS NULL; -- Only update if no base rate exists
+
+    RAISE NOTICE 'Updated % coaches with base rates', array_length(coach_ids, 1);
+
+    -- Continue only if we have at least some coaches
+    IF array_length(coach_ids, 1) < 3 THEN
+        RAISE NOTICE 'Need at least 3 coaches to create seed data. Current: %', array_length(coach_ids, 1);
+        RETURN;
+    END IF;
 
     -- ============================================================================
     -- COURSES (10 courses including competition courses)
     -- ============================================================================
-    
-    DECLARE
-        course1_id UUID;
-        course2_id UUID;
-        course3_id UUID;
-        course4_id UUID;
-        course5_id UUID;
-        course6_id UUID;
-        course7_id UUID;
-        course8_id UUID;
-        course9_id UUID;
-        course10_id UUID;
-    BEGIN
         INSERT INTO courses (name, description, status, hourly_rate, created_by)
         VALUES 
             ('Web Development Fundamentals', 'Learn HTML, CSS, and JavaScript basics', 'active', 50.00, admin_id),
@@ -296,6 +355,6 @@ BEGIN
         AND RANDOM() > 0.3; -- 70% attendance rate
 
         RAISE NOTICE 'Seed data created successfully!';
-        RAISE NOTICE 'Created: 15 coaches, 10 courses, 100+ sessions, and attendance records';
-    END;
+        RAISE NOTICE 'Created: 10 courses, 100+ sessions, and attendance records';
+        RAISE NOTICE 'Updated existing coaches with base rates';
 END $$;

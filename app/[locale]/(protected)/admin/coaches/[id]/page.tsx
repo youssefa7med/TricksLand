@@ -84,9 +84,9 @@ export default function AdminCoachProfilePage() {
             // Set form values
             if (coachData) {
                 setRateForm({
-                    base_hourly_rate: coachData.base_hourly_rate || '',
-                    rate_effective_from: coachData.rate_effective_from || '',
-                    next_rate_increase_date: coachData.next_rate_increase_date || '',
+                    base_hourly_rate: (coachData as any).base_hourly_rate || '',
+                    rate_effective_from: (coachData as any).rate_effective_from || '',
+                    next_rate_increase_date: (coachData as any).next_rate_increase_date || '',
                 });
             }
         } catch (error: any) {
@@ -122,10 +122,10 @@ export default function AdminCoachProfilePage() {
     };
 
     const calculateCurrentRate = () => {
-        if (!coach?.base_hourly_rate || !coach?.rate_effective_from) return null;
+        if (!coach || !(coach as any).base_hourly_rate || !(coach as any).rate_effective_from) return null;
         
-        const baseRate = Number(coach.base_hourly_rate);
-        const effectiveDate = new Date(coach.rate_effective_from);
+        const baseRate = Number((coach as any).base_hourly_rate);
+        const effectiveDate = new Date((coach as any).rate_effective_from);
         const today = new Date();
         const yearsPassed = Math.floor((today.getTime() - effectiveDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
         
@@ -204,24 +204,24 @@ export default function AdminCoachProfilePage() {
                     <div className="flex justify-between items-start mb-4">
                         <div>
                             <h2 className="text-xl font-semibold text-white mb-2">Base Hourly Rate</h2>
-                            {coach.base_hourly_rate ? (
+                            {(coach as any).base_hourly_rate ? (
                                 <div>
                                     <p className="text-white/80">
-                                        Base Rate: <span className="font-bold text-white">{formatCurrency(coach.base_hourly_rate)}</span>
+                                        Base Rate: <span className="font-bold text-white">{formatCurrency((coach as any).base_hourly_rate)}</span>
                                     </p>
-                                    {coach.rate_effective_from && (
+                                    {(coach as any).rate_effective_from && (
                                         <p className="text-white/60 text-sm mt-1">
-                                            Effective from: {formatDate(coach.rate_effective_from)}
+                                            Effective from: {formatDate((coach as any).rate_effective_from)}
                                         </p>
                                     )}
-                                    {currentRate && currentRate !== Number(coach.base_hourly_rate) && (
+                                    {currentRate && currentRate !== Number((coach as any).base_hourly_rate) && (
                                         <p className="text-green-400 text-sm mt-1">
                                             Current Rate (with increases): {formatCurrency(currentRate)}
                                         </p>
                                     )}
-                                    {coach.next_rate_increase_date && (
+                                    {(coach as any).next_rate_increase_date && (
                                         <p className="text-yellow-400 text-sm mt-1">
-                                            Next increase: {formatDate(coach.next_rate_increase_date)}
+                                            Next increase: {formatDate((coach as any).next_rate_increase_date)}
                                         </p>
                                     )}
                                 </div>
