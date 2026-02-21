@@ -64,7 +64,7 @@ export default function CoachNewSessionPage() {
             return;
         }
         const fetchRate = async () => {
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('hourly_rates')
                 .select('rate')
                 .eq('course_id', form.course_id)
@@ -72,8 +72,12 @@ export default function CoachNewSessionPage() {
                 .lte('effective_from', form.session_date)
                 .order('effective_from', { ascending: false })
                 .limit(1)
-                .single();
-            setRatePreview(data?.rate ?? null);
+                .maybeSingle();
+            if (error || !data || (data as any).rate === null || (data as any).rate === undefined) {
+                setRatePreview(null);
+            } else {
+                setRatePreview(Number((data as any).rate));
+            }
         };
         fetchRate();
     }, [form.course_id, form.session_date, userId]);
