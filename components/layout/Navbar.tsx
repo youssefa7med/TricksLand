@@ -72,11 +72,10 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`text-sm transition-colors relative whitespace-nowrap ${
-                                    isActive(item.href)
-                                        ? 'text-white font-semibold'
-                                        : 'text-white/70 hover:text-white'
-                                }`}
+                                className={`text-sm transition-colors relative whitespace-nowrap ${isActive(item.href)
+                                        ? 'text-primary font-semibold'
+                                        : 'text-gray-600 hover:text-primary'
+                                    }`}
                             >
                                 {item.name}
                                 {isActive(item.href) && (
@@ -90,16 +89,16 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                     <div className="flex items-center gap-2">
                         {/* Desktop: role badge + settings + logout */}
                         <div className="hidden md:flex items-center gap-2">
-                            <span className="text-white/40 text-xs capitalize px-1">{role}</span>
+                            <span className="text-gray-400 text-xs capitalize px-1">{role}</span>
                             <Link
                                 href={`/${locale}/settings`}
-                                className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-white transition-colors text-sm"
+                                className="bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg text-primary transition-colors text-sm"
                             >
                                 {t('settings')}
                             </Link>
                             <button
                                 onClick={handleLogout}
-                                className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-white transition-colors text-sm"
+                                className="bg-secondary/10 hover:bg-secondary/20 px-3 py-1.5 rounded-lg text-secondary transition-colors text-sm"
                             >
                                 {tc('logout')}
                             </button>
@@ -108,7 +107,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                         {/* Mobile: hamburger button */}
                         <button
                             onClick={() => setIsOpen(!isOpen)}
-                            className="md:hidden bg-white/10 hover:bg-white/20 p-2 rounded-lg text-white transition-colors"
+                            className="md:hidden bg-primary/10 hover:bg-primary/20 p-2 rounded-lg text-primary transition-colors"
                             aria-label="Toggle menu"
                         >
                             {isOpen ? (
@@ -128,18 +127,17 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
 
                 {/* Mobile dropdown menu */}
                 {isOpen && (
-                    <div className="md:hidden border-t border-white/10 py-3 pb-4">
+                    <div className="md:hidden border-t border-primary/20 py-3 pb-4">
                         {/* Nav links */}
                         <div className="space-y-1 mb-3">
                             {navItems.map((item) => (
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                                        isActive(item.href)
-                                            ? 'bg-primary/20 text-white'
-                                            : 'text-white/70 hover:bg-white/10 hover:text-white'
-                                    }`}
+                                    className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-colors ${isActive(item.href)
+                                            ? 'bg-primary/20 text-primary'
+                                            : 'text-gray-600 hover:bg-primary/10 hover:text-primary'
+                                        }`}
                                 >
                                     {item.name}
                                     {isActive(item.href) && (
@@ -150,19 +148,19 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                         </div>
 
                         {/* Divider */}
-                        <div className="border-t border-white/10 pt-3 mt-1 space-y-1">
-                            <div className="px-4 py-1 text-white/30 text-xs uppercase tracking-wider">
+                        <div className="border-t border-primary/20 pt-3 mt-1 space-y-1">
+                            <div className="px-4 py-1 text-gray-400 text-xs uppercase tracking-wider">
                                 {role}
                             </div>
                             <Link
                                 href={`/${locale}/settings`}
-                                className="flex items-center px-4 py-3 rounded-xl text-sm text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+                                className="flex items-center px-4 py-3 rounded-xl text-sm text-gray-600 hover:bg-primary/10 hover:text-primary transition-colors"
                             >
                                 {t('settings')}
                             </Link>
                             <button
                                 onClick={handleLogout}
-                                className="w-full text-left flex items-center px-4 py-3 rounded-xl text-sm text-red-400/80 hover:bg-white/10 hover:text-red-300 transition-colors"
+                                className="w-full text-left flex items-center px-4 py-3 rounded-xl text-sm text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
                             >
                                 {tc('logout')}
                             </button>

@@ -20,7 +20,10 @@ const config: Config = {
                     light: "#EE9C4D",
                     dark: "#C85C0F",
                 },
-                background: "hsl(var(--background))",
+                background: {
+                    DEFAULT: "#F4E1C1",
+                    warm: "#F4E1C1",
+                },
                 foreground: "hsl(var(--foreground))",
                 card: {
                     DEFAULT: "hsl(var(--card))",
@@ -35,7 +38,7 @@ const config: Config = {
                     foreground: "hsl(var(--muted-foreground))",
                 },
                 accent: {
-                    DEFAULT: "hsl(var(--accent))",
+                    DEFAULT: "#E8C27D",
                     foreground: "hsl(var(--accent-foreground))",
                 },
                 destructive: {
