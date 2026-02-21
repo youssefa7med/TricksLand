@@ -122,7 +122,7 @@ export default function AdminEditSessionPage() {
             subtotal: subtotal,
         };
 
-        const { error } = await supabase.from('sessions').update(payload).eq('id', params.id as string);
+        const { error } = await (supabase as any).from('sessions').update(payload).eq('id', params.id as string);
         if (error) {
             toast.error(error.message);
         } else {
