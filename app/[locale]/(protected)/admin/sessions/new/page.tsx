@@ -79,16 +79,29 @@ export default function AdminNewSessionPage() {
             return;
         }
 
-        // Validate that a rate exists and is a valid number
-        if (!rateRow || (rateRow as any).rate === null || (rateRow as any).rate === undefined) {
-            toast.error('No hourly rate found for this course-coach combination. Please set a rate before logging sessions.');
-            setLoading(false);
-            return;
+        let appliedRate: number | null = null;
+
+        // First, try to get rate from hourly_rates table (coach-specific rate)
+        if (rateRow && (rateRow as any).rate !== null && (rateRow as any).rate !== undefined) {
+            appliedRate = Number((rateRow as any).rate);
         }
 
-        const appliedRate = Number((rateRow as any).rate);
-        if (isNaN(appliedRate) || appliedRate <= 0) {
-            toast.error('Invalid rate value found. Please contact admin to verify the hourly rate.');
+        // Fallback: If no coach-specific rate found, check courses.hourly_rate (default rate)
+        if (!appliedRate || isNaN(appliedRate) || appliedRate <= 0) {
+            const { data: courseData, error: courseError } = await supabase
+                .from('courses')
+                .select('hourly_rate')
+                .eq('id', form.course_id)
+                .maybeSingle();
+
+            if (!courseError && courseData && (courseData as any).hourly_rate !== null && (courseData as any).hourly_rate !== undefined) {
+                appliedRate = Number((courseData as any).hourly_rate);
+            }
+        }
+
+        // Validate that a rate exists and is a valid number
+        if (!appliedRate || isNaN(appliedRate) || appliedRate <= 0) {
+            toast.error('No hourly rate found for this course-coach combination. Please set a rate in the course settings or assign a coach-specific rate.');
             setLoading(false);
             return;
         }
