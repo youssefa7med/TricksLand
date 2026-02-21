@@ -223,6 +223,12 @@ export default function AdminCoachesPage() {
                                                         />
                                                     ) : (
                                                         <div className="flex items-center gap-2 flex-wrap">
+                                                            <Link
+                                                                href={`/${locale}/admin/coaches/${coach.id}`}
+                                                                className="text-primary hover:text-white font-medium"
+                                                            >
+                                                                {coach.full_name}
+                                                            </Link>
                                                             <span className="text-white font-medium">{coach.full_name}</span>
                                                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                                                 isSelfRegistered

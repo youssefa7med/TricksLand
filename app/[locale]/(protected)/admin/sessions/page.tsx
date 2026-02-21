@@ -28,9 +28,11 @@ export default function AdminSessionsPage() {
             .select(`
                 id, session_date, start_time, end_time, session_type,
                 computed_hours, applied_rate, subtotal, notes,
+                attendance_required, attendance_marked_by_admin,
                 courses (id, name),
                 paid_coach:profiles!sessions_paid_coach_id_fkey (id, full_name),
-                original_coach:profiles!sessions_originally_scheduled_coach_id_fkey (full_name)
+                original_coach:profiles!sessions_originally_scheduled_coach_id_fkey (full_name),
+                coach_attendance (id, status, attendance_timestamp)
             `)
             .order('session_date', { ascending: false })
             .order('start_time', { ascending: false });
@@ -71,6 +73,54 @@ export default function AdminSessionsPage() {
         const { error } = await supabase.from('sessions').delete().eq('id', id);
         if (error) toast.error(error.message);
         else { toast.success('Session deleted'); fetchData(); }
+    };
+
+    const handleMarkAttendance = async (sessionId: string, coachId: string) => {
+        if (!confirm('Mark this session as attended by admin?')) return;
+        
+        // Check if attendance already exists
+        const { data: existing } = await supabase
+            .from('coach_attendance')
+            .select('id')
+            .eq('session_id', sessionId)
+            .eq('coach_id', coachId)
+            .maybeSingle();
+
+        if (existing) {
+            toast.error('Attendance already marked for this session');
+            return;
+        }
+
+        // Create attendance record (admin override - no GPS required)
+        const { error: attError } = await (supabase as any)
+            .from('coach_attendance')
+            .insert({
+                coach_id: coachId,
+                session_id: sessionId,
+                latitude: 29.073694, // Academy location
+                longitude: 31.112250,
+                distance_from_academy: 0,
+                status: 'present',
+                attendance_timestamp: new Date().toISOString(),
+            });
+
+        if (attError) {
+            toast.error(`Failed to mark attendance: ${attError.message}`);
+            return;
+        }
+
+        // Update session to mark as admin-marked
+        const { error: sessionError } = await (supabase as any)
+            .from('sessions')
+            .update({ attendance_marked_by_admin: true })
+            .eq('id', sessionId);
+
+        if (sessionError) {
+            toast.error(`Failed to update session: ${sessionError.message}`);
+        } else {
+            toast.success('Attendance marked successfully');
+            fetchData();
+        }
     };
 
     const currentMonth = new Date().toISOString().substring(0, 7);
@@ -153,6 +203,7 @@ export default function AdminSessionsPage() {
                                         <th className="text-left py-3 px-3 text-white/70">Hrs</th>
                                         <th className="text-left py-3 px-3 text-white/70">Rate</th>
                                         <th className="text-right py-3 px-3 text-white/70">Amount</th>
+                                        <th className="text-left py-3 px-3 text-white/70">Attendance</th>
                                         <th className="text-right py-3 px-3 text-white/70">Actions</th>
                                     </tr>
                                 </thead>
@@ -178,6 +229,24 @@ export default function AdminSessionsPage() {
                                             <td className="py-3 px-3 text-white text-sm">{s.computed_hours}h</td>
                                             <td className="py-3 px-3 text-white text-sm">{formatCurrency(s.applied_rate)}</td>
                                             <td className="py-3 px-3 text-white text-right font-semibold">{formatCurrency(s.subtotal)}</td>
+                                            <td className="py-3 px-3">
+                                                {s.attendance_required ? (
+                                                    (s.coach_attendance && Array.isArray(s.coach_attendance) && s.coach_attendance.length > 0) || s.attendance_marked_by_admin ? (
+                                                        <span className="text-xs px-2 py-1 rounded bg-green-500/20 text-green-300">
+                                                            {s.attendance_marked_by_admin ? '✓ Admin' : '✓ Marked'}
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleMarkAttendance(s.id, (s.paid_coach as any)?.id)}
+                                                            className="text-xs px-2 py-1 rounded bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30 transition-colors"
+                                                        >
+                                                            Mark Attendance
+                                                        </button>
+                                                    )
+                                                ) : (
+                                                    <span className="text-xs px-2 py-1 rounded bg-gray-500/20 text-gray-300">Not Required</span>
+                                                )}
+                                            </td>
                                             <td className="py-3 px-3 text-right">
                                                 <div className="flex justify-end gap-3">
                                                     <Link

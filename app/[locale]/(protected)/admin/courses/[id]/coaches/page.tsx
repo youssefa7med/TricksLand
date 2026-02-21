@@ -35,16 +35,31 @@ export default function AdminCourseCoachesPage() {
     const [rateEffectiveFrom, setRateEffectiveFrom] = useState(getDefaultEffectiveFrom());
     const [addingRate, setAddingRate] = useState(false);
 
+    const [coachBaseRates, setCoachBaseRates] = useState<Record<string, any>>({});
+    const [useBaseRate, setUseBaseRate] = useState(false);
+
     const fetchData = async () => {
         const [{ data: courseData }, { data: assignedData }, { data: allCoachData }] = await Promise.all([
             supabase.from('courses').select('id, name').eq('id', courseId).single(),
-            supabase.from('course_coaches').select('coach_id, profiles!course_coaches_coach_id_fkey(id, full_name, email)').eq('course_id', courseId),
-            supabase.from('profiles').select('id, full_name, email').eq('role', 'coach').order('full_name'),
+            supabase.from('course_coaches').select('coach_id, profiles!course_coaches_coach_id_fkey(id, full_name, email, base_hourly_rate, rate_effective_from)').eq('course_id', courseId),
+            supabase.from('profiles').select('id, full_name, email, base_hourly_rate, rate_effective_from').eq('role', 'coach').order('full_name'),
         ]);
 
         setCourse(courseData);
         setAssignedCoaches(assignedData || []);
         setAllCoaches(allCoachData || []);
+
+        // Store base rates for all coaches
+        const baseRatesMap: Record<string, any> = {};
+        (allCoachData || []).forEach((coach: any) => {
+            if (coach.base_hourly_rate) {
+                baseRatesMap[coach.id] = {
+                    base_hourly_rate: coach.base_hourly_rate,
+                    rate_effective_from: coach.rate_effective_from,
+                };
+            }
+        });
+        setCoachBaseRates(baseRatesMap);
 
         // Fetch rates for each assigned coach
         if (assignedData && assignedData.length > 0) {
@@ -86,8 +101,37 @@ export default function AdminCourseCoachesPage() {
             assigned_by: user.id,
         } as any);
 
-        if (error) toast.error(error.message);
-        else { toast.success('Coach assigned'); setAssignCoachId(''); fetchData(); }
+        if (error) {
+            toast.error(error.message);
+            setAssigning(false);
+            return;
+        }
+
+        // If useBaseRate is checked and coach has a base rate, set it automatically
+        if (useBaseRate && coachBaseRates[assignCoachId]) {
+            const baseRate = coachBaseRates[assignCoachId];
+            const effectiveFrom = baseRate.rate_effective_from || getDefaultEffectiveFrom();
+            
+            const { error: rateError } = await supabase.from('hourly_rates').insert({
+                course_id: courseId,
+                coach_id: assignCoachId,
+                rate: baseRate.base_hourly_rate,
+                effective_from: effectiveFrom,
+                created_by: user.id,
+            } as any);
+
+            if (rateError) {
+                toast.warning('Coach assigned but rate setting failed: ' + rateError.message);
+            } else {
+                toast.success('Coach assigned with base rate');
+            }
+        } else {
+            toast.success('Coach assigned');
+        }
+
+        setAssignCoachId('');
+        setUseBaseRate(false);
+        fetchData();
         setAssigning(false);
     };
 
@@ -140,14 +184,44 @@ export default function AdminCourseCoachesPage() {
                 {unassignedCoaches.length > 0 && (
                     <GlassCard className="mb-6">
                         <h2 className="text-xl font-semibold text-white mb-4">Assign New Coach</h2>
-                        <form onSubmit={handleAssign} className="flex gap-4">
-                            <select value={assignCoachId} onChange={(e) => setAssignCoachId(e.target.value)} className={`flex-1 ${selectClass}`}>
-                                <option value="" className="bg-gray-900">Select coach to assign</option>
-                                {unassignedCoaches.map((c) => <option key={c.id} value={c.id} className="bg-gray-900">{c.full_name}</option>)}
-                            </select>
-                            <button type="submit" disabled={assigning} className="btn-glossy disabled:opacity-50">
-                                {assigning ? 'Assigning...' : 'Assign Coach'}
-                            </button>
+                        <form onSubmit={handleAssign} className="space-y-4">
+                            <div className="flex gap-4">
+                                <select 
+                                    value={assignCoachId} 
+                                    onChange={(e) => {
+                                        setAssignCoachId(e.target.value);
+                                        setUseBaseRate(false);
+                                    }} 
+                                    className={`flex-1 ${selectClass}`}
+                                >
+                                    <option value="" className="bg-gray-900">Select coach to assign</option>
+                                    {unassignedCoaches.map((c) => (
+                                        <option key={c.id} value={c.id} className="bg-gray-900">
+                                            {c.full_name} {coachBaseRates[c.id] ? `(${formatCurrency(coachBaseRates[c.id].base_hourly_rate)}/hr)` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button type="submit" disabled={assigning} className="btn-glossy disabled:opacity-50">
+                                    {assigning ? 'Assigning...' : 'Assign Coach'}
+                                </button>
+                            </div>
+                            {assignCoachId && coachBaseRates[assignCoachId] && (
+                                <div className="flex items-center gap-3 bg-white/5 rounded-lg p-3">
+                                    <input
+                                        type="checkbox"
+                                        id="useBaseRate"
+                                        checked={useBaseRate}
+                                        onChange={(e) => setUseBaseRate(e.target.checked)}
+                                        className="w-4 h-4 rounded"
+                                    />
+                                    <label htmlFor="useBaseRate" className="text-white/80 text-sm cursor-pointer flex-1">
+                                        Use coach's base rate ({formatCurrency(coachBaseRates[assignCoachId].base_hourly_rate)}/hr) for this course
+                                    </label>
+                                    <p className="text-white/40 text-xs">
+                                        You can override this rate later in the rate settings below
+                                    </p>
+                                </div>
+                            )}
                         </form>
                     </GlassCard>
                 )}
@@ -187,12 +261,21 @@ export default function AdminCourseCoachesPage() {
                                         <div>
                                             <h3 className="text-xl font-semibold text-white">{(a.profiles as any)?.full_name}</h3>
                                             <p className="text-white/50 text-sm">{(a.profiles as any)?.email}</p>
+                                            {(a.profiles as any)?.base_hourly_rate && (
+                                                <p className="text-white/40 text-xs mt-1">
+                                                    Base Rate: {formatCurrency((a.profiles as any).base_hourly_rate)}/hr
+                                                    {(a.profiles as any).rate_effective_from && ` (from ${(a.profiles as any).rate_effective_from})`}
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="flex items-center gap-4">
                                             {currentRate && (
                                                 <div className="text-right">
-                                                    <div className="text-white/50 text-xs">Current Rate</div>
+                                                    <div className="text-white/50 text-xs">Course Rate</div>
                                                     <div className="text-primary font-bold text-lg">{formatCurrency(currentRate.rate)}/hr</div>
+                                                    {(a.profiles as any)?.base_hourly_rate && Number(currentRate.rate) !== Number((a.profiles as any).base_hourly_rate) && (
+                                                        <div className="text-yellow-400 text-xs">(Overridden)</div>
+                                                    )}
                                                 </div>
                                             )}
                                             <button
