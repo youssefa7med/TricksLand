@@ -11,15 +11,17 @@ const config: Config = {
         extend: {
             colors: {
                 primary: {
-                    DEFAULT: "#2B8A8A",
-                    light: "#3BA4A4",
-                    dark: "#1F6262",
+                    DEFAULT: "#2F9E9A",
+                    light: "#4DB3AF",
+                    dark: "#1F7A77",
                 },
                 secondary: {
-                    DEFAULT: "#E8944A",
-                    light: "#F0A860",
-                    dark: "#D17C2F",
+                    DEFAULT: "#E67E22",
+                    light: "#EE9C4D",
+                    dark: "#C85C0F",
                 },
+                background: "#F4E1C1",
+                accent: "#E8C27D",
                 background: "hsl(var(--background))",
                 foreground: "hsl(var(--foreground))",
                 card: {

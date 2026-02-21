@@ -11,22 +11,28 @@
     --popover-foreground: 240 10% 3.9%;
 
     /* Primary Colors - Teal */
-    --primary: 180 52% 35%;
-    /* #2B8A8A */
+    --primary: 176 55% 48%;
+    /* #2F9E9A */
     --primary-foreground: 0 0% 98%;
-    --primary-light: 180 55% 48%;
-    /* #3BA4A4 approx */
-    --primary-dark: 180 48% 25%;
-    /* #1F6262 approx */
+    --primary-light: 176 55% 60%;
+    /* #4DB3AF approx */
+    --primary-dark: 176 55% 35%;
+    /* #1F7A77 approx */
 
     /* Secondary Colors - Orange */
-    --secondary: 21 80% 60%;
-    /* #E8944A */
+    --secondary: 30 83% 55%;
+    /* #E67E22 */
     --secondary-foreground: 0 0% 98%;
-    --secondary-light: 21 82% 68%;
-    /* #F0A860 approx */
-    --secondary-dark: 21 75% 52%;
-    /* #D17C2F approx */
+    --secondary-light: 30 83% 68%;
+    /* #EE9C4D approx */
+    --secondary-dark: 30 83% 40%;
+    /* #C85C0F approx */
+
+    /* Accent & Background */
+    --accent-color: 44 77% 67%;
+    /* #E8C27D */
+    --bg-warm: 33 79% 91%;
+    /* #F4E1C1 */
 
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
@@ -36,7 +42,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 180 52% 35%;
+    --ring: 176 55% 48%;
     --radius: 0.5rem;
   }
 
@@ -48,15 +54,15 @@
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 180 52% 35%;
+    --primary: 176 55% 48%;
     --primary-foreground: 0 0% 98%;
-    --primary-light: 180 55% 48%;
-    --primary-dark: 180 48% 25%;
+    --primary-light: 176 55% 60%;
+    --primary-dark: 176 55% 35%;
 
-    --secondary: 21 80% 60%;
+    --secondary: 30 83% 55%;
     --secondary-foreground: 0 0% 98%;
-    --secondary-light: 21 82% 68%;
-    --secondary-dark: 21 75% 52%;
+    --secondary-light: 30 83% 68%;
+    --secondary-dark: 30 83% 40%;
 
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
@@ -66,7 +72,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 180 52% 35%;
+    --ring: 176 55% 48%;
   }
 }
 
