@@ -90,13 +90,13 @@ export default function AdminEditSessionPage() {
         }
 
         // Validate that a rate exists and is a valid number
-        if (!rateRow || rateRow.rate === null || rateRow.rate === undefined) {
+        if (!rateRow || (rateRow as any).rate === null || (rateRow as any).rate === undefined) {
             toast.error('No hourly rate found for this course-coach combination. Please set a rate before updating sessions.');
             setSaving(false);
             return;
         }
 
-        const appliedRate = Number(rateRow.rate);
+        const appliedRate = Number((rateRow as any).rate);
         if (isNaN(appliedRate) || appliedRate <= 0) {
             toast.error('Invalid rate value found. Please verify the hourly rate.');
             setSaving(false);
