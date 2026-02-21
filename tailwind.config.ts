@@ -20,8 +20,6 @@ const config: Config = {
                     light: "#EE9C4D",
                     dark: "#C85C0F",
                 },
-                background: "#F4E1C1",
-                accent: "#E8C27D",
                 background: "hsl(var(--background))",
                 foreground: "hsl(var(--foreground))",
                 card: {
