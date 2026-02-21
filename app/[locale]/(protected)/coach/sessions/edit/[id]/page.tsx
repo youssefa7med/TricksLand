@@ -8,6 +8,12 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
 
+function computeHours(start: string, end: string): number {
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    return Math.round(((eh * 60 + em) - (sh * 60 + sm)) / 60 * 100) / 100;
+}
+
 export default function CoachEditSessionPage() {
     const params = useParams();
     const router = useRouter();
@@ -16,13 +22,14 @@ export default function CoachEditSessionPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [courses, setCourses] = useState<any[]>([]);
+    const [userId, setUserId] = useState<string>('');
 
     const [form, setForm] = useState({
         course_id: '',
         session_date: '',
         start_time: '',
         end_time: '',
-        session_type: 'online_session' as 'online_session' | 'offline_meeting' | 'training' | 'consultation' | 'workshop' | 'tutoring' | 'other',
+        session_type: 'online_session' as string,
         notes: '',
     });
 
@@ -30,6 +37,7 @@ export default function CoachEditSessionPage() {
         const load = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
+            setUserId(user.id);
 
             const currentMonth = new Date().toISOString().substring(0, 7);
 
@@ -46,8 +54,6 @@ export default function CoachEditSessionPage() {
                 router.push(`/${locale}/coach/sessions`);
                 return;
             }
-
-            // Only allow editing current month sessions
             if (!session.session_date.startsWith(currentMonth)) {
                 toast.error('Only current month sessions can be edited');
                 router.push(`/${locale}/coach/sessions`);
@@ -70,10 +76,44 @@ export default function CoachEditSessionPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (form.end_time <= form.start_time) {
-            toast.error('End time must be after start time. Cross-midnight sessions are not allowed.');
+            toast.error('End time must be after start time.');
             return;
         }
         setSaving(true);
+
+        // Fetch the applicable rate from hourly_rates
+        const { data: rateRow, error: rateError } = await supabase
+            .from('hourly_rates')
+            .select('rate')
+            .eq('course_id', form.course_id)
+            .eq('coach_id', userId)
+            .lte('effective_from', form.session_date)
+            .order('effective_from', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (rateError) {
+            toast.error(`Failed to fetch rate: ${rateError.message}`);
+            setSaving(false);
+            return;
+        }
+
+        // Validate that a rate exists and is a valid number
+        if (!rateRow || rateRow.rate === null || rateRow.rate === undefined) {
+            toast.error('No hourly rate found for this course. Please contact admin to set a rate before updating sessions.');
+            setSaving(false);
+            return;
+        }
+
+        const appliedRate = Number(rateRow.rate);
+        if (isNaN(appliedRate) || appliedRate <= 0) {
+            toast.error('Invalid rate value found. Please contact admin to verify the hourly rate.');
+            setSaving(false);
+            return;
+        }
+
+        const computedHours = computeHours(form.start_time, form.end_time);
+        const subtotal = Math.round(computedHours * appliedRate * 100) / 100;
 
         const { error } = await (supabase as any).from('sessions').update({
             course_id: form.course_id,
@@ -82,6 +122,9 @@ export default function CoachEditSessionPage() {
             end_time: form.end_time,
             session_type: form.session_type,
             notes: form.notes || null,
+            applied_rate: appliedRate,
+            computed_hours: computedHours,
+            subtotal: subtotal,
         }).eq('id', params.id as string);
 
         if (error) toast.error(error.message);
@@ -128,7 +171,7 @@ export default function CoachEditSessionPage() {
                         </div>
                         <div>
                             <label className={labelClass}>Activity Type *</label>
-                            <select value={form.session_type} onChange={(e) => setForm({ ...form, session_type: e.target.value as any })} className={selectClass}>
+                            <select value={form.session_type} onChange={(e) => setForm({ ...form, session_type: e.target.value })} className={selectClass}>
                                 <option value="online_session" className="bg-gray-900">Online Session</option>
                                 <option value="offline_meeting" className="bg-gray-900">Offline Meeting</option>
                                 <option value="training" className="bg-gray-900">Training</option>

@@ -40,6 +40,13 @@ export default function AdminNewSessionPage() {
         load();
     }, []);
 
+    // Helper: compute decimal hours from HH:MM strings
+    const computeHours = (start: string, end: string) => {
+        const [sh, sm] = start.split(':').map(Number);
+        const [eh, em] = end.split(':').map(Number);
+        return Math.round(((eh * 60 + em) - (sh * 60 + sm)) / 60 * 100) / 100;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!form.course_id || !form.paid_coach_id || !form.start_time || !form.end_time) {
@@ -55,6 +62,40 @@ export default function AdminNewSessionPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { setLoading(false); return; }
 
+        // Fetch the applicable rate from hourly_rates (most recent rate on or before session date)
+        const { data: rateRow, error: rateError } = await supabase
+            .from('hourly_rates')
+            .select('rate')
+            .eq('course_id', form.course_id)
+            .eq('coach_id', form.paid_coach_id)
+            .lte('effective_from', form.session_date)
+            .order('effective_from', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (rateError) {
+            toast.error(`Failed to fetch rate: ${rateError.message}`);
+            setLoading(false);
+            return;
+        }
+
+        // Validate that a rate exists and is a valid number
+        if (!rateRow || rateRow.rate === null || rateRow.rate === undefined) {
+            toast.error('No hourly rate found for this course-coach combination. Please set a rate before logging sessions.');
+            setLoading(false);
+            return;
+        }
+
+        const appliedRate = Number(rateRow.rate);
+        if (isNaN(appliedRate) || appliedRate <= 0) {
+            toast.error('Invalid rate value found. Please contact admin to verify the hourly rate.');
+            setLoading(false);
+            return;
+        }
+
+        const hours = computeHours(form.start_time, form.end_time);
+        const subtotal = Math.round(hours * appliedRate * 100) / 100;
+
         const payload: any = {
             course_id: form.course_id,
             paid_coach_id: form.paid_coach_id,
@@ -67,6 +108,9 @@ export default function AdminNewSessionPage() {
             originally_scheduled_coach_id: hasReplacement && form.originally_scheduled_coach_id
                 ? form.originally_scheduled_coach_id
                 : null,
+            applied_rate: appliedRate,
+            computed_hours: hours,
+            subtotal: subtotal,
         };
 
         const { error } = await supabase.from('sessions').insert(payload);
