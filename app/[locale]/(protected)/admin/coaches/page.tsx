@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useLocale } from 'next-intl';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { toast } from 'sonner';
 
@@ -14,6 +16,7 @@ interface Coach {
 }
 
 export default function AdminCoachesPage() {
+    const locale = useLocale();
     const [coaches, setCoaches] = useState<Coach[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
@@ -137,11 +140,10 @@ export default function AdminCoachesPage() {
                             <button
                                 key={key}
                                 onClick={() => setFilter(key)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                    filter === key
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === key
                                         ? 'bg-primary text-white'
                                         : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
-                                }`}
+                                    }`}
                             >
                                 {label}
                             </button>
@@ -229,12 +231,10 @@ export default function AdminCoachesPage() {
                                                             >
                                                                 {coach.full_name}
                                                             </Link>
-                                                            <span className="text-white font-medium">{coach.full_name}</span>
-                                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                                                isSelfRegistered
+                                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isSelfRegistered
                                                                     ? 'bg-green-500/20 text-green-400'
                                                                     : 'bg-blue-500/20 text-blue-400'
-                                                            }`}>
+                                                                }`}>
                                                                 {isSelfRegistered ? 'Self-registered' : 'Admin-created'}
                                                             </span>
                                                         </div>

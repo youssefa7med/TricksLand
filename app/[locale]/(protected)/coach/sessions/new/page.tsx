@@ -109,7 +109,7 @@ export default function CoachNewSessionPage() {
                 const { data: coachData, error: coachError } = await supabase
                     .from('profiles')
                     .select('base_hourly_rate, rate_effective_from')
-                    .eq('id', user.id)
+                    .eq('id', userId)
                     .maybeSingle();
                 
                 if (!coachError && coachData && (coachData as any).base_hourly_rate !== null && (coachData as any).base_hourly_rate !== undefined) {
