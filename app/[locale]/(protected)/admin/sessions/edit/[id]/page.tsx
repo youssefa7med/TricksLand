@@ -100,12 +100,22 @@ export default function AdminEditSessionPage() {
         if (!appliedRate || isNaN(appliedRate) || appliedRate <= 0) {
             const { data: courseData, error: courseError } = await supabase
                 .from('courses')
-                .select('hourly_rate')
+                .select('hourly_rate, name')
                 .eq('id', form.course_id)
                 .maybeSingle();
 
-            if (!courseError && courseData && (courseData as any).hourly_rate !== null && (courseData as any).hourly_rate !== undefined) {
-                appliedRate = Number((courseData as any).hourly_rate);
+            if (courseError) {
+                console.error('Error fetching course rate:', courseError);
+            }
+
+            // Special case: If course name contains "competition", use 75 EGP
+            if (courseData && (courseData as any).name) {
+                const courseName = String((courseData as any).name).toLowerCase();
+                if (courseName.includes('competition') || courseName.includes('competetion')) {
+                    appliedRate = 75;
+                } else if ((courseData as any).hourly_rate !== null && (courseData as any).hourly_rate !== undefined) {
+                    appliedRate = Number((courseData as any).hourly_rate);
+                }
             }
         }
 
@@ -210,7 +220,7 @@ export default function AdminEditSessionPage() {
                         <div>
                             <label className={labelClass}>Activity Type *</label>
                             <select value={form.session_type} onChange={(e) => setForm({ ...form, session_type: e.target.value as any })} className={selectClass}>
-                                <option value="online_session" className="bg-gray-900">Online Session</option>
+                                <option value="online_session" className="bg-gray-900">Session</option>
                                 <option value="offline_meeting" className="bg-gray-900">Offline Meeting</option>
                                 <option value="training" className="bg-gray-900">Training</option>
                                 <option value="consultation" className="bg-gray-900">Consultation</option>

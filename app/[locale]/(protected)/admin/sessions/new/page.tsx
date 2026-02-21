@@ -26,6 +26,7 @@ export default function AdminNewSessionPage() {
         end_time: '',
         session_type: 'online_session' as 'online_session' | 'offline_meeting',
         notes: '',
+        attendance_required: true,
     });
 
     useEffect(() => {
@@ -90,12 +91,47 @@ export default function AdminNewSessionPage() {
         if (!appliedRate || isNaN(appliedRate) || appliedRate <= 0) {
             const { data: courseData, error: courseError } = await supabase
                 .from('courses')
-                .select('hourly_rate')
+                .select('hourly_rate, name')
                 .eq('id', form.course_id)
                 .maybeSingle();
 
-            if (!courseError && courseData && (courseData as any).hourly_rate !== null && (courseData as any).hourly_rate !== undefined) {
-                appliedRate = Number((courseData as any).hourly_rate);
+            if (courseError) {
+                console.error('Error fetching course rate:', courseError);
+            }
+
+            // Special case: If course name contains "competition", use 75 EGP
+            if (courseData && (courseData as any).name) {
+                const courseName = String((courseData as any).name).toLowerCase();
+                if (courseName.includes('competition') || courseName.includes('competetion')) {
+                    appliedRate = 75;
+                } else if ((courseData as any).hourly_rate !== null && (courseData as any).hourly_rate !== undefined) {
+                    appliedRate = Number((courseData as any).hourly_rate);
+                }
+            }
+        }
+
+        // Final fallback: Check coach base rate (with 25% annual increase)
+        if (!appliedRate || isNaN(appliedRate) || appliedRate <= 0) {
+            const { data: coachData, error: coachError } = await supabase
+                .from('profiles')
+                .select('base_hourly_rate, rate_effective_from')
+                .eq('id', form.paid_coach_id)
+                .maybeSingle();
+
+            if (!coachError && coachData && (coachData as any).base_hourly_rate !== null && (coachData as any).base_hourly_rate !== undefined) {
+                const baseRate = Number((coachData as any).base_hourly_rate);
+                const effectiveFrom = (coachData as any).rate_effective_from || form.session_date;
+                
+                // Calculate years passed and apply 25% increase per year
+                const sessionDate = new Date(form.session_date);
+                const effectiveDate = new Date(effectiveFrom);
+                const yearsPassed = Math.floor((sessionDate.getTime() - effectiveDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
+                
+                appliedRate = baseRate;
+                for (let i = 0; i < yearsPassed; i++) {
+                    appliedRate *= 1.25;
+                }
+                appliedRate = Math.round(appliedRate * 100) / 100;
             }
         }
 
@@ -124,6 +160,7 @@ export default function AdminNewSessionPage() {
             applied_rate: appliedRate,
             computed_hours: hours,
             subtotal: subtotal,
+            attendance_required: form.attendance_required,
         };
 
         const { error } = await supabase.from('sessions').insert(payload);
@@ -214,7 +251,7 @@ export default function AdminNewSessionPage() {
                         <div>
                             <label className={labelClass}>Activity Type <span className="text-red-400">*</span></label>
                             <select value={form.session_type} onChange={(e) => setForm({ ...form, session_type: e.target.value as any })} className={selectClass}>
-                                <option value="online_session" className="bg-gray-900">Online Session</option>
+                                <option value="online_session" className="bg-gray-900">Session</option>
                                 <option value="offline_meeting" className="bg-gray-900">Offline Meeting</option>
                                 <option value="training" className="bg-gray-900">Training</option>
                                 <option value="consultation" className="bg-gray-900">Consultation</option>
@@ -227,6 +264,19 @@ export default function AdminNewSessionPage() {
                         <div>
                             <label className={labelClass}>Notes <span className="text-white/40">(optional)</span></label>
                             <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} placeholder="Any notes about this session..." className={`${inputClass} resize-none`} />
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                id="attendance_required"
+                                checked={form.attendance_required}
+                                onChange={(e) => setForm({ ...form, attendance_required: e.target.checked })}
+                                className="w-4 h-4 rounded"
+                            />
+                            <label htmlFor="attendance_required" className="text-white/80 text-sm cursor-pointer">
+                                Attendance marking required <span className="text-red-400">*</span>
+                            </label>
                         </div>
 
                         <div className="flex gap-3 pt-2">

@@ -35,6 +35,7 @@ export default function CoachNewSessionPage() {
         end_time: '',
         session_type: 'online_session' as string,
         notes: '',
+        attendance_required: true,
     });
 
     useEffect(() => {
@@ -85,13 +86,48 @@ export default function CoachNewSessionPage() {
             if (!rate || isNaN(rate) || rate <= 0) {
                 const { data: courseData, error: courseError } = await supabase
                     .from('courses')
-                    .select('hourly_rate')
+                    .select('hourly_rate, name')
                     .eq('id', form.course_id)
                     .maybeSingle();
                 
-                if (!courseError && courseData && (courseData as any).hourly_rate !== null && (courseData as any).hourly_rate !== undefined) {
+                if (courseError) {
+                    console.error('Error fetching course rate:', courseError);
+                }
+                
+            // Special case: If course name contains "competition", use 75 EGP
+            if (courseData && (courseData as any).name) {
+                const courseName = String((courseData as any).name).toLowerCase();
+                if (courseName.includes('competition') || courseName.includes('competetion')) {
+                    rate = 75;
+                } else if ((courseData as any).hourly_rate !== null && (courseData as any).hourly_rate !== undefined) {
                     rate = Number((courseData as any).hourly_rate);
                 }
+            }
+            
+            // Final fallback: Check coach base rate (with 25% annual increase)
+            if (!rate || isNaN(rate) || rate <= 0) {
+                const { data: coachData, error: coachError } = await supabase
+                    .from('profiles')
+                    .select('base_hourly_rate, rate_effective_from')
+                    .eq('id', user.id)
+                    .maybeSingle();
+                
+                if (!coachError && coachData && (coachData as any).base_hourly_rate !== null && (coachData as any).base_hourly_rate !== undefined) {
+                    const baseRate = Number((coachData as any).base_hourly_rate);
+                    const effectiveFrom = (coachData as any).rate_effective_from || form.session_date;
+                    
+                    // Calculate years passed and apply 25% increase per year
+                    const sessionDate = new Date(form.session_date);
+                    const effectiveDate = new Date(effectiveFrom);
+                    const yearsPassed = Math.floor((sessionDate.getTime() - effectiveDate.getTime()) / (1000 * 60 * 60 * 24 * 365));
+                    
+                    rate = baseRate;
+                    for (let i = 0; i < yearsPassed; i++) {
+                        rate *= 1.25;
+                    }
+                    rate = Math.round(rate * 100) / 100;
+                }
+            }
             }
             
             setRatePreview(rate && rate > 0 ? rate : null);
@@ -142,12 +178,22 @@ export default function CoachNewSessionPage() {
         if (!appliedRate || isNaN(appliedRate) || appliedRate <= 0) {
             const { data: courseData, error: courseError } = await supabase
                 .from('courses')
-                .select('hourly_rate')
+                .select('hourly_rate, name')
                 .eq('id', form.course_id)
                 .maybeSingle();
 
-            if (!courseError && courseData && (courseData as any).hourly_rate !== null && (courseData as any).hourly_rate !== undefined) {
-                appliedRate = Number((courseData as any).hourly_rate);
+            if (courseError) {
+                console.error('Error fetching course rate:', courseError);
+            }
+
+            // Special case: If course name contains "competition", use 75 EGP
+            if (courseData && (courseData as any).name) {
+                const courseName = String((courseData as any).name).toLowerCase();
+                if (courseName.includes('competition') || courseName.includes('competetion')) {
+                    appliedRate = 75;
+                } else if ((courseData as any).hourly_rate !== null && (courseData as any).hourly_rate !== undefined) {
+                    appliedRate = Number((courseData as any).hourly_rate);
+                }
             }
         }
 
@@ -175,6 +221,7 @@ export default function CoachNewSessionPage() {
             applied_rate: appliedRate,
             computed_hours: computedHours,
             subtotal: subtotal,
+            attendance_required: form.attendance_required,
         } as any);
 
         if (error) {
