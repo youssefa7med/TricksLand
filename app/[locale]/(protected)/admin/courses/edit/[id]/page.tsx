@@ -40,7 +40,13 @@ export default function AdminEditCoursePage() {
     // Rate form (open per coach)
     const [rateOpen, setRateOpen] = useState<string | null>(null);
     const [rateAmount, setRateAmount] = useState('');
-    const [rateDate, setRateDate] = useState(new Date().toISOString().split('T')[0]);
+    // Default to first day of current month so rates apply to all sessions this month
+    const getDefaultRateDate = () => {
+        const date = new Date();
+        date.setDate(1);
+        return date.toISOString().split('T')[0];
+    };
+    const [rateDate, setRateDate] = useState(getDefaultRateDate());
     const [addingRate, setAddingRate] = useState(false);
 
     const inputClass = "w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary";
@@ -296,7 +302,7 @@ export default function AdminEditCoursePage() {
                                             onClick={() => {
                                                 setRateOpen(isRateOpen ? null : a.coach_id);
                                                 setRateAmount('');
-                                                setRateDate(new Date().toISOString().split('T')[0]);
+                                                setRateDate(getDefaultRateDate());
                                             }}
                                             className="text-primary hover:text-white text-xs font-medium transition-colors mb-2"
                                         >

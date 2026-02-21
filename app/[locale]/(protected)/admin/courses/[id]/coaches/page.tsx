@@ -26,7 +26,13 @@ export default function AdminCourseCoachesPage() {
     // Rate form
     const [rateCoachId, setRateCoachId] = useState('');
     const [rateAmount, setRateAmount] = useState('');
-    const [rateEffectiveFrom, setRateEffectiveFrom] = useState(new Date().toISOString().split('T')[0]);
+    // Default to first day of current month so rates apply to all sessions this month
+    const getDefaultEffectiveFrom = () => {
+        const date = new Date();
+        date.setDate(1);
+        return date.toISOString().split('T')[0];
+    };
+    const [rateEffectiveFrom, setRateEffectiveFrom] = useState(getDefaultEffectiveFrom());
     const [addingRate, setAddingRate] = useState(false);
 
     const fetchData = async () => {
