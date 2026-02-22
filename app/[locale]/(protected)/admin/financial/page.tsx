@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency } from '@/lib/utils';
@@ -47,6 +47,15 @@ interface Expense {
     description: string | null;
 }
 
+interface PaymentTransaction {
+    id: string;
+    payment_record_id: string;
+    amount: number;
+    payment_method: string;
+    notes: string | null;
+    created_at: string;
+}
+
 const STATUS_BADGE: Record<string, string> = {
     paid: 'bg-green-500/20 text-green-400',
     partially_paid: 'bg-yellow-500/20 text-yellow-400',
@@ -64,6 +73,8 @@ export default function AdminFinancialPage() {
     const [payments, setPayments] = useState<StudentPayment[]>([]);
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [courseStudents, setCourseStudents] = useState<{ id: string; full_name: string }[]>([]);
+    const [transactions, setTransactions] = useState<Record<string, PaymentTransaction[]>>({});
+    const [expandedPayment, setExpandedPayment] = useState<string | null>(null);
     const [tab, setTab] = useState<'overview' | 'payments' | 'expenses'>('overview');
 
     const [loading, setLoading] = useState(true);
@@ -99,7 +110,6 @@ export default function AdminFinancialPage() {
         load();
     }, [loadSummaries]);
 
-    // Load payments + expenses + enrolled students when course changes
     const loadCourseData = useCallback(async (courseId: string) => {
         if (!courseId) return;
         const [{ data: paymentsData }, { data: expensesData }, { data: enrolledData }] = await Promise.all([
@@ -126,6 +136,26 @@ export default function AdminFinancialPage() {
             full_name: r.students?.full_name || 'Unknown',
         }));
         setCourseStudents(enrolled);
+
+        // Fetch transactions for all payment records
+        if (paymentsData && paymentsData.length > 0) {
+            const paymentIds = paymentsData.map((p: any) => p.id);
+            const { data: txData } = await (supabase as any)
+                .from('payment_transactions')
+                .select('id, payment_record_id, amount, payment_method, notes, created_at')
+                .in('payment_record_id', paymentIds)
+                .order('created_at', { ascending: false });
+            if (txData) {
+                const txMap: Record<string, PaymentTransaction[]> = {};
+                for (const tx of txData) {
+                    if (!txMap[tx.payment_record_id]) txMap[tx.payment_record_id] = [];
+                    txMap[tx.payment_record_id].push(tx);
+                }
+                setTransactions(txMap);
+            }
+        } else {
+            setTransactions({});
+        }
     }, [supabase]);
 
     useEffect(() => {
@@ -149,7 +179,7 @@ export default function AdminFinancialPage() {
 
         setSaving(false);
         if (error) { toast.error(error.message); return; }
-        toast.success('Payment record saved');
+        toast.success(t('paymentRecordSaved'));
         setShowPayForm(false);
         setPayForm({ studentId: '', courseFee: '', dueDate: '', notes: '' });
         await loadCourseData(selectedCourse);
@@ -189,7 +219,7 @@ export default function AdminFinancialPage() {
             }).eq('id', recordForm.paymentId);
         }
 
-        toast.success('Payment recorded');
+        toast.success(t('paymentRecorded'));
         setShowRecordForm(false);
         setRecordForm({ paymentId: '', amount: '', method: 'cash', notes: '' });
         await loadCourseData(selectedCourse);
@@ -212,7 +242,7 @@ export default function AdminFinancialPage() {
         });
         setSaving(false);
         if (error) { toast.error(error.message); return; }
-        toast.success('Expense added');
+        toast.success(t('expenseAdded'));
         setShowExpForm(false);
         setExpForm({ title: '', amount: '', date: new Date().toISOString().split('T')[0], category: 'other', description: '' });
         await loadCourseData(selectedCourse);
@@ -220,9 +250,31 @@ export default function AdminFinancialPage() {
     };
 
     const handleDeleteExpense = async (id: string) => {
-        if (!confirm('Delete this expense?')) return;
+        if (!confirm(t('deleteExpenseConfirm'))) return;
         await (supabase as any).from('course_expenses').delete().eq('id', id);
-        toast.success('Expense deleted');
+        toast.success(t('expenseDeleted'));
+        await loadCourseData(selectedCourse);
+        await loadSummaries();
+    };
+
+    const handleDeleteTransaction = async (tx: PaymentTransaction) => {
+        if (!confirm(t('deleteTransactionConfirm'))) return;
+        setSaving(true);
+        // Delete transaction
+        const { error } = await (supabase as any).from('payment_transactions').delete().eq('id', tx.id);
+        if (error) { setSaving(false); toast.error(error.message); return; }
+        // Update payment record: subtract the refunded amount
+        const payment = payments.find(p => p.id === tx.payment_record_id);
+        if (payment) {
+            const newAmount = Math.max(0, Number(payment.amount_paid) - Number(tx.amount));
+            const newStatus = newAmount <= 0 ? 'not_paid' : newAmount < Number(payment.course_fee) ? 'partially_paid' : 'paid';
+            await (supabase as any).from('student_payments').update({
+                amount_paid: newAmount,
+                payment_status: newStatus,
+            }).eq('id', tx.payment_record_id);
+        }
+        setSaving(false);
+        toast.success(t('transactionDeleted'));
         await loadCourseData(selectedCourse);
         await loadSummaries();
     };
@@ -349,13 +401,13 @@ export default function AdminFinancialPage() {
                             {/* Add payment record form */}
                             {showPayForm && (
                                 <form onSubmit={handleAddPaymentRecord} className="bg-white/5 rounded-xl p-4 space-y-3">
-                                    <h4 className="text-white text-sm font-semibold">New Payment Record</h4>
+                                    <h4 className="text-white text-sm font-semibold">{t('newPaymentRecord')}</h4>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className={labelClass}>Student</label>
+                                            <label className={labelClass}>{t('studentLabel')}</label>
                                             <select value={payForm.studentId} onChange={e => setPayForm(p => ({ ...p, studentId: e.target.value }))}
                                                 required className={inputClass}>
-                                                <option value="">Select student</option>
+                                                <option value="">{t('selectStudentPlaceholder')}</option>
                                                 {courseStudents
                                                     .filter(s => !payments.some(p => p.student_id === s.id))
                                                     .map(s => (
@@ -365,22 +417,22 @@ export default function AdminFinancialPage() {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className={labelClass}>Course Fee (EGP)</label>
+                                            <label className={labelClass}>{t('courseFeeLabel')}</label>
                                             <input type="number" min="1" step="0.01" required value={payForm.courseFee}
                                                 onChange={e => setPayForm(p => ({ ...p, courseFee: e.target.value }))}
                                                 className={inputClass} placeholder="0.00" />
                                         </div>
                                         <div>
-                                            <label className={labelClass}>Due Date</label>
+                                            <label className={labelClass}>{t('dueDateLabel')}</label>
                                             <input type="date" value={payForm.dueDate}
                                                 onChange={e => setPayForm(p => ({ ...p, dueDate: e.target.value }))}
                                                 className={inputClass} />
                                         </div>
                                         <div>
-                                            <label className={labelClass}>Notes</label>
+                                            <label className={labelClass}>{tc('notes')}</label>
                                             <input value={payForm.notes}
                                                 onChange={e => setPayForm(p => ({ ...p, notes: e.target.value }))}
-                                                className={inputClass} placeholder="Optional" />
+                                                className={inputClass} placeholder={t('optionalPlaceholder')} />
                                         </div>
                                     </div>
                                     <div className="flex gap-2 justify-end">
@@ -401,36 +453,36 @@ export default function AdminFinancialPage() {
                                 return (
                                 <form onSubmit={handleRecordPayment} className="bg-white/5 rounded-xl p-4 space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <h4 className="text-white text-sm font-semibold">Record Payment</h4>
-                                        <span className="text-xs text-yellow-400">Remaining: {formatCurrency(remaining)}</span>
+                                        <h4 className="text-white text-sm font-semibold">{t('recordPayment')}</h4>
+                                        <span className="text-xs text-yellow-400">{t('remainingLabel')}: {formatCurrency(remaining)}</span>
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className={labelClass}>Amount (EGP)</label>
+                                            <label className={labelClass}>{t('amountLabel')}</label>
                                             <input type="number" min="0.01" step="0.01" required
                                                 max={remaining}
                                                 value={recordForm.amount}
                                                 onChange={e => setRecordForm(p => ({ ...p, amount: e.target.value }))}
                                                 className={inputClass} placeholder="0.00" />
                                             {parseFloat(recordForm.amount) > remaining && (
-                                                <p className="text-red-400 text-xs mt-1">Cannot exceed remaining balance of {formatCurrency(remaining)}</p>
+                                                <p className="text-red-400 text-xs mt-1">{t('exceedsBalance', { amount: formatCurrency(remaining) })}</p>
                                             )}
                                         </div>
                                         <div>
-                                            <label className={labelClass}>Method</label>
+                                            <label className={labelClass}>{t('methodLabel')}</label>
                                             <select value={recordForm.method} onChange={e => setRecordForm(p => ({ ...p, method: e.target.value }))}
                                                 className={inputClass}>
-                                                <option value="cash">Cash</option>
-                                                <option value="bank_transfer">Bank Transfer</option>
-                                                <option value="card">Card</option>
-                                                <option value="check">Check</option>
+                                                <option value="cash">{t('methodCash')}</option>
+                                                <option value="bank_transfer">{t('methodBankTransfer')}</option>
+                                                <option value="card">{t('methodCard')}</option>
+                                                <option value="check">{t('methodCheck')}</option>
                                             </select>
                                         </div>
                                         <div className="col-span-2">
-                                            <label className={labelClass}>Notes</label>
+                                            <label className={labelClass}>{tc('notes')}</label>
                                             <input value={recordForm.notes}
                                                 onChange={e => setRecordForm(p => ({ ...p, notes: e.target.value }))}
-                                                className={inputClass} placeholder="Optional" />
+                                                className={inputClass} placeholder={t('optionalPlaceholder')} />
                                         </div>
                                     </div>
                                     <div className="flex gap-2 justify-end">
@@ -463,7 +515,8 @@ export default function AdminFinancialPage() {
                                         </thead>
                                         <tbody>
                                             {payments.map(p => (
-                                                <tr key={p.id} className="border-b border-white/5 hover:bg-white/5">
+                                                <React.Fragment key={p.id}>
+                                                <tr className="border-b border-white/5 hover:bg-white/5">
                                                     <td className="py-3 px-3 text-white font-medium">
                                                         {(p.students as any)?.full_name || '—'}
                                                     </td>
@@ -476,16 +529,63 @@ export default function AdminFinancialPage() {
                                                         </span>
                                                     </td>
                                                     <td className="py-3 px-3 text-center">
+                                                        <div className="flex flex-col gap-1 items-center">
                                                         {p.payment_status !== 'paid' && (
                                                             <button
                                                                 onClick={() => { setRecordForm(r => ({ ...r, paymentId: p.id })); setShowRecordForm(true); }}
                                                                 className="text-xs bg-primary/20 hover:bg-primary/40 text-primary px-2 py-1 rounded transition-colors"
                                                             >
-                                                                + Payment
+                                                                {t('addPaymentBtn')}
                                                             </button>
                                                         )}
+                                                        <button
+                                                            onClick={() => setExpandedPayment(expandedPayment === p.id ? null : p.id)}
+                                                            className="text-xs bg-white/10 hover:bg-white/20 text-white/70 px-2 py-1 rounded transition-colors"
+                                                        >
+                                                            {expandedPayment === p.id ? t('hideTransactions') : t('transactions')}
+                                                        </button>
+                                                    </div>
                                                     </td>
                                                 </tr>
+                                                {expandedPayment === p.id && (
+                                                    <tr>
+                                                        <td colSpan={6} className="px-6 py-3 bg-black/20">
+                                                            {(!transactions[p.id] || transactions[p.id].length === 0) ? (
+                                                                <p className="text-white/40 text-xs text-center py-2">{t('noTransactions')}</p>
+                                                            ) : (
+                                                                <table className="w-full text-xs">
+                                                                    <thead>
+                                                                        <tr className="text-white/40 border-b border-white/10">
+                                                                            <th className="text-left py-1 px-2">{t('transactionDateCol')}</th>
+                                                                            <th className="text-left py-1 px-2">{t('transactionMethodCol')}</th>
+                                                                            <th className="text-right py-1 px-2">{t('transactionAmountCol')}</th>
+                                                                            <th className="text-center py-1 px-2">{tc('actions')}</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {transactions[p.id].map(tx => (
+                                                                            <tr key={tx.id} className="border-b border-white/5">
+                                                                                <td className="py-1.5 px-2 text-white/70">{new Date(tx.created_at).toLocaleDateString()}</td>
+                                                                                <td className="py-1.5 px-2 text-white/70 capitalize">{tx.payment_method.replace('_', ' ')}</td>
+                                                                                <td className="py-1.5 px-2 text-right text-green-400 font-semibold">{formatCurrency(tx.amount)}</td>
+                                                                                <td className="py-1.5 px-2 text-center">
+                                                                                    <button
+                                                                                        onClick={() => handleDeleteTransaction(tx)}
+                                                                                        disabled={saving}
+                                                                                        className="text-xs bg-red-500/20 hover:bg-red-500/40 text-red-400 px-2 py-0.5 rounded transition-colors disabled:opacity-50"
+                                                                                    >
+                                                                                        {t('deleteTransactionBtn')}
+                                                                                    </button>
+                                                                                </td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                                </React.Fragment>
                                             ))}
                                         </tbody>
                                     </table>
@@ -507,43 +607,43 @@ export default function AdminFinancialPage() {
 
                             {showExpForm && (
                                 <form onSubmit={handleAddExpense} className="bg-white/5 rounded-xl p-4 space-y-3">
-                                    <h4 className="text-white text-sm font-semibold">New Expense</h4>
+                                    <h4 className="text-white text-sm font-semibold">{t('newExpense')}</h4>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label className={labelClass}>Title</label>
+                                            <label className={labelClass}>{t('titleLabel')}</label>
                                             <input required value={expForm.title}
                                                 onChange={e => setExpForm(p => ({ ...p, title: e.target.value }))}
-                                                className={inputClass} placeholder="e.g. Room rental" />
+                                                className={inputClass} placeholder={t('titlePlaceholder')} />
                                         </div>
                                         <div>
-                                            <label className={labelClass}>Amount (EGP)</label>
+                                            <label className={labelClass}>{t('amountLabel')}</label>
                                             <input type="number" min="0.01" step="0.01" required value={expForm.amount}
                                                 onChange={e => setExpForm(p => ({ ...p, amount: e.target.value }))}
                                                 className={inputClass} placeholder="0.00" />
                                         </div>
                                         <div>
-                                            <label className={labelClass}>Date</label>
+                                            <label className={labelClass}>{t('dateLabel')}</label>
                                             <input type="date" required value={expForm.date}
                                                 onChange={e => setExpForm(p => ({ ...p, date: e.target.value }))}
                                                 className={inputClass} />
                                         </div>
                                         <div>
-                                            <label className={labelClass}>Category</label>
+                                            <label className={labelClass}>{t('categoryLabel')}</label>
                                             <select value={expForm.category} onChange={e => setExpForm(p => ({ ...p, category: e.target.value }))}
                                                 className={inputClass}>
-                                                <option value="instructor">Instructor</option>
-                                                <option value="materials">Materials</option>
-                                                <option value="venue">Venue</option>
-                                                <option value="equipment">Equipment</option>
-                                                <option value="marketing">Marketing</option>
-                                                <option value="other">Other</option>
+                                                <option value="instructor">{t('catInstructor')}</option>
+                                                <option value="materials">{t('catMaterials')}</option>
+                                                <option value="venue">{t('catVenue')}</option>
+                                                <option value="equipment">{t('catEquipment')}</option>
+                                                <option value="marketing">{t('catMarketing')}</option>
+                                                <option value="other">{t('catOther')}</option>
                                             </select>
                                         </div>
                                         <div className="col-span-2">
-                                            <label className={labelClass}>Description</label>
+                                            <label className={labelClass}>{t('descriptionLabel')}</label>
                                             <input value={expForm.description}
                                                 onChange={e => setExpForm(p => ({ ...p, description: e.target.value }))}
-                                                className={inputClass} placeholder="Optional" />
+                                                className={inputClass} placeholder={t('optionalPlaceholder')} />
                                         </div>
                                     </div>
                                     <div className="flex gap-2 justify-end">
@@ -578,7 +678,7 @@ export default function AdminFinancialPage() {
                                         </div>
                                     ))}
                                     <div className="flex justify-end pt-2 border-t border-white/10">
-                                        <span className="text-white/60 text-sm">Total: <span className="text-red-400 font-semibold">{formatCurrency(expenses.reduce((a, e) => a + Number(e.amount), 0))}</span></span>
+                                        <span className="text-white/60 text-sm">{t('totalLabel')}: <span className="text-red-400 font-semibold">{formatCurrency(expenses.reduce((a, e) => a + Number(e.amount), 0))}</span></span>
                                     </div>
                                 </div>
                             )}
