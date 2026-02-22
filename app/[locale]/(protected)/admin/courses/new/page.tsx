@@ -171,67 +171,6 @@ export default function NewCoursePage() {
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-white/80 text-sm font-medium mb-2">
-                                Default Hourly Rate <span className="text-white/40">(optional, EGP/hr)</span>
-                            </label>
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0.01"
-                                    value={hourlyRate}
-                                    onChange={(e) => setHourlyRate(e.target.value)}
-                                    placeholder="e.g. 200"
-                                    className={`${inputClass} ${isCompetition ? 'opacity-70' : ''}`}
-                                    readOnly={isCompetition}
-                                />
-                            </div>
-                            {/* Competition checkbox */}
-                            <label className="flex items-center gap-2 mt-3 cursor-pointer select-none w-fit">
-                                <div
-                                    className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                                        isCompetition
-                                            ? 'bg-yellow-500 border-yellow-500'
-                                            : 'bg-white/10 border-white/30 hover:border-white/60'
-                                    }`}
-                                    onClick={() => handleCompetitionChange(!isCompetition)}
-                                >
-                                    {isCompetition && (
-                                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    )}
-                                </div>
-                                <input
-                                    type="checkbox"
-                                    checked={isCompetition}
-                                    onChange={(e) => handleCompetitionChange(e.target.checked)}
-                                    className="sr-only"
-                                />
-                                <span className="text-sm font-medium text-white/80">
-                                    Competition
-                                </span>
-                                {isCompetition && (
-                                    <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-                                        Rate locked at 75 EGP/hr
-                                    </span>
-                                )}
-                            </label>
-                        </div>
-
-                        <div>
-                            <label className="block text-white/80 text-sm font-medium mb-2">Status</label>
-                            <select
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value as 'active' | 'archived')}
-                                className={inputClass}
-                            >
-                                <option value="active" className="bg-gray-900">Active</option>
-                                <option value="archived" className="bg-gray-900">Archived</option>
-                            </select>
-                        </div>
-
                         {/* Coach assignment */}
                         <div>
                             <label className="block text-white/80 text-sm font-medium mb-2">
@@ -288,6 +227,52 @@ export default function NewCoursePage() {
                                     })}
                                 </div>
                             )}
+                        </div>
+
+                        {/* Hourly Rate + Competition */}
+                        <div>
+                            <label className="block text-white/80 text-sm font-medium mb-2">
+                                Default Hourly Rate <span className="text-white/40">(optional, EGP/hr)</span>
+                            </label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                value={hourlyRate}
+                                onChange={(e) => !isCompetition && setHourlyRate(e.target.value)}
+                                placeholder="e.g. 200"
+                                readOnly={isCompetition}
+                                className={`${inputClass} ${isCompetition ? 'opacity-60 cursor-not-allowed' : ''}`}
+                            />
+                            <div className="mt-3 flex items-center gap-3">
+                                <input
+                                    id="competition-checkbox"
+                                    type="checkbox"
+                                    checked={isCompetition}
+                                    onChange={(e) => handleCompetitionChange(e.target.checked)}
+                                    className="w-4 h-4 accent-yellow-500 cursor-pointer"
+                                />
+                                <label htmlFor="competition-checkbox" className="flex items-center gap-2 cursor-pointer select-none">
+                                    <span className="text-sm font-medium text-white/80">Competition</span>
+                                    {isCompetition && (
+                                        <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                                            Rate locked at 75 EGP/hr
+                                        </span>
+                                    )}
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-white/80 text-sm font-medium mb-2">Status</label>
+                            <select
+                                value={status}
+                                onChange={(e) => setStatus(e.target.value as 'active' | 'archived')}
+                                className={inputClass}
+                            >
+                                <option value="active" className="bg-gray-900">Active</option>
+                                <option value="archived" className="bg-gray-900">Archived</option>
+                            </select>
                         </div>
 
                         <div className="flex gap-3 pt-2">
