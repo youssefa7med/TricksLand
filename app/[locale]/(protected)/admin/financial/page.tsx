@@ -158,6 +158,15 @@ export default function AdminFinancialPage() {
 
     const handleRecordPayment = async (e: React.FormEvent) => {
         e.preventDefault();
+        const payment = payments.find(p => p.id === recordForm.paymentId);
+        const amount = parseFloat(recordForm.amount);
+
+        // Guard: cannot pay more than what is remaining
+        if (payment && amount > Number(payment.remaining_balance)) {
+            toast.error(`Amount exceeds remaining balance of ${formatCurrency(payment.remaining_balance)}`);
+            return;
+        }
+
         setSaving(true);
         const { data: { user } } = await supabase.auth.getUser();
         const { error } = await (supabase as any).from('payment_transactions').insert({
@@ -171,7 +180,6 @@ export default function AdminFinancialPage() {
         if (error) { toast.error(error.message); return; }
 
         // Update amount_paid directly
-        const payment = payments.find(p => p.id === recordForm.paymentId);
         if (payment) {
             const newAmount = payment.amount_paid + parseFloat(recordForm.amount);
             await (supabase as any).from('student_payments').update({
@@ -387,15 +395,26 @@ export default function AdminFinancialPage() {
                             )}
 
                             {/* Record payment form */}
-                            {showRecordForm && (
+                            {showRecordForm && (() => {
+                                const activePayment = payments.find(p => p.id === recordForm.paymentId);
+                                const remaining = activePayment ? Number(activePayment.remaining_balance) : 0;
+                                return (
                                 <form onSubmit={handleRecordPayment} className="bg-white/5 rounded-xl p-4 space-y-3">
-                                    <h4 className="text-white text-sm font-semibold">Record Payment</h4>
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-white text-sm font-semibold">Record Payment</h4>
+                                        <span className="text-xs text-yellow-400">Remaining: {formatCurrency(remaining)}</span>
+                                    </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <label className={labelClass}>Amount (EGP)</label>
-                                            <input type="number" min="1" step="0.01" required value={recordForm.amount}
+                                            <input type="number" min="0.01" step="0.01" required
+                                                max={remaining}
+                                                value={recordForm.amount}
                                                 onChange={e => setRecordForm(p => ({ ...p, amount: e.target.value }))}
                                                 className={inputClass} placeholder="0.00" />
+                                            {parseFloat(recordForm.amount) > remaining && (
+                                                <p className="text-red-400 text-xs mt-1">Cannot exceed remaining balance of {formatCurrency(remaining)}</p>
+                                            )}
                                         </div>
                                         <div>
                                             <label className={labelClass}>Method</label>
@@ -417,13 +436,14 @@ export default function AdminFinancialPage() {
                                     <div className="flex gap-2 justify-end">
                                         <button type="button" onClick={() => setShowRecordForm(false)}
                                             className="px-4 py-2 rounded-lg bg-white/10 text-white/70 text-sm">{tc('cancel')}</button>
-                                        <button type="submit" disabled={saving}
+                                        <button type="submit" disabled={saving || parseFloat(recordForm.amount || '0') > remaining}
                                             className="px-4 py-2 rounded-lg bg-primary text-white text-sm disabled:opacity-50">
                                             {saving ? tc('saving') : t('recordPayment')}
                                         </button>
                                     </div>
                                 </form>
-                            )}
+                                );
+                            })()}
 
                             {/* Payments table */}
                             {payments.length === 0 ? (
