@@ -34,13 +34,20 @@ export default function AdminReportsPage() {
 
     useEffect(() => {
         Promise.all([
-            supabase.from('courses').select('id, name').eq('status', 'active').order('name'),
+            supabase.from('courses').select('id, name').order('name'),
             supabase.from('profiles').select('id, full_name').eq('role', 'coach').order('full_name'),
         ]).then(([{ data: coursesData }, { data: coachesData }]) => {
             setCourses(coursesData || []);
             setCoaches(coachesData || []);
         });
     }, []);
+
+    // Helper: compute last day of a YYYY-MM month string
+    const getMonthRange = (ym: string) => {
+        const [y, m] = ym.split('-').map(Number);
+        const lastDay = new Date(y, m, 0).getDate();
+        return { start: `${ym}-01`, end: `${ym}-${String(lastDay).padStart(2, '0')}` };
+    };
 
     const generateReport = async () => {
         setLoading(true);
@@ -51,23 +58,32 @@ export default function AdminReportsPage() {
                     let q = (supabase as any).from('student_monthly_attendance').select('*').eq('month', month);
                     if (selectedCourse) q = q.eq('course_id', selectedCourse);
                     q = q.order('student_name');
-                    const { data } = await q;
+                    const { data, error } = await q;
+                    if (error) throw error;
                     setReportData(data || []);
                     break;
                 }
                 case 'course-attendance': {
                     let q = (supabase as any).from('student_monthly_attendance').select('*').eq('month', month);
                     if (selectedCourse) q = q.eq('course_id', selectedCourse);
-                    const { data } = await q;
+                    const { data, error } = await q;
+                    if (error) throw error;
                     // Aggregate by course
                     const courseMap: Record<string, any> = {};
                     (data || []).forEach((r: any) => {
                         if (!courseMap[r.course_id]) {
-                            courseMap[r.course_id] = { course_id: r.course_id, course_name: r.course_name, total_students: 0, total_sessions: 0, total_attended: 0, avg_rate: 0 };
+                            courseMap[r.course_id] = {
+                                course_id: r.course_id,
+                                course_name: r.course_name,
+                                total_students: 0,
+                                total_sessions: 0,
+                                total_attended: 0,
+                                avg_rate: 0,
+                            };
                         }
                         courseMap[r.course_id].total_students++;
-                        courseMap[r.course_id].total_sessions += r.total_sessions;
-                        courseMap[r.course_id].total_attended += r.sessions_attended;
+                        courseMap[r.course_id].total_sessions += Number(r.total_sessions || 0);
+                        courseMap[r.course_id].total_attended += Number(r.sessions_attended || 0);
                     });
                     const aggregated = Object.values(courseMap).map((c: any) => ({
                         ...c,
@@ -80,29 +96,33 @@ export default function AdminReportsPage() {
                     let q = (supabase as any).from('course_financial_summary').select('*');
                     if (selectedCourse) q = q.eq('course_id', selectedCourse);
                     q = q.order('course_name');
-                    const { data } = await q;
+                    const { data, error } = await q;
+                    if (error) throw error;
                     setReportData(data || []);
                     break;
                 }
                 case 'coach-hours': {
+                    const { start, end } = getMonthRange(month);
                     let q = supabase.from('sessions')
                         .select('session_date, courses(name), computed_hours, applied_rate, subtotal, paid_coach_id, profiles!sessions_paid_coach_id_fkey(full_name)')
-                        .gte('session_date', `${month}-01`)
-                        .lte('session_date', `${month}-31`);
+                        .gte('session_date', start)
+                        .lte('session_date', end);
                     if (selectedCoach) q = (q as any).eq('paid_coach_id', selectedCoach);
-                    const { data } = await (q as any).order('session_date');
+                    const { data, error } = await (q as any).order('session_date');
+                    if (error) throw error;
                     setReportData(data || []);
                     break;
                 }
                 case 'coach-payroll': {
-                    let q = supabase.from('coach_monthly_totals').select('*').eq('month', month);
-                    const { data } = await (q as any).order('coach_name');
+                    let q = (supabase as any).from('coach_monthly_totals').select('*').eq('month', month);
+                    const { data, error } = await q.order('coach_name');
+                    if (error) throw error;
                     setReportData(data || []);
                     break;
                 }
             }
-        } catch (err) {
-            toast.error('Failed to generate report');
+        } catch (err: any) {
+            toast.error(err?.message || 'Failed to generate report');
         }
         setLoading(false);
     };

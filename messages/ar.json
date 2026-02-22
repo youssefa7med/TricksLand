@@ -147,8 +147,17 @@
         "sessions": "الجلسات",
         "adjustments": "التعديلات",
         "coaches": "المدربون",
+        "students": "الطلاب",
+        "attendance": "حضور المدربين",
+        "myAttendance": "حضوري",
+        "studentAttendance": "حضور الطلاب",
+        "financial": "المالية",
+        "reports": "التقارير",
+        "scheduling": "الجدولة",
         "invoices": "الفواتير",
-        "settings": "الإعدادات"
+        "settings": "الإعدادات",
+        "switchToArabic": "ع",
+        "switchToEnglish": "EN"
     },
     "validation": {
         "required": "هذا الحقل مطلوب",

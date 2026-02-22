@@ -161,8 +161,16 @@
         "adjustments": "Adjustments",
         "coaches": "Coaches",
         "students": "Students",
+        "attendance": "Coach Attendance",
+        "myAttendance": "My Attendance",
+        "studentAttendance": "Student Attendance",
+        "financial": "Financial",
+        "reports": "Reports",
+        "scheduling": "Scheduling",
         "invoices": "Invoices",
-        "settings": "Settings"
+        "settings": "Settings",
+        "switchToArabic": "ع",
+        "switchToEnglish": "EN"
     },
     "validation": {
         "required": "This field is required",

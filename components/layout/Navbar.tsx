@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -23,34 +23,49 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
         router.push(`/${locale}/login`);
     };
 
+    // Language toggle: swap the locale segment in the current URL
+    const handleToggleLanguage = () => {
+        const targetLocale = locale === 'en' ? 'ar' : 'en';
+        const segments = pathname.split('/');
+        if (segments[1] === 'en' || segments[1] === 'ar') {
+            segments[1] = targetLocale;
+        } else {
+            segments.splice(1, 0, targetLocale);
+        }
+        router.push(segments.join('/'));
+    };
+
     const adminNav = [
-        { name: t('dashboard'), href: `/${locale}/admin/dashboard` },
-        { name: t('courses'), href: `/${locale}/admin/courses` },
-        { name: t('sessions'), href: `/${locale}/admin/sessions` },
-        { name: '� Students', href: `/${locale}/admin/students` },
-        { name: '📍 Coach Attendance', href: `/${locale}/admin/attendance` },
-        { name: '✏️ Student Attendance', href: `/${locale}/admin/student-attendance` },
-        { name: t('adjustments'), href: `/${locale}/admin/adjustments` },
-        { name: t('coaches'), href: `/${locale}/admin/coaches` },
-        { name: '💰 Financial', href: `/${locale}/admin/financial` },
-        { name: '📊 Reports', href: `/${locale}/admin/reports` },
-        { name: '📅 Scheduling', href: `/${locale}/admin/scheduling` },
-        { name: t('invoices'), href: `/${locale}/admin/invoices` },
+        { name: t('dashboard'),                  href: `/${locale}/admin/dashboard` },
+        { name: t('courses'),                    href: `/${locale}/admin/courses` },
+        { name: t('sessions'),                   href: `/${locale}/admin/sessions` },
+        { name: `${t('students')}`,              href: `/${locale}/admin/students` },
+        { name: `${t('attendance')}`,            href: `/${locale}/admin/attendance` },
+        { name: `${t('studentAttendance')}`,     href: `/${locale}/admin/student-attendance` },
+        { name: t('adjustments'),                href: `/${locale}/admin/adjustments` },
+        { name: t('coaches'),                    href: `/${locale}/admin/coaches` },
+        { name: `${t('financial')}`,             href: `/${locale}/admin/financial` },
+        { name: `${t('reports')}`,               href: `/${locale}/admin/reports` },
+        { name: `${t('scheduling')}`,            href: `/${locale}/admin/scheduling` },
+        { name: t('invoices'),                   href: `/${locale}/admin/invoices` },
     ];
 
     const coachNav = [
-        { name: t('dashboard'), href: `/${locale}/coach/dashboard` },
-        { name: t('sessions'), href: `/${locale}/coach/sessions` },
-        { name: '📍 My Attendance', href: `/${locale}/coach/attendance` },
-        { name: '✏️ Student Attendance', href: `/${locale}/coach/student-attendance` },
-        { name: t('myCourses'), href: `/${locale}/coach/courses` },
-        { name: t('adjustments'), href: `/${locale}/coach/adjustments` },
-        { name: t('invoices'), href: `/${locale}/coach/invoices` },
+        { name: t('dashboard'),              href: `/${locale}/coach/dashboard` },
+        { name: t('sessions'),               href: `/${locale}/coach/sessions` },
+        { name: `${t('myAttendance')}`,      href: `/${locale}/coach/attendance` },
+        { name: `${t('studentAttendance')}`, href: `/${locale}/coach/student-attendance` },
+        { name: t('myCourses'),              href: `/${locale}/coach/courses` },
+        { name: t('adjustments'),            href: `/${locale}/coach/adjustments` },
+        { name: t('invoices'),               href: `/${locale}/coach/invoices` },
     ];
 
     const navItems = role === 'admin' ? adminNav : coachNav;
 
     const isActive = (href: string) => pathname === href;
+
+    // Show Arabic letter when in English (to switch to Arabic), and "EN" when in Arabic (to switch to English)
+    const langLabel = locale === 'en' ? 'ع' : 'EN';
 
     return (
         <nav className="glass-nav sticky top-0 z-50">
@@ -58,29 +73,31 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                 {/* Top bar */}
                 <div className="flex justify-between items-center h-14 md:h-16">
 
-                    {/* Logo */}
-                    <Link
-                        href={`/${locale}`}
-                        className="shrink-0"
-                    >
+                    {/* Logo + Brand Name */}
+                    <Link href={`/${locale}`} className="shrink-0 flex items-center gap-2">
                         <img
                             src="/images/logo.jpg"
                             alt="TricksLand Steam Academy"
                             style={{ height: '40px', width: 'auto', objectFit: 'contain' }}
                             suppressHydrationWarning
                         />
+                        <span className="text-white font-bold text-sm leading-tight hidden sm:block">
+                            TricksLand
+                            <span className="block text-white/60 font-normal text-xs">Steam Academy</span>
+                        </span>
                     </Link>
 
                     {/* Desktop nav links */}
-                    <div className="hidden md:flex items-center gap-5 flex-1 mx-8">
+                    <div className="hidden md:flex items-center gap-4 flex-1 mx-6 overflow-x-auto">
                         {navItems.map((item) => (
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`text-sm transition-colors relative whitespace-nowrap ${isActive(item.href)
+                                className={`text-sm transition-colors relative whitespace-nowrap ${
+                                    isActive(item.href)
                                         ? 'text-primary font-semibold'
                                         : 'text-gray-600 hover:text-primary'
-                                    }`}
+                                }`}
                             >
                                 {item.name}
                                 {isActive(item.href) && (
@@ -92,6 +109,15 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
 
                     {/* Right side controls */}
                     <div className="flex items-center gap-2">
+                        {/* Language toggle - always visible */}
+                        <button
+                            onClick={handleToggleLanguage}
+                            title={locale === 'en' ? 'Switch to Arabic' : 'Switch to English'}
+                            className="bg-white/10 hover:bg-white/20 border border-white/20 px-2.5 py-1.5 rounded-lg text-white text-sm font-bold transition-colors min-w-[36px] text-center"
+                        >
+                            {langLabel}
+                        </button>
+
                         {/* Desktop: role badge + settings + logout */}
                         <div className="hidden md:flex items-center gap-2">
                             <span className="text-gray-400 text-xs capitalize px-1">{role}</span>
@@ -116,12 +142,10 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                             aria-label="Toggle menu"
                         >
                             {isOpen ? (
-                                // X icon
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             ) : (
-                                // Hamburger icon
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                 </svg>
@@ -139,10 +163,11 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-colors ${isActive(item.href)
+                                    className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                                        isActive(item.href)
                                             ? 'bg-primary/20 text-primary'
                                             : 'text-gray-600 hover:bg-primary/10 hover:text-primary'
-                                        }`}
+                                    }`}
                                 >
                                     {item.name}
                                     {isActive(item.href) && (
