@@ -438,7 +438,10 @@ CREATE POLICY "Anyone can view public settings"
 -- HELPER VIEW: Student monthly attendance summary
 -- ============================================================================
 
-CREATE OR REPLACE VIEW student_monthly_attendance AS
+DROP VIEW IF EXISTS public.student_monthly_attendance;
+CREATE VIEW public.student_monthly_attendance
+WITH (security_invoker = true)
+AS
 SELECT 
     sa.student_id,
     p.full_name AS student_name,
@@ -459,7 +462,10 @@ GROUP BY sa.student_id, p.full_name, sa.course_id, c.name, TO_CHAR(sa.attendance
 -- HELPER VIEW: Course financial summary
 -- ============================================================================
 
-CREATE OR REPLACE VIEW course_financial_summary AS
+DROP VIEW IF EXISTS public.course_financial_summary;
+CREATE VIEW public.course_financial_summary
+WITH (security_invoker = true)
+AS
 SELECT 
     c.id AS course_id,
     c.name AS course_name,

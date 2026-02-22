@@ -4,7 +4,7 @@
 const ACADEMY_LOCATION = {
     latitude: 29.073694,
     longitude: 31.112250,
-    radius: 50, // meters
+    radius: 60, // meters — increased from 50 to 60
 };
 
 /**

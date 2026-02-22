@@ -140,7 +140,12 @@ export default function SettingsPage() {
 
                 {/* ── User Management — Admin only ── */}
                 {role === 'admin' && (
-                    <UserManagement selfId={selfId} />
+                    <>
+                        <UserManagement selfId={selfId} />
+                        <div className="mt-8">
+                            <AdminSystemSettings />
+                        </div>
+                    </>
                 )}
             </div>
         </div>
@@ -441,6 +446,83 @@ function UserManagement({ selfId }: { selfId: string }) {
                     </table>
                 </div>
             )}
+        </GlassCard>
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin System Settings Component
+// ─────────────────────────────────────────────────────────────────────────────
+function AdminSystemSettings() {
+    const supabase = createClient();
+    const [geoRadius, setGeoRadius] = useState('60');
+    const [platformName, setPlatformName] = useState('TricksLand Academy');
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        (supabase as any)
+            .from('admin_settings')
+            .select('key, value')
+            .in('key', ['geolocation_radius_meters', 'platform_name'])
+            .then(({ data }: any) => {
+                if (data) {
+                    data.forEach((s: any) => {
+                        if (s.key === 'geolocation_radius_meters') setGeoRadius(s.value);
+                        if (s.key === 'platform_name') setPlatformName(s.value);
+                    });
+                }
+                setLoading(false);
+            });
+    }, []);
+
+    const handleSave = async (key: string, value: string) => {
+        setSaving(true);
+        const { error } = await (supabase as any)
+            .from('admin_settings')
+            .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+        setSaving(false);
+        if (error) toast.error(error.message);
+        else toast.success('Setting saved');
+    };
+
+    if (loading) return null;
+
+    const inputCls = 'bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary';
+
+    return (
+        <GlassCard>
+            <h2 className="text-lg font-semibold text-white mb-2">System Settings</h2>
+            <p className="text-white/50 text-sm mb-5">Configure platform-wide settings</p>
+            <div className="space-y-5">
+                <div>
+                    <label className="block text-white/80 text-sm font-medium mb-1">
+                        Geolocation Check-in Radius (meters)
+                    </label>
+                    <p className="text-white/40 text-xs mb-2">
+                        Coaches must be within this radius to mark their own attendance
+                    </p>
+                    <div className="flex gap-3">
+                        <input type="number" min="10" max="500" value={geoRadius}
+                            onChange={e => setGeoRadius(e.target.value)} className={`w-32 ${inputCls}`} />
+                        <button onClick={() => handleSave('geolocation_radius_meters', geoRadius)} disabled={saving}
+                            className="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
+                            {saving ? 'Saving…' : 'Save'}
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-white/80 text-sm font-medium mb-1">Platform Name</label>
+                    <div className="flex gap-3">
+                        <input type="text" value={platformName} onChange={e => setPlatformName(e.target.value)}
+                            className={`flex-1 max-w-xs ${inputCls}`} />
+                        <button onClick={() => handleSave('platform_name', platformName)} disabled={saving}
+                            className="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
+                            {saving ? 'Saving…' : 'Save'}
+                        </button>
+                    </div>
+                </div>
+            </div>
         </GlassCard>
     );
 }
