@@ -3,6 +3,11 @@ export type UserRole = 'admin' | 'coach';
 export type CourseStatus = 'active' | 'archived';
 export type SessionType = 'online_session' | 'offline_meeting';
 export type AdjustmentType = 'bonus' | 'discount';
+export type SessionStatus = 'scheduled' | 'completed' | 'postponed' | 'cancelled' | 'extra';
+export type AttendanceStatus = 'present' | 'absent' | 'late';
+export type PaymentStatus = 'not_paid' | 'partially_paid' | 'paid';
+export type ExpenseCategory = 'instructor' | 'materials' | 'venue' | 'equipment' | 'marketing' | 'other';
+export type PaymentMethod = 'cash' | 'bank_transfer' | 'card' | 'check' | 'other';
 
 export interface Profile {
     id: string;
@@ -98,6 +103,130 @@ export interface Adjustment {
     notes: string | null;
     created_by: string;
     created_at: string;
+}
+
+// ============================================================================
+// NEW ENHANCEMENT TYPES
+// ============================================================================
+
+export interface StudentAttendance {
+    id: string;
+    session_id: string;
+    student_id: string;
+    course_id: string;
+    attendance_date: string; // Date string YYYY-MM-DD
+    status: AttendanceStatus; // present, absent, late
+    arrival_time: string | null; // Time string
+    leaving_time: string | null; // Time string
+    duration_minutes: number | null;
+    marked_by: string;
+    marked_at: string;
+    notes: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CourseSchedule {
+    id: string;
+    course_id: string;
+    total_sessions: number;
+    sessions_per_week: number;
+    start_date: string; // Date string
+    scheduled_end_date: string; // Date string
+    actual_end_date: string | null; // Date string
+    sessions_completed: number;
+    sessions_cancelled: number;
+    sessions_postponed: number;
+    extra_sessions_added: number;
+    status: 'active' | 'completed' | 'archived';
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CourseExpense {
+    id: string;
+    course_id: string;
+    title: string;
+    description: string | null;
+    amount: number;
+    expense_date: string; // Date string
+    category: ExpenseCategory;
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface StudentPayment {
+    id: string;
+    student_id: string;
+    course_id: string;
+    course_fee: number;
+    amount_paid: number;
+    remaining_balance: number; // Generated column
+    payment_status: PaymentStatus;
+    first_payment_date: string | null; // Date string
+    last_payment_date: string | null; // Date string
+    due_date: string | null; // Date string
+    notes: string | null;
+    created_by: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface PaymentTransaction {
+    id: string;
+    payment_record_id: string;
+    amount: number;
+    transaction_date: string; // Date string
+    transaction_time: string; // Time string
+    payment_method: PaymentMethod;
+    reference_number: string | null;
+    notes: string | null;
+    created_by: string;
+    created_at: string;
+}
+
+export interface AdminSetting {
+    id: string;
+    key: string;
+    value: string;
+    value_type: 'string' | 'integer' | 'float' | 'boolean' | 'json';
+    description: string | null;
+    is_public: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+// ============================================================================
+// VIEW TYPES
+// ============================================================================
+
+export interface StudentMonthlyAttendance {
+    student_id: string;
+    student_name: string;
+    course_id: string;
+    course_name: string;
+    month: string; // YYYY-MM format
+    total_sessions: number;
+    sessions_attended: number;
+    sessions_absent: number;
+    sessions_late: number;
+    attendance_percentage: number;
+}
+
+export interface CourseFinancialSummary {
+    course_id: string;
+    course_name: string;
+    total_course_fees: number;
+    total_income: number;
+    pending_income: number;
+    total_expenses: number;
+    net_profit: number;
+    total_students: number;
+    students_paid: number;
+    students_partially_paid: number;
+    students_not_paid: number;
 }
 
 // Extended types with relations
@@ -211,10 +340,55 @@ export interface Database {
                 Update: Partial<Omit<CoachAttendance, 'id' | 'created_at'>>;
                 Relationships: [];
             };
+            // New enhancement tables
+            student_attendance: {
+                Row: StudentAttendance;
+                Insert: Omit<StudentAttendance, 'id' | 'created_at' | 'updated_at' | 'duration_minutes'>;
+                Update: Partial<Omit<StudentAttendance, 'id' | 'created_at' | 'updated_at'>>;
+                Relationships: [];
+            };
+            course_schedules: {
+                Row: CourseSchedule;
+                Insert: Omit<CourseSchedule, 'id' | 'created_at' | 'updated_at'>;
+                Update: Partial<Omit<CourseSchedule, 'id' | 'created_at' | 'updated_at'>>;
+                Relationships: [];
+            };
+            course_expenses: {
+                Row: CourseExpense;
+                Insert: Omit<CourseExpense, 'id' | 'created_at' | 'updated_at'>;
+                Update: Partial<Omit<CourseExpense, 'id' | 'created_at' | 'updated_at'>>;
+                Relationships: [];
+            };
+            student_payments: {
+                Row: StudentPayment;
+                Insert: Omit<StudentPayment, 'id' | 'created_at' | 'updated_at' | 'remaining_balance'>;
+                Update: Partial<Omit<StudentPayment, 'id' | 'created_at' | 'updated_at' | 'remaining_balance'>>;
+                Relationships: [];
+            };
+            payment_transactions: {
+                Row: PaymentTransaction;
+                Insert: Omit<PaymentTransaction, 'id' | 'created_at'>;
+                Update: Partial<Omit<PaymentTransaction, 'id' | 'created_at'>>;
+                Relationships: [];
+            };
+            admin_settings: {
+                Row: AdminSetting;
+                Insert: Omit<AdminSetting, 'id' | 'created_at' | 'updated_at'>;
+                Update: Partial<Omit<AdminSetting, 'id' | 'created_at' | 'updated_at'>>;
+                Relationships: [];
+            };
         };
         Views: {
             coach_monthly_totals: {
                 Row: CoachMonthlyTotal;
+                Relationships: [];
+            };
+            student_monthly_attendance: {
+                Row: StudentMonthlyAttendance;
+                Relationships: [];
+            };
+            course_financial_summary: {
+                Row: CourseFinancialSummary;
                 Relationships: [];
             };
         };
@@ -231,12 +405,29 @@ export interface Database {
                 };
                 Returns: number;
             };
+            calculate_billable_hours: {
+                Args: {
+                    p_arrival_time: string;
+                    p_leaving_time: string;
+                };
+                Returns: number;
+            };
+            get_admin_setting: {
+                Args: {
+                    p_key: string;
+                    p_default_value?: string;
+                };
+                Returns: string;
+            };
         };
         Enums: {
             user_role: 'admin' | 'coach';
             course_status: 'active' | 'archived';
             session_type: 'online_session' | 'offline_meeting';
             adjustment_type: 'bonus' | 'discount';
+            session_status: 'scheduled' | 'completed' | 'postponed' | 'cancelled' | 'extra';
+            payment_status: 'not_paid' | 'partially_paid' | 'paid';
+            expense_category: 'instructor' | 'materials' | 'venue' | 'equipment' | 'marketing' | 'other';
         };
         CompositeTypes: Record<string, never>;
     };
