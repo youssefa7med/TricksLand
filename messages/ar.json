@@ -522,7 +522,13 @@
             "noStudents": "لا يوجد طلاب مسجلون في هذا الكورس",
             "savedMsg": "تم حفظ الحضور لـ %count% طالب",
             "selectCourseFirst": "اختر كورساً أولاً",
-            "selectBoth": "اختر الكورس والجلسة لتسجيل الحضور"
+            "selectBoth": "اختر الكورس والجلسة لتسجيل الحضور",
+            "alreadyMarkedBadge": "✓ تم التسجيل",
+            "alreadyMarkedTitle": "تم تسجيل الحضور",
+            "alreadyMarkedNote": "تم حفظ حضور هذه الجلسة مسبقاً.",
+            "alreadyMarkedNoteAdmin": "تم حفظ الحضور مسبقاً. يمكنك تعديله بصفتك مسؤولاً.",
+            "editAttendance": "تعديل الحضور",
+            "summaryNoData": "لا توجد سجلات حضور لهذا الشهر. سجّل الحضور في جلسة أولاً."
         },
         "scheduling": {
             "title": "جدولة الكورسات",

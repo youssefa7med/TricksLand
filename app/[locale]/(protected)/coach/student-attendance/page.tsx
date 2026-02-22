@@ -37,6 +37,8 @@ export default function CoachStudentAttendancePage() {
     const [loadingStudents, setLoadingStudents] = useState(false);
     const [saving, setSaving] = useState(false);
     const [coachId, setCoachId] = useState('');
+    // Lock form once attendance is already recorded for the session
+    const [alreadyMarked, setAlreadyMarked] = useState(false);
 
     // Load coach's courses
     useEffect(() => {
@@ -66,6 +68,7 @@ export default function CoachStudentAttendancePage() {
         setSelectedSession('');
         setSelectedSessionData(null);
         setStudents([]);
+        setAlreadyMarked(false);
         supabase.from('sessions')
             .select('id, session_date, start_time, end_time')
             .eq('course_id', selectedCourse)
@@ -77,6 +80,7 @@ export default function CoachStudentAttendancePage() {
     // Load students + existing attendance per session
     const loadSessionData = useCallback(async (sessionId: string, courseId: string) => {
         setLoadingStudents(true);
+        setAlreadyMarked(false);
 
         const { data: enrolled } = await (supabase as any)
             .from('course_students')
@@ -97,6 +101,7 @@ export default function CoachStudentAttendancePage() {
         const statusMap: Record<string, 'present' | 'absent' | 'late'> = {};
         (attData || []).forEach((r: any) => { statusMap[r.student_id] = r.status; });
         setPendingStatus(statusMap);
+        setAlreadyMarked((attData || []).length > 0);
         setLoadingStudents(false);
     }, [supabase]);
 
@@ -223,14 +228,27 @@ export default function CoachStudentAttendancePage() {
                                 <p className="text-white font-semibold">{selectedSessionData.session_date}</p>
                                 <p className="text-white/60 text-sm">{selectedSessionData.start_time?.slice(0, 5)} – {selectedSessionData.end_time?.slice(0, 5)}</p>
                             </div>
-                            <div className="flex gap-3 text-sm">
+                            <div className="flex gap-3 text-sm flex-wrap">
+                                {alreadyMarked && (
+                                    <span className="bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1 rounded-full text-xs font-semibold">
+                                        {t('alreadyMarkedBadge')}
+                                    </span>
+                                )}
                                 <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full">{t('presentCount', { count: presentCount })}</span>
                                 <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full">{t('absentCount', { count: absentCount })}</span>
                             </div>
                         </div>
                     )}
 
-                    {students.length > 0 && (
+                    {/* Locked notice for coach */}
+                    {alreadyMarked && (
+                        <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                            <p className="text-green-400 font-semibold text-sm">{t('alreadyMarkedTitle')}</p>
+                            <p className="text-white/60 text-xs mt-0.5">{t('alreadyMarkedNote')}</p>
+                        </div>
+                    )}
+
+                    {!alreadyMarked && students.length > 0 && (
                         <div className="flex gap-2 flex-wrap">
                             <span className="text-white/60 text-sm self-center">{tc('markAll')}:</span>
                             <button onClick={() => markAll('present')} className="px-3 py-1 text-sm rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/40 transition-colors">{t('markAllPresent')}</button>
@@ -258,11 +276,15 @@ export default function CoachStudentAttendancePage() {
                                         </div>
                                         <div className="flex gap-2">
                                             {(['present', 'absent', 'late'] as const).map(s => (
-                                                <button key={s} onClick={() => setPendingStatus(p => ({ ...p, [student.id]: s }))}
+                                                <button key={s}
+                                                    onClick={() => !alreadyMarked && setPendingStatus(p => ({ ...p, [student.id]: s }))}
+                                                    disabled={alreadyMarked}
                                                     className={`px-3 py-1 text-xs rounded-lg border transition-all ${
                                                         currentStatus === s
                                                             ? STATUS_COLORS[s] + ' font-semibold'
-                                                            : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
+                                                            : alreadyMarked
+                                                                ? 'bg-white/5 border-white/10 text-white/30 cursor-not-allowed'
+                                                                : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
                                                     }`}>
                                                     {tc(s)}
                                                 </button>
@@ -274,7 +296,7 @@ export default function CoachStudentAttendancePage() {
                         </div>
                     )}
 
-                    {students.length > 0 && (
+                    {students.length > 0 && !alreadyMarked && (
                         <div className="flex justify-end pt-2">
                             <button onClick={handleSave} disabled={saving}
                                 className="bg-primary hover:bg-primary/80 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50">
@@ -298,7 +320,7 @@ export default function CoachStudentAttendancePage() {
                     {!selectedCourse ? (
                         <div className="py-8 text-center text-white/50">{t('selectCourseFirst')}</div>
                     ) : summaryData.length === 0 ? (
-                        <div className="py-8 text-center text-white/50">{t('noStudents')}</div>
+                        <div className="py-8 text-center text-white/50">{t('summaryNoData')}</div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">

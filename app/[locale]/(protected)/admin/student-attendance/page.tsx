@@ -64,6 +64,9 @@ export default function AdminStudentAttendancePage() {
     const [loadingStudents, setLoadingStudents] = useState(false);
     const [saving, setSaving] = useState(false);
     const [loadingSummary, setLoadingSummary] = useState(false);
+    // Track if this session already has attendance recorded
+    const [alreadyMarked, setAlreadyMarked] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     // Load courses
     useEffect(() => {
@@ -78,6 +81,8 @@ export default function AdminStudentAttendancePage() {
         setSelectedSession('');
         setSelectedSessionData(null);
         setStudents([]);
+        setAlreadyMarked(false);
+        setIsEditMode(false);
         supabase.from('sessions')
             .select('id, session_date, start_time, end_time')
             .eq('course_id', selectedCourse)
@@ -90,6 +95,7 @@ export default function AdminStudentAttendancePage() {
     const loadSessionData = useCallback(async (sessionId: string, courseId: string) => {
         if (!sessionId || !courseId) return;
         setLoadingStudents(true);
+        setAlreadyMarked(false);
 
         // Get enrolled students
         const { data: enrolledData } = await (supabase as any)
@@ -117,6 +123,10 @@ export default function AdminStudentAttendancePage() {
         });
         setExistingRecords(recordMap);
         setPendingStatus(statusMap);
+        // Lock the form if attendance was already saved
+        const hasExisting = (attData || []).length > 0;
+        setAlreadyMarked(hasExisting);
+        setIsEditMode(false);
         setLoadingStudents(false);
     }, [supabase]);
 
@@ -179,6 +189,7 @@ export default function AdminStudentAttendancePage() {
         setSaving(false);
         if (errorCount === 0) toast.success(`Attendance saved for ${successCount} students`);
         else toast.warning(`Saved ${successCount}, failed ${errorCount}`);
+        setIsEditMode(false);
         loadSessionData(selectedSession, selectedCourse);
     };
 
@@ -279,17 +290,37 @@ export default function AdminStudentAttendancePage() {
                                         <p className="text-white font-semibold">{selectedSessionData.session_date}</p>
                                         <p className="text-white/60 text-sm">{selectedSessionData.start_time?.slice(0, 5)} – {selectedSessionData.end_time?.slice(0, 5)}</p>
                                     </div>
-                                    {/* Stats */}
-                                    <div className="flex gap-3 text-sm">
-                                        <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full">{presentCount} {t('presentCount')}</span>
-                                        <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full">{absentCount} {t('absentCount')}</span>
-                                        <span className="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full">{lateCount} {t('lateCount')}</span>
+                                    <div className="flex gap-3 items-center flex-wrap">
+                                        {alreadyMarked && (
+                                            <span className="bg-green-500/20 text-green-400 border border-green-500/30 px-3 py-1 rounded-full text-xs font-semibold">
+                                                {t('alreadyMarkedBadge')}
+                                            </span>
+                                        )}
+                                        <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm">{presentCount} {t('presentCount')}</span>
+                                        <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-sm">{absentCount} {t('absentCount')}</span>
+                                        <span className="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-sm">{lateCount} {t('lateCount')}</span>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Quick mark all */}
-                            {students.length > 0 && (
+                            {/* Already marked banner (admin can still edit) */}
+                            {alreadyMarked && !isEditMode && (
+                                <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 flex items-center justify-between gap-4">
+                                    <div>
+                                        <p className="text-green-400 font-semibold text-sm">{t('alreadyMarkedTitle')}</p>
+                                        <p className="text-white/60 text-xs mt-0.5">{t('alreadyMarkedNoteAdmin')}</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsEditMode(true)}
+                                        className="shrink-0 bg-white/10 hover:bg-white/20 text-white text-sm px-4 py-2 rounded-lg transition-colors"
+                                    >
+                                        {t('editAttendance')}
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Quick mark all — only when editable */}
+                            {students.length > 0 && (!alreadyMarked || isEditMode) && (
                                 <div className="flex gap-2 flex-wrap">
                                     <span className="text-white/60 text-sm self-center">{tc('markAll')}:</span>
                                     <button onClick={() => markAll('present')} className="px-3 py-1 text-sm rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/40 transition-colors">{t('markAllPresent')}</button>
@@ -307,6 +338,7 @@ export default function AdminStudentAttendancePage() {
                                 <div className="space-y-2">
                                     {students.map((student, idx) => {
                                         const currentStatus = pendingStatus[student.id] || 'absent';
+                                        const locked = alreadyMarked && !isEditMode;
                                         return (
                                             <div key={student.id} className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-3">
                                                 <div className="flex items-center gap-3">
@@ -320,11 +352,14 @@ export default function AdminStudentAttendancePage() {
                                                     {(['present', 'absent', 'late'] as const).map(s => (
                                                         <button
                                                             key={s}
-                                                            onClick={() => setStatus(student.id, s)}
+                                                            onClick={() => !locked && setStatus(student.id, s)}
+                                                            disabled={locked}
                                                             className={`px-3 py-1 text-xs rounded-lg border transition-all ${
                                                                 currentStatus === s
                                                                     ? STATUS_COLORS[s] + ' font-semibold'
-                                                                    : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
+                                                                    : locked
+                                                                        ? 'bg-white/5 border-white/10 text-white/30 cursor-not-allowed'
+                                                                        : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
                                                             }`}
                                                         >
                                                             {s === 'present' ? tc('present') : s === 'absent' ? tc('absent') : tc('late')}
@@ -337,7 +372,7 @@ export default function AdminStudentAttendancePage() {
                                 </div>
                             )}
 
-                            {students.length > 0 && (
+                            {students.length > 0 && (!alreadyMarked || isEditMode) && (
                                 <div className="flex justify-end pt-2">
                                     <button
                                         onClick={handleSaveAttendance}
@@ -357,11 +392,11 @@ export default function AdminStudentAttendancePage() {
             {tab === 'summary' && (
                 <GlassCard className="p-4">
                     {!selectedCourse ? (
-                        <div className="py-8 text-center text-white/50">Select a course to view summary</div>
+                        <div className="py-8 text-center text-white/50">{t('selectCourseFirst')}</div>
                     ) : loadingSummary ? (
-                        <div className="py-8 text-center text-white/50">Loading…</div>
+                        <div className="py-8 text-center text-white/50">{tc('loading')}</div>
                     ) : summaryData.length === 0 ? (
-                        <div className="py-8 text-center text-white/50">No attendance data for {summaryMonth}</div>
+                        <div className="py-8 text-center text-white/50">{t('summaryNoData')}</div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">

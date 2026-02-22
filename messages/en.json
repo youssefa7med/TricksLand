@@ -522,7 +522,13 @@
             "noStudents": "No students enrolled in this course",
             "savedMsg": "Attendance saved for %count% students",
             "selectCourseFirst": "Select a course first",
-            "selectBoth": "Select a course and session to mark attendance"
+            "selectBoth": "Select a course and session to mark attendance",
+            "alreadyMarkedBadge": "✓ Submitted",
+            "alreadyMarkedTitle": "Attendance Already Submitted",
+            "alreadyMarkedNote": "Attendance for this session has already been saved.",
+            "alreadyMarkedNoteAdmin": "Attendance was previously saved. You can edit it as admin.",
+            "editAttendance": "Edit Attendance",
+            "summaryNoData": "No attendance records found for this month. Record attendance in a session first."
         },
         "scheduling": {
             "title": "Course Scheduling",
