@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 interface Course {
     id: string;
@@ -52,14 +53,10 @@ const STATUS_BADGE: Record<string, string> = {
     not_paid: 'bg-red-500/20 text-red-400',
 };
 
-const STATUS_LABEL: Record<string, string> = {
-    paid: 'Paid',
-    partially_paid: 'Partial',
-    not_paid: 'Not Paid',
-};
-
 export default function AdminFinancialPage() {
     const supabase = createClient();
+    const t = useTranslations('pages.financial');
+    const tc = useTranslations('common');
 
     const [courses, setCourses] = useState<Course[]>([]);
     const [summaries, setSummaries] = useState<CourseSummary[]>([]);
@@ -211,18 +208,18 @@ export default function AdminFinancialPage() {
     return (
         <div className="min-h-screen p-4 md:p-6 space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-white">Financial Management</h1>
-                <p className="text-white/60 text-sm mt-1">Track student payments and course expenses</p>
+                <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
+                <p className="text-white/60 text-sm mt-1">{t('subtitle')}</p>
             </div>
 
             {/* Platform overview cards */}
             {!loading && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
-                        { label: 'Total Income', value: formatCurrency(summaries.reduce((a, s) => a + Number(s.total_income), 0)), color: 'text-green-400' },
-                        { label: 'Pending', value: formatCurrency(summaries.reduce((a, s) => a + Number(s.pending_income), 0)), color: 'text-yellow-400' },
-                        { label: 'Total Expenses', value: formatCurrency(summaries.reduce((a, s) => a + Number(s.total_expenses), 0)), color: 'text-red-400' },
-                        { label: 'Net Profit', value: formatCurrency(summaries.reduce((a, s) => a + Number(s.net_profit), 0)), color: 'text-primary' },
+                        { label: t('totalIncome'), value: formatCurrency(summaries.reduce((a, s) => a + Number(s.total_income), 0)), color: 'text-green-400' },
+                        { label: t('pendingIncome'), value: formatCurrency(summaries.reduce((a, s) => a + Number(s.pending_income), 0)), color: 'text-yellow-400' },
+                        { label: t('totalExpenses'), value: formatCurrency(summaries.reduce((a, s) => a + Number(s.total_expenses), 0)), color: 'text-red-400' },
+                        { label: t('netProfit'), value: formatCurrency(summaries.reduce((a, s) => a + Number(s.net_profit), 0)), color: 'text-primary' },
                     ].map(card => (
                         <GlassCard key={card.label} className="p-4">
                             <p className="text-white/50 text-xs">{card.label}</p>
@@ -234,10 +231,10 @@ export default function AdminFinancialPage() {
 
             {/* Course selector */}
             <GlassCard className="p-4">
-                <label className={labelClass}>Select Course</label>
+                <label className={labelClass}>{t('selectCourse')}</label>
                 <select value={selectedCourse} onChange={e => { setSelectedCourse(e.target.value); setTab('overview'); }}
                     className={inputClass}>
-                    <option value="">— All Courses Overview —</option>
+                    <option value="">{t('allCoursesOverview')}</option>
                     {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
             </GlassCard>
@@ -248,12 +245,12 @@ export default function AdminFinancialPage() {
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="text-white/50 border-b border-white/10">
-                                <th className="text-left p-4">Course</th>
-                                <th className="text-right p-4">Students</th>
-                                <th className="text-right p-4">Income</th>
-                                <th className="text-right p-4">Pending</th>
-                                <th className="text-right p-4">Expenses</th>
-                                <th className="text-right p-4">Net Profit</th>
+                                <th className="text-left p-4">{t('courseCol')}</th>
+                                <th className="text-right p-4">{t('studentsCol')}</th>
+                                <th className="text-right p-4">{t('incomeCol')}</th>
+                                <th className="text-right p-4">{t('pendingCol')}</th>
+                                <th className="text-right p-4">{t('expensesCol')}</th>
+                                <th className="text-right p-4">{t('netProfitCol')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -282,10 +279,10 @@ export default function AdminFinancialPage() {
                     {selectedSummary && (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {[
-                                { label: 'Total Students', value: selectedSummary.total_students, color: 'text-white' },
-                                { label: 'Collected', value: formatCurrency(selectedSummary.total_income), color: 'text-green-400' },
-                                { label: 'Expenses', value: formatCurrency(selectedSummary.total_expenses), color: 'text-red-400' },
-                                { label: 'Net Profit', value: formatCurrency(selectedSummary.net_profit), color: Number(selectedSummary.net_profit) >= 0 ? 'text-green-400' : 'text-red-400' },
+                                { label: t('totalStudents'), value: selectedSummary.total_students, color: 'text-white' },
+                                { label: t('collected'), value: formatCurrency(selectedSummary.total_income), color: 'text-green-400' },
+                                { label: t('expensesCol'), value: formatCurrency(selectedSummary.total_expenses), color: 'text-red-400' },
+                                { label: t('netProfit'), value: formatCurrency(selectedSummary.net_profit), color: Number(selectedSummary.net_profit) >= 0 ? 'text-green-400' : 'text-red-400' },
                             ].map(card => (
                                 <GlassCard key={card.label} className="p-4">
                                     <p className="text-white/50 text-xs">{card.label}</p>
@@ -297,10 +294,10 @@ export default function AdminFinancialPage() {
 
                     {/* Tabs */}
                     <div className="flex gap-2">
-                        {(['payments', 'expenses'] as const).map(t => (
-                            <button key={t} onClick={() => setTab(t)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${tab === t ? 'bg-primary text-white' : 'bg-white/10 text-white/70 hover:bg-white/20'}`}>
-                                {t === 'payments' ? '💳 Student Payments' : '📋 Expenses'}
+                        {(['payments', 'expenses'] as const).map(tabKey => (
+                            <button key={tabKey} onClick={() => setTab(tabKey)}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${tab === tabKey ? 'bg-primary text-white' : 'bg-white/10 text-white/70 hover:bg-white/20'}`}>
+                                {tabKey === 'payments' ? `💳 ${t('paymentsTab')}` : `📋 ${t('expensesTab')}`}
                             </button>
                         ))}
                     </div>
@@ -309,10 +306,10 @@ export default function AdminFinancialPage() {
                     {tab === 'payments' && (
                         <GlassCard className="p-4 space-y-4">
                             <div className="flex justify-between items-center">
-                                <h3 className="text-white font-semibold">Student Payments</h3>
+                                <h3 className="text-white font-semibold">{t('paymentsTab')}</h3>
                                 <button onClick={() => setShowPayForm(!showPayForm)}
                                     className="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-                                    + Add Record
+                                    + {t('addPaymentRecord')}
                                 </button>
                             </div>
 
@@ -351,10 +348,10 @@ export default function AdminFinancialPage() {
                                     </div>
                                     <div className="flex gap-2 justify-end">
                                         <button type="button" onClick={() => setShowPayForm(false)}
-                                            className="px-4 py-2 rounded-lg bg-white/10 text-white/70 text-sm">Cancel</button>
+                                            className="px-4 py-2 rounded-lg bg-white/10 text-white/70 text-sm">{tc('cancel')}</button>
                                         <button type="submit" disabled={saving}
                                             className="px-4 py-2 rounded-lg bg-primary text-white text-sm disabled:opacity-50">
-                                            {saving ? 'Saving…' : 'Save'}
+                                            {saving ? tc('saving') : tc('save')}
                                         </button>
                                     </div>
                                 </form>
@@ -390,10 +387,10 @@ export default function AdminFinancialPage() {
                                     </div>
                                     <div className="flex gap-2 justify-end">
                                         <button type="button" onClick={() => setShowRecordForm(false)}
-                                            className="px-4 py-2 rounded-lg bg-white/10 text-white/70 text-sm">Cancel</button>
+                                            className="px-4 py-2 rounded-lg bg-white/10 text-white/70 text-sm">{tc('cancel')}</button>
                                         <button type="submit" disabled={saving}
                                             className="px-4 py-2 rounded-lg bg-primary text-white text-sm disabled:opacity-50">
-                                            {saving ? 'Saving…' : 'Record Payment'}
+                                            {saving ? tc('saving') : t('recordPayment')}
                                         </button>
                                     </div>
                                 </form>
@@ -401,18 +398,18 @@ export default function AdminFinancialPage() {
 
                             {/* Payments table */}
                             {payments.length === 0 ? (
-                                <div className="py-8 text-center text-white/50">No payment records yet</div>
+                                <div className="py-8 text-center text-white/50">{tc('noData')}</div>
                             ) : (
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="text-white/50 border-b border-white/10">
-                                                <th className="text-left py-2 px-3">Student</th>
-                                                <th className="text-right py-2 px-3">Fee</th>
-                                                <th className="text-right py-2 px-3">Paid</th>
-                                                <th className="text-right py-2 px-3">Remaining</th>
-                                                <th className="text-center py-2 px-3">Status</th>
-                                                <th className="text-center py-2 px-3">Actions</th>
+                                                <th className="text-left py-2 px-3">{tc('name')}</th>
+                                                <th className="text-right py-2 px-3">{t('incomeCol')}</th>
+                                                <th className="text-right py-2 px-3">{tc('paid')}</th>
+                                                <th className="text-right py-2 px-3">{tc('pending')}</th>
+                                                <th className="text-center py-2 px-3">{tc('status')}</th>
+                                                <th className="text-center py-2 px-3">{tc('actions')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -426,7 +423,7 @@ export default function AdminFinancialPage() {
                                                     <td className="py-3 px-3 text-right text-yellow-400">{formatCurrency(p.remaining_balance)}</td>
                                                     <td className="py-3 px-3 text-center">
                                                         <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_BADGE[p.payment_status]}`}>
-                                                            {STATUS_LABEL[p.payment_status]}
+                                                            {p.payment_status === 'paid' ? tc('paid') : p.payment_status === 'partially_paid' ? tc('partial') : tc('notPaid')}
                                                         </span>
                                                     </td>
                                                     <td className="py-3 px-3 text-center">
@@ -452,10 +449,10 @@ export default function AdminFinancialPage() {
                     {tab === 'expenses' && (
                         <GlassCard className="p-4 space-y-4">
                             <div className="flex justify-between items-center">
-                                <h3 className="text-white font-semibold">Course Expenses</h3>
+                                <h3 className="text-white font-semibold">{t('expensesTab')}</h3>
                                 <button onClick={() => setShowExpForm(!showExpForm)}
                                     className="bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30 px-4 py-2 rounded-lg text-sm transition-colors">
-                                    + Add Expense
+                                    + {t('addExpense')}
                                 </button>
                             </div>
 
@@ -502,17 +499,17 @@ export default function AdminFinancialPage() {
                                     </div>
                                     <div className="flex gap-2 justify-end">
                                         <button type="button" onClick={() => setShowExpForm(false)}
-                                            className="px-4 py-2 rounded-lg bg-white/10 text-white/70 text-sm">Cancel</button>
+                                            className="px-4 py-2 rounded-lg bg-white/10 text-white/70 text-sm">{tc('cancel')}</button>
                                         <button type="submit" disabled={saving}
                                             className="px-4 py-2 rounded-lg bg-red-500 text-white text-sm disabled:opacity-50">
-                                            {saving ? 'Saving…' : 'Add Expense'}
+                                            {saving ? tc('saving') : t('addExpense')}
                                         </button>
                                     </div>
                                 </form>
                             )}
 
                             {expenses.length === 0 ? (
-                                <div className="py-8 text-center text-white/50">No expenses recorded yet</div>
+                                <div className="py-8 text-center text-white/50">{tc('noData')}</div>
                             ) : (
                                 <div className="space-y-2">
                                     {expenses.map(exp => (

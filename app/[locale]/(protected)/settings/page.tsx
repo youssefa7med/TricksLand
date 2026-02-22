@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface ManagedUser {
     id: string;
@@ -29,6 +29,7 @@ export default function SettingsPage() {
     const [role, setRole] = useState('');
     const [selfId, setSelfId] = useState('');
     const locale = useLocale();
+    const t = useTranslations('pages.settings');
     const supabase = createClient();
 
     // ── Profile ──────────────────────────────────────────────────────────────
@@ -56,7 +57,7 @@ export default function SettingsPage() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!fullName.trim()) { toast.error('Full name is required'); return; }
+        if (!fullName.trim()) { toast.error(locale === 'ar' ? 'الاسم مطلوب' : 'Full name is required'); return; }
         setSaving(true);
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { setSaving(false); return; }
@@ -65,7 +66,7 @@ export default function SettingsPage() {
             .update({ full_name: fullName.trim() })
             .eq('id', user.id);
         if (error) toast.error(error.message);
-        else toast.success('Profile updated successfully');
+        else toast.success(t('profileUpdated'));
         setSaving(false);
     };
 
@@ -84,55 +85,55 @@ export default function SettingsPage() {
             <div className="max-w-3xl mx-auto">
                 <div className="flex items-center gap-4 mb-8">
                     <Link href={dashboardHref} className="text-white/60 hover:text-white transition-colors text-sm">
-                        ← Back to Dashboard
+                        {t('backToDashboard')}
                     </Link>
                 </div>
 
                 <div className="mb-8">
-                    <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">Settings</h1>
-                    <p className="text-white/70">Manage your account and users</p>
+                    <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">{t('title')}</h1>
+                    <p className="text-white/70">{t('subtitle')}</p>
                 </div>
 
                 {/* ── Profile Card ── */}
                 <GlassCard className="mb-8">
-                    <h2 className="text-lg font-semibold text-white mb-5">My Profile</h2>
+                    <h2 className="text-lg font-semibold text-white mb-5">{t('myProfile')}</h2>
                     <form onSubmit={handleSave} className="space-y-5">
                         <div>
-                            <label className={labelClass}>Full Name <span className="text-red-400">*</span></label>
+                            <label className={labelClass}>{t('fullNameLabel')} <span className="text-red-400">*</span></label>
                             <input
                                 type="text"
                                 value={fullName}
                                 onChange={(e) => setFullName(e.target.value)}
-                                placeholder="Your full name"
+                                placeholder={t('fullNamePlaceholder')}
                                 required
                                 className={inputClass}
                             />
                         </div>
                         <div>
-                            <label className={labelClass}>Email Address</label>
+                            <label className={labelClass}>{t('emailLabel')}</label>
                             <input
                                 type="email"
                                 value={email}
                                 disabled
                                 className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white/50 cursor-not-allowed"
                             />
-                            <p className="text-white/40 text-xs mt-1">Email cannot be changed here.</p>
+                            <p className="text-white/40 text-xs mt-1">{t('emailHint')}</p>
                         </div>
                         <div>
-                            <label className={labelClass}>Role</label>
+                            <label className={labelClass}>{t('roleLabel')}</label>
                             <div className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2">
                                 <span className={`inline-block px-2 py-1 rounded text-sm font-medium ${role === 'admin' ? 'bg-secondary/20 text-secondary' : 'bg-primary/20 text-primary'
                                     }`}>
-                                    {role === 'admin' ? 'Administrator' : 'Coach'}
+                                    {role === 'admin' ? t('adminRole') : t('coachRole')}
                                 </span>
                             </div>
                         </div>
                         <div className="flex gap-3 pt-1">
                             <button type="submit" disabled={saving} className="btn-glossy disabled:opacity-50 disabled:cursor-not-allowed">
-                                {saving ? 'Saving...' : 'Save Changes'}
+                                {saving ? t('saving') : t('saveChanges')}
                             </button>
                             <Link href={dashboardHref} className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-white transition-colors">
-                                Cancel
+                                {t('cancel')}
                             </Link>
                         </div>
                     </form>
@@ -156,6 +157,7 @@ export default function SettingsPage() {
 // User Management Component
 // ─────────────────────────────────────────────────────────────────────────────
 function UserManagement({ selfId }: { selfId: string }) {
+    const t = useTranslations('pages.settings');
     const [tab, setTab] = useState<'admin' | 'coach'>('admin');
     const [users, setUsers] = useState<ManagedUser[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(true);
@@ -204,7 +206,7 @@ function UserManagement({ selfId }: { selfId: string }) {
             });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error);
-            toast.success(`${tab === 'admin' ? 'Admin' : 'Coach'} created successfully`);
+            toast.success(`${tab === 'admin' ? t('adminRole') : t('coachRole')} ${t('userCreated')}`);
             resetCreate();
             fetchUsers();
         } catch (err: any) {
@@ -221,7 +223,7 @@ function UserManagement({ selfId }: { selfId: string }) {
     };
 
     const handleEdit = async (id: string) => {
-        if (!editName.trim()) { toast.error('Name cannot be empty'); return; }
+        if (!editName.trim()) { toast.error(tab === 'admin' ? 'الاسم مطلوب' : 'Name cannot be empty'); return; }
         setEditSaving(true);
         try {
             const body: any = { full_name: editName };
@@ -235,7 +237,7 @@ function UserManagement({ selfId }: { selfId: string }) {
             });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error);
-            toast.success('User updated');
+            toast.success(t('userUpdated'));
             setEditId(null);
             fetchUsers();
         } catch (err: any) {
@@ -245,12 +247,12 @@ function UserManagement({ selfId }: { selfId: string }) {
     };
 
     const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Remove user "${name}"? This action cannot be undone.`)) return;
+        if (!confirm(t('deleteConfirm').replace('%name%', name) + ' This action cannot be undone.')) return;
         try {
             const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error);
-            toast.success('User removed');
+            toast.success(t('userRemoved'));
             fetchUsers();
         } catch (err: any) {
             toast.error(err.message);
@@ -261,29 +263,29 @@ function UserManagement({ selfId }: { selfId: string }) {
         <GlassCard>
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                 <div>
-                    <h2 className="text-lg font-semibold text-white">User Management</h2>
-                    <p className="text-white/50 text-sm">Create and manage admin &amp; coach accounts</p>
+                    <h2 className="text-lg font-semibold text-white">{t('userManagement')}</h2>
+                    <p className="text-white/50 text-sm">{t('userManagementSubtitle')}</p>
                 </div>
                 <button
                     onClick={() => { setShowCreate(!showCreate); setEditId(null); }}
                     className="btn-glossy text-sm"
                 >
-                    {showCreate ? 'Cancel' : `+ Add ${tab === 'admin' ? 'Admin' : 'Coach'}`}
+                    {showCreate ? t('cancelCreate') : (tab === 'admin' ? t('addAdmin') : t('addCoach'))}
                 </button>
             </div>
 
             {/* Tabs */}
             <div className="flex gap-2 mb-6">
-                {(['admin', 'coach'] as const).map((t) => (
+                {(['admin', 'coach'] as const).map((tabKey) => (
                     <button
-                        key={t}
-                        onClick={() => { setTab(t); setShowCreate(false); setEditId(null); }}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${tab === t
+                        key={tabKey}
+                        onClick={() => { setTab(tabKey); setShowCreate(false); setEditId(null); }}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${tab === tabKey
                                 ? 'bg-primary text-white'
                                 : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white'
                             }`}
                     >
-                        {t === 'admin' ? 'Admins' : 'Coaches'} ({users.filter((u) => u.role === t).length})
+                        {tabKey === 'admin' ? t('adminTab') : t('coachTab')} ({users.filter((u) => u.role === tabKey).length})
                     </button>
                 ))}
             </div>
@@ -292,11 +294,11 @@ function UserManagement({ selfId }: { selfId: string }) {
             {showCreate && (
                 <div className="bg-white/5 border border-white/10 rounded-xl p-5 mb-6">
                     <h3 className="text-white font-medium mb-4">
-                        New {tab === 'admin' ? 'Admin' : 'Coach'} Account
+                        {tab === 'admin' ? t('newAdminAccount') : t('newCoachAccount')}
                     </h3>
                     <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-white/70 text-xs font-medium mb-1">Full Name *</label>
+                            <label className="block text-white/70 text-xs font-medium mb-1">{t('fullNameInputLabel')}</label>
                             <input
                                 type="text"
                                 value={newName}
@@ -307,7 +309,7 @@ function UserManagement({ selfId }: { selfId: string }) {
                             />
                         </div>
                         <div>
-                            <label className="block text-white/70 text-xs font-medium mb-1">Email *</label>
+                            <label className="block text-white/70 text-xs font-medium mb-1">{t('emailInputLabel')}</label>
                             <input
                                 type="email"
                                 value={newEmail}
@@ -318,7 +320,7 @@ function UserManagement({ selfId }: { selfId: string }) {
                             />
                         </div>
                         <div>
-                            <label className="block text-white/70 text-xs font-medium mb-1">Password * (min 6 chars)</label>
+                            <label className="block text-white/70 text-xs font-medium mb-1">{t('passwordLabel')}</label>
                             <input
                                 type="password"
                                 value={newPassword}
@@ -331,7 +333,7 @@ function UserManagement({ selfId }: { selfId: string }) {
                         </div>
                         <div className="flex items-end">
                             <button type="submit" disabled={creating} className="btn-glossy text-sm w-full disabled:opacity-50">
-                                {creating ? 'Creating...' : `Create ${tab === 'admin' ? 'Admin' : 'Coach'}`}
+                                {creating ? t('creating') : (tab === 'admin' ? t('createAdmin') : t('createCoach'))}
                             </button>
                         </div>
                     </form>
@@ -340,11 +342,11 @@ function UserManagement({ selfId }: { selfId: string }) {
 
             {/* Users Table */}
             {loadingUsers ? (
-                <p className="text-white/50 text-sm py-6 text-center">Loading users...</p>
+                <p className="text-white/50 text-sm py-6 text-center">{t('loadingUsers')}</p>
             ) : filtered.length === 0 ? (
                 <div className="text-center py-10">
                     <p className="text-white/50 text-sm">
-                        No {tab === 'admin' ? 'admins' : 'coaches'} found. Click &quot;Add {tab === 'admin' ? 'Admin' : 'Coach'}&quot; to create one.
+                        {tab === 'admin' ? t('noAdmins') : t('noCoaches')}
                     </p>
                 </div>
             ) : (
@@ -352,9 +354,9 @@ function UserManagement({ selfId }: { selfId: string }) {
                     <table className="w-full">
                         <thead>
                             <tr className="border-b border-white/10">
-                                <th className="text-left py-3 px-3 text-white/60 text-sm font-medium">Name</th>
-                                <th className="text-left py-3 px-3 text-white/60 text-sm font-medium">Email</th>
-                                <th className="text-right py-3 px-3 text-white/60 text-sm font-medium">Actions</th>
+                                <th className="text-left py-3 px-3 text-white/60 text-sm font-medium">{t('nameCol')}</th>
+                                <th className="text-left py-3 px-3 text-white/60 text-sm font-medium">{t('emailCol')}</th>
+                                <th className="text-right py-3 px-3 text-white/60 text-sm font-medium">{t('actionsCol')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -376,7 +378,7 @@ function UserManagement({ selfId }: { selfId: string }) {
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-white text-sm font-medium">{u.full_name}</span>
                                                     {isSelf && (
-                                                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">You</span>
+                                                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary">{t('youBadge')}</span>
                                                     )}
                                                 </div>
                                             )}
@@ -411,13 +413,13 @@ function UserManagement({ selfId }: { selfId: string }) {
                                                         disabled={editSaving}
                                                         className="text-green-400 hover:text-green-300 text-sm transition-colors disabled:opacity-50"
                                                     >
-                                                        {editSaving ? 'Saving...' : 'Save'}
+                                                        {editSaving ? t('savingBtn') : t('saveBtn')}
                                                     </button>
                                                     <button
                                                         onClick={() => setEditId(null)}
                                                         className="text-white/40 hover:text-white text-sm transition-colors"
                                                     >
-                                                        Cancel
+                                                        {t('cancelCreate')}
                                                     </button>
                                                 </div>
                                             ) : (
@@ -426,14 +428,14 @@ function UserManagement({ selfId }: { selfId: string }) {
                                                         onClick={() => startEdit(u)}
                                                         className="text-primary hover:text-white text-sm transition-colors"
                                                     >
-                                                        Edit
+                                                        {t('editBtn')}
                                                     </button>
                                                     {!isSelf && (
                                                         <button
                                                             onClick={() => handleDelete(u.id, u.full_name)}
                                                             className="text-red-400 hover:text-red-300 text-sm transition-colors"
                                                         >
-                                                            Remove
+                                                            {t('removeBtn')}
                                                         </button>
                                                     )}
                                                 </div>
@@ -454,6 +456,7 @@ function UserManagement({ selfId }: { selfId: string }) {
 // Admin System Settings Component
 // ─────────────────────────────────────────────────────────────────────────────
 function AdminSystemSettings() {
+    const t = useTranslations('pages.settings');
     const supabase = createClient();
     const [geoRadius, setGeoRadius] = useState('60');
     const [platformName, setPlatformName] = useState('TricksLand Academy');
@@ -483,7 +486,7 @@ function AdminSystemSettings() {
             .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
         setSaving(false);
         if (error) toast.error(error.message);
-        else toast.success('Setting saved');
+        else toast.success(t('settingSaved'));
     };
 
     if (loading) return null;
@@ -492,33 +495,33 @@ function AdminSystemSettings() {
 
     return (
         <GlassCard>
-            <h2 className="text-lg font-semibold text-white mb-2">System Settings</h2>
-            <p className="text-white/50 text-sm mb-5">Configure platform-wide settings</p>
+            <h2 className="text-lg font-semibold text-white mb-2">{t('systemSettings')}</h2>
+            <p className="text-white/50 text-sm mb-5">{t('systemSettingsSubtitle')}</p>
             <div className="space-y-5">
                 <div>
                     <label className="block text-white/80 text-sm font-medium mb-1">
-                        Geolocation Check-in Radius (meters)
+                        {t('geoRadiusLabel')}
                     </label>
                     <p className="text-white/40 text-xs mb-2">
-                        Coaches must be within this radius to mark their own attendance
+                        {t('geoRadiusHint')}
                     </p>
                     <div className="flex gap-3">
                         <input type="number" min="10" max="500" value={geoRadius}
                             onChange={e => setGeoRadius(e.target.value)} className={`w-32 ${inputCls}`} />
                         <button onClick={() => handleSave('geolocation_radius_meters', geoRadius)} disabled={saving}
                             className="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
-                            {saving ? 'Saving…' : 'Save'}
+                            {saving ? t('savingDots') : t('saveSetting')}
                         </button>
                     </div>
                 </div>
                 <div>
-                    <label className="block text-white/80 text-sm font-medium mb-1">Platform Name</label>
+                    <label className="block text-white/80 text-sm font-medium mb-1">{t('platformNameLabel')}</label>
                     <div className="flex gap-3">
                         <input type="text" value={platformName} onChange={e => setPlatformName(e.target.value)}
                             className={`flex-1 max-w-xs ${inputCls}`} />
                         <button onClick={() => handleSave('platform_name', platformName)} disabled={saving}
                             className="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg text-sm transition-colors disabled:opacity-50">
-                            {saving ? 'Saving…' : 'Save'}
+                            {saving ? t('savingDots') : t('saveSetting')}
                         </button>
                     </div>
                 </div>

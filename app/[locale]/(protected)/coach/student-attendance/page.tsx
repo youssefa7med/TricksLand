@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 interface Course { id: string; name: string; }
 interface Session { id: string; session_date: string; start_time: string; end_time: string; }
@@ -17,6 +18,8 @@ const STATUS_COLORS = {
 
 export default function CoachStudentAttendancePage() {
     const supabase = createClient();
+    const t = useTranslations('pages.studentAttendance');
+    const tc = useTranslations('common');
 
     const [courses, setCourses] = useState<Course[]>([]);
     const [sessions, setSessions] = useState<Session[]>([]);
@@ -75,14 +78,14 @@ export default function CoachStudentAttendancePage() {
     const loadSessionData = useCallback(async (sessionId: string, courseId: string) => {
         setLoadingStudents(true);
 
-        const { data: enrolled } = await supabase
+        const { data: enrolled } = await (supabase as any)
             .from('course_students')
-            .select('student_id, profiles!course_students_student_id_fkey(id, full_name)')
+            .select('student_id, students(id, full_name)')
             .eq('course_id', courseId);
 
         const studentList: Student[] = (enrolled || []).map((r: any) => ({
-            id: r.profiles?.id || r.student_id,
-            full_name: r.profiles?.full_name || 'Unknown',
+            id: r.students?.id || r.student_id,
+            full_name: r.students?.full_name || 'Unknown',
         }));
         setStudents(studentList);
 
@@ -142,7 +145,7 @@ export default function CoachStudentAttendancePage() {
             if (error) fail++; else ok++;
         }
         setSaving(false);
-        if (fail === 0) toast.success(`Attendance saved for ${ok} students`);
+        if (fail === 0) toast.success(t('savedMsg', { count: ok }));
         else toast.warning(`${ok} saved, ${fail} failed`);
         loadSessionData(selectedSession, selectedCourse);
     };
@@ -159,16 +162,16 @@ export default function CoachStudentAttendancePage() {
     return (
         <div className="min-h-screen p-4 md:p-6 space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-white">Student Attendance</h1>
-                <p className="text-white/60 text-sm mt-1">Mark attendance for your students</p>
+                <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
+                <p className="text-white/60 text-sm mt-1">{t('subtitle')}</p>
             </div>
 
             {/* Tabs */}
             <div className="flex gap-2">
-                {(['mark', 'summary'] as const).map(t => (
-                    <button key={t} onClick={() => setTab(t)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === t ? 'bg-primary text-white' : 'bg-white/10 text-white/70 hover:bg-white/20'}`}>
-                        {t === 'mark' ? '✏️ Mark Attendance' : '📊 Monthly Summary'}
+                {(['mark', 'summary'] as const).map(tabKey => (
+                    <button key={tabKey} onClick={() => setTab(tabKey)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${tab === tabKey ? 'bg-primary text-white' : 'bg-white/10 text-white/70 hover:bg-white/20'}`}>
+                        {tabKey === 'mark' ? `✏️ ${t('markTab')}` : `📊 ${t('summaryTab')}`}
                     </button>
                 ))}
             </div>
@@ -177,21 +180,21 @@ export default function CoachStudentAttendancePage() {
             <GlassCard className="p-4">
                 <div className="flex flex-wrap gap-4">
                     <div className="flex-1 min-w-48">
-                        <label className="block text-white/70 text-xs mb-1">Course</label>
+                        <label className="block text-white/70 text-xs mb-1">{tc('course')}</label>
                         <select value={selectedCourse} onChange={e => setSelectedCourse(e.target.value)}
                             className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                            <option value="">— Select Course —</option>
+                            <option value="">{t('selectCourseLabel')}</option>
                             {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </div>
 
                     {tab === 'mark' && (
                         <div className="flex-1 min-w-48">
-                            <label className="block text-white/70 text-xs mb-1">Session</label>
+                            <label className="block text-white/70 text-xs mb-1">{t('selectSessionLabel')}</label>
                             <select value={selectedSession} onChange={e => setSelectedSession(e.target.value)}
                                 disabled={!selectedCourse || loadingSessions}
                                 className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50">
-                                <option value="">— Select Session —</option>
+                                <option value="">{t('selectSessionLabel')}</option>
                                 {sessions.map(s => (
                                     <option key={s.id} value={s.id}>
                                         {s.session_date} · {s.start_time?.slice(0, 5)} – {s.end_time?.slice(0, 5)}
@@ -203,7 +206,7 @@ export default function CoachStudentAttendancePage() {
 
                     {tab === 'summary' && (
                         <div>
-                            <label className="block text-white/70 text-xs mb-1">Month</label>
+                            <label className="block text-white/70 text-xs mb-1">{t('monthLabel')}</label>
                             <input type="month" value={summaryMonth} onChange={e => setSummaryMonth(e.target.value)}
                                 className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                         </div>
@@ -221,25 +224,25 @@ export default function CoachStudentAttendancePage() {
                                 <p className="text-white/60 text-sm">{selectedSessionData.start_time?.slice(0, 5)} – {selectedSessionData.end_time?.slice(0, 5)}</p>
                             </div>
                             <div className="flex gap-3 text-sm">
-                                <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full">{presentCount} Present</span>
-                                <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full">{absentCount} Absent</span>
+                                <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full">{t('presentCount', { count: presentCount })}</span>
+                                <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full">{t('absentCount', { count: absentCount })}</span>
                             </div>
                         </div>
                     )}
 
                     {students.length > 0 && (
                         <div className="flex gap-2 flex-wrap">
-                            <span className="text-white/60 text-sm self-center">Mark all:</span>
-                            <button onClick={() => markAll('present')} className="px-3 py-1 text-sm rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/40 transition-colors">All Present</button>
-                            <button onClick={() => markAll('absent')} className="px-3 py-1 text-sm rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/40 transition-colors">All Absent</button>
-                            <button onClick={() => markAll('late')} className="px-3 py-1 text-sm rounded-lg bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/40 transition-colors">All Late</button>
+                            <span className="text-white/60 text-sm self-center">{tc('markAll')}:</span>
+                            <button onClick={() => markAll('present')} className="px-3 py-1 text-sm rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/40 transition-colors">{t('markAllPresent')}</button>
+                            <button onClick={() => markAll('absent')} className="px-3 py-1 text-sm rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/40 transition-colors">{t('markAllAbsent')}</button>
+                            <button onClick={() => markAll('late')} className="px-3 py-1 text-sm rounded-lg bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/40 transition-colors">{t('markAllLate')}</button>
                         </div>
                     )}
 
                     {loadingStudents ? (
-                        <div className="py-8 text-center text-white/50">Loading students…</div>
+                        <div className="py-8 text-center text-white/50">{tc('loading')}…</div>
                     ) : students.length === 0 ? (
-                        <div className="py-8 text-center text-white/50">No students enrolled</div>
+                        <div className="py-8 text-center text-white/50">{t('noStudents')}</div>
                     ) : (
                         <div className="space-y-2">
                             {students.map((student, idx) => {
@@ -261,7 +264,7 @@ export default function CoachStudentAttendancePage() {
                                                             ? STATUS_COLORS[s] + ' font-semibold'
                                                             : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
                                                     }`}>
-                                                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                                                    {tc(s)}
                                                 </button>
                                             ))}
                                         </div>
@@ -275,7 +278,7 @@ export default function CoachStudentAttendancePage() {
                         <div className="flex justify-end pt-2">
                             <button onClick={handleSave} disabled={saving}
                                 className="bg-primary hover:bg-primary/80 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50">
-                                {saving ? 'Saving…' : 'Save Attendance'}
+                                {saving ? tc('saving') : t('saveAttendance')}
                             </button>
                         </div>
                     )}
@@ -283,28 +286,28 @@ export default function CoachStudentAttendancePage() {
             )}
 
             {tab === 'mark' && selectedCourse && !selectedSession && (
-                <GlassCard className="p-8 text-center text-white/50">Select a session to mark attendance</GlassCard>
+                <GlassCard className="p-8 text-center text-white/50">{t('selectBoth')}</GlassCard>
             )}
             {!selectedCourse && (
-                <GlassCard className="p-8 text-center text-white/50">Select a course to begin</GlassCard>
+                <GlassCard className="p-8 text-center text-white/50">{t('selectCourseFirst')}</GlassCard>
             )}
 
             {/* SUMMARY TAB */}
             {tab === 'summary' && (
                 <GlassCard className="p-4">
                     {!selectedCourse ? (
-                        <div className="py-8 text-center text-white/50">Select a course to view summary</div>
+                        <div className="py-8 text-center text-white/50">{t('selectCourseFirst')}</div>
                     ) : summaryData.length === 0 ? (
-                        <div className="py-8 text-center text-white/50">No attendance data for {summaryMonth}</div>
+                        <div className="py-8 text-center text-white/50">{t('noStudents')}</div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead><tr className="text-white/50 border-b border-white/10">
-                                    <th className="text-left py-2 px-3">Student</th>
-                                    <th className="text-center py-2 px-3">Sessions</th>
-                                    <th className="text-center py-2 px-3">Present</th>
-                                    <th className="text-center py-2 px-3">Absent</th>
-                                    <th className="text-center py-2 px-3">Rate</th>
+                                    <th className="text-left py-2 px-3">{t('studentCol')}</th>
+                                    <th className="text-center py-2 px-3">{t('sessionsCol')}</th>
+                                    <th className="text-center py-2 px-3">{tc('present')}</th>
+                                    <th className="text-center py-2 px-3">{tc('absent')}</th>
+                                    <th className="text-center py-2 px-3">{t('rateCol')}</th>
                                 </tr></thead>
                                 <tbody>{summaryData.map((row: any) => (
                                     <tr key={row.student_id} className="border-b border-white/5 hover:bg-white/5">

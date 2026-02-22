@@ -5,21 +5,25 @@ import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 interface Course { id: string; name: string; }
 
 type ReportType = 'student-attendance' | 'course-attendance' | 'financial' | 'coach-hours' | 'coach-payroll';
 
-const REPORT_LABELS: Record<ReportType, string> = {
-    'student-attendance': '📋 Student Attendance',
-    'course-attendance': '📊 Course Attendance',
-    'financial': '💰 Course Financial',
-    'coach-hours': '⏱ Coach Hours',
-    'coach-payroll': '💼 Coach Payroll',
-};
 
 export default function AdminReportsPage() {
     const supabase = createClient();
+    const t = useTranslations('pages.reports');
+    const tc = useTranslations('common');
+
+    const REPORT_LABELS: Record<ReportType, string> = {
+        'student-attendance': t('reportStudentAttendance'),
+        'course-attendance': t('reportCourseAttendance'),
+        'financial': t('reportFinancial'),
+        'coach-hours': t('reportCoachHours'),
+        'coach-payroll': t('reportCoachPayroll'),
+    };
 
     const [courses, setCourses] = useState<Course[]>([]);
     const [coaches, setCoaches] = useState<{ id: string; full_name: string }[]>([]);
@@ -177,8 +181,8 @@ export default function AdminReportsPage() {
     return (
         <div className="min-h-screen p-4 md:p-6 space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-white">Reports</h1>
-                <p className="text-white/60 text-sm mt-1">Generate and export monthly reports</p>
+                <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
+                <p className="text-white/60 text-sm mt-1">{t('subtitle')}</p>
             </div>
 
             {/* Report type selector */}
@@ -197,17 +201,17 @@ export default function AdminReportsPage() {
             <GlassCard className="p-4">
                 <div className="flex flex-wrap gap-4 items-end">
                     <div>
-                        <label className="block text-white/70 text-xs mb-1">Month</label>
+                        <label className="block text-white/70 text-xs mb-1">{t('monthLabel')}</label>
                         <input type="month" value={month} onChange={e => setMonth(e.target.value)}
                             className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                     </div>
 
                     {showCourseFilter && (
                         <div className="flex-1 min-w-48">
-                            <label className="block text-white/70 text-xs mb-1">Course (all if empty)</label>
+                            <label className="block text-white/70 text-xs mb-1">{t('courseFilter')}</label>
                             <select value={selectedCourse} onChange={e => setSelectedCourse(e.target.value)}
                                 className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                                <option value="">All Courses</option>
+                                <option value="">{t('allCourses')}</option>
                                 {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
                         </div>
@@ -215,10 +219,10 @@ export default function AdminReportsPage() {
 
                     {showCoachFilter && (
                         <div className="flex-1 min-w-48">
-                            <label className="block text-white/70 text-xs mb-1">Coach (all if empty)</label>
+                            <label className="block text-white/70 text-xs mb-1">{t('coachFilter')}</label>
                             <select value={selectedCoach} onChange={e => setSelectedCoach(e.target.value)}
                                 className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                                <option value="">All Coaches</option>
+                                <option value="">{t('allCoaches')}</option>
                                 {coaches.map(c => <option key={c.id} value={c.id}>{c.full_name}</option>)}
                             </select>
                         </div>
@@ -226,7 +230,7 @@ export default function AdminReportsPage() {
 
                     <button onClick={generateReport} disabled={loading}
                         className="bg-primary hover:bg-primary/80 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
-                        {loading ? 'Generating…' : '🔍 Generate'}
+                        {loading ? t('generating') : t('generate')}
                     </button>
                 </div>
             </GlassCard>
@@ -237,7 +241,7 @@ export default function AdminReportsPage() {
                     <div className="flex justify-between items-center">
                         <div>
                             <h3 className="text-white font-semibold">{REPORT_LABELS[reportType]}</h3>
-                            <p className="text-white/50 text-xs mt-0.5">{reportData.length} records · {month}</p>
+                            <p className="text-white/50 text-xs mt-0.5">{reportData.length} {t('records')} · {month}</p>
                         </div>
                         <div className="flex gap-2">
                             <button onClick={exportCSV}
@@ -256,13 +260,13 @@ export default function AdminReportsPage() {
                         {reportType === 'student-attendance' && (
                             <table className="w-full text-sm">
                                 <thead><tr className="text-white/50 border-b border-white/10">
-                                    <th className="text-left p-3">Student</th>
-                                    <th className="text-left p-3">Course</th>
-                                    <th className="text-center p-3">Sessions</th>
-                                    <th className="text-center p-3">Present</th>
-                                    <th className="text-center p-3">Absent</th>
-                                    <th className="text-center p-3">Late</th>
-                                    <th className="text-center p-3">Rate</th>
+                                    <th className="text-left p-3">{t('studentCol')}</th>
+                                    <th className="text-left p-3">{t('courseCol')}</th>
+                                    <th className="text-center p-3">{t('sessionsCol')}</th>
+                                    <th className="text-center p-3">{t('presentCol')}</th>
+                                    <th className="text-center p-3">{t('absentCol')}</th>
+                                    <th className="text-center p-3">{t('lateCol')}</th>
+                                    <th className="text-center p-3">{t('rateCol')}</th>
                                 </tr></thead>
                                 <tbody>{reportData.map((r, i) => (
                                     <tr key={i} className="border-b border-white/5 hover:bg-white/5">
@@ -286,11 +290,11 @@ export default function AdminReportsPage() {
                         {reportType === 'course-attendance' && (
                             <table className="w-full text-sm">
                                 <thead><tr className="text-white/50 border-b border-white/10">
-                                    <th className="text-left p-3">Course</th>
-                                    <th className="text-center p-3">Students</th>
-                                    <th className="text-center p-3">Total Sessions</th>
-                                    <th className="text-center p-3">Attended</th>
-                                    <th className="text-center p-3">Avg Rate</th>
+                                    <th className="text-left p-3">{t('courseCol')}</th>
+                                    <th className="text-center p-3">{t('studentsCol')}</th>
+                                    <th className="text-center p-3">{t('totalSessionsCol')}</th>
+                                    <th className="text-center p-3">{t('attendedCol')}</th>
+                                    <th className="text-center p-3">{t('avgRateCol')}</th>
                                 </tr></thead>
                                 <tbody>{reportData.map((r, i) => (
                                     <tr key={i} className="border-b border-white/5 hover:bg-white/5">
@@ -312,12 +316,12 @@ export default function AdminReportsPage() {
                         {reportType === 'financial' && (
                             <table className="w-full text-sm">
                                 <thead><tr className="text-white/50 border-b border-white/10">
-                                    <th className="text-left p-3">Course</th>
-                                    <th className="text-right p-3">Students</th>
-                                    <th className="text-right p-3">Collected</th>
-                                    <th className="text-right p-3">Pending</th>
-                                    <th className="text-right p-3">Expenses</th>
-                                    <th className="text-right p-3">Net Profit</th>
+                                    <th className="text-left p-3">{t('courseCol')}</th>
+                                    <th className="text-right p-3">{t('studentsCol')}</th>
+                                    <th className="text-right p-3">{t('collectedCol')}</th>
+                                    <th className="text-right p-3">{t('pendingCol')}</th>
+                                    <th className="text-right p-3">{t('expensesCol')}</th>
+                                    <th className="text-right p-3">{t('netProfitCol')}</th>
                                 </tr></thead>
                                 <tbody>
                                     {reportData.map((r, i) => (
@@ -331,7 +335,7 @@ export default function AdminReportsPage() {
                                         </tr>
                                     ))}
                                     <tr className="border-t border-white/20">
-                                        <td className="p-3 text-white/70 font-semibold" colSpan={2}>Total</td>
+                                        <td className="p-3 text-white/70 font-semibold" colSpan={2}>{t('totalCol')}</td>
                                         <td className="p-3 text-right text-green-400 font-semibold">{formatCurrency(reportData.reduce((a, r) => a + Number(r.total_income), 0))}</td>
                                         <td className="p-3 text-right text-yellow-400 font-semibold">{formatCurrency(reportData.reduce((a, r) => a + Number(r.pending_income), 0))}</td>
                                         <td className="p-3 text-right text-red-400 font-semibold">{formatCurrency(reportData.reduce((a, r) => a + Number(r.total_expenses), 0))}</td>
@@ -345,12 +349,12 @@ export default function AdminReportsPage() {
                         {reportType === 'coach-hours' && (
                             <table className="w-full text-sm">
                                 <thead><tr className="text-white/50 border-b border-white/10">
-                                    <th className="text-left p-3">Date</th>
-                                    <th className="text-left p-3">Coach</th>
-                                    <th className="text-left p-3">Course</th>
-                                    <th className="text-right p-3">Hours</th>
-                                    <th className="text-right p-3">Rate</th>
-                                    <th className="text-right p-3">Subtotal</th>
+                                    <th className="text-left p-3">{t('dateCol')}</th>
+                                    <th className="text-left p-3">{tc('coach')}</th>
+                                    <th className="text-left p-3">{t('courseCol')}</th>
+                                    <th className="text-right p-3">{t('hoursCol')}</th>
+                                    <th className="text-right p-3">{t('rateAmtCol')}</th>
+                                    <th className="text-right p-3">{t('subtotalCol')}</th>
                                 </tr></thead>
                                 <tbody>{reportData.map((r, i) => (
                                     <tr key={i} className="border-b border-white/5 hover:bg-white/5">
@@ -369,13 +373,13 @@ export default function AdminReportsPage() {
                         {reportType === 'coach-payroll' && (
                             <table className="w-full text-sm">
                                 <thead><tr className="text-white/50 border-b border-white/10">
-                                    <th className="text-left p-3">Coach</th>
-                                    <th className="text-right p-3">Sessions</th>
-                                    <th className="text-right p-3">Hours</th>
-                                    <th className="text-right p-3">Gross</th>
-                                    <th className="text-right p-3">Bonuses</th>
-                                    <th className="text-right p-3">Discounts</th>
-                                    <th className="text-right p-3">Net Payable</th>
+                                    <th className="text-left p-3">{tc('coach')}</th>
+                                    <th className="text-right p-3">{tc('sessions')}</th>
+                                    <th className="text-right p-3">{tc('hours')}</th>
+                                    <th className="text-right p-3">{t('grossCol')}</th>
+                                    <th className="text-right p-3">{t('bonusesCol')}</th>
+                                    <th className="text-right p-3">{t('discountsCol')}</th>
+                                    <th className="text-right p-3">{t('netPayableCol')}</th>
                                 </tr></thead>
                                 <tbody>
                                     {reportData.map((r, i) => (
@@ -390,7 +394,7 @@ export default function AdminReportsPage() {
                                         </tr>
                                     ))}
                                     <tr className="border-t border-white/20">
-                                        <td className="p-3 text-white/70 font-semibold" colSpan={6}>Total Payable</td>
+                                        <td className="p-3 text-white/70 font-semibold" colSpan={6}>{t('totalPayable')}</td>
                                         <td className="p-3 text-right text-primary font-bold text-base">{formatCurrency(reportData.reduce((a, r) => a + Number(r.net_total), 0))}</td>
                                     </tr>
                                 </tbody>
@@ -403,7 +407,7 @@ export default function AdminReportsPage() {
             {reportData.length === 0 && !loading && (
                 <GlassCard className="p-12 text-center">
                     <div className="text-4xl mb-3">📊</div>
-                    <p className="text-white/50">Select a report type and click Generate</p>
+                    <p className="text-white/50">{t('noData')}</p>
                 </GlassCard>
             )}
         </div>

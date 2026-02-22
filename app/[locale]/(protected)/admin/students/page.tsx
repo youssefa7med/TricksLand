@@ -5,10 +5,12 @@ import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { toast } from 'sonner';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 export default function AdminStudentsPage() {
     const locale = useLocale();
+    const t = useTranslations('pages.students');
+    const tc = useTranslations('common');
     const supabase = createClient();
     const [allStudents, setAllStudents] = useState<any[]>([]);
     const [courses, setCourses] = useState<any[]>([]);
@@ -99,10 +101,10 @@ export default function AdminStudentsPage() {
     };
 
     const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Delete "${name}"? This will also remove them from all courses.`)) return;
+        if (!confirm(t('deleteConfirm').replace('%name%', name))) return;
         const { error } = await (supabase as any).from('students').delete().eq('id', id);
         if (error) toast.error(error.message);
-        else { toast.success('Student deleted'); fetchData(); }
+        else { toast.success(t('studentDeleted')); fetchData(); }
     };
 
     const inputClass = "bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary text-sm";
@@ -112,13 +114,13 @@ export default function AdminStudentsPage() {
             <div className="max-w-7xl mx-auto">
                 <div className="flex justify-between items-start flex-wrap gap-3 mb-6 md:mb-8">
                     <div>
-                        <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">Students</h1>
+                        <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">{t('title')}</h1>
                         <p className="text-white/70">
-                            {loading ? '…' : `${filtered.length} of ${allStudents.length}`} student{allStudents.length !== 1 ? 's' : ''}
+                            {loading ? '…' : `${filtered.length} / ${allStudents.length}`}
                         </p>
                     </div>
                     <Link href={`/${locale}/admin/students/new`} className="btn-glossy">
-                        + New Student
+                        {t('addNew')}
                     </Link>
                 </div>
 
@@ -127,7 +129,7 @@ export default function AdminStudentsPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         {/* Name search */}
                         <div>
-                            <label className="block text-white/50 text-xs mb-1">Search by name</label>
+                            <label className="block text-white/50 text-xs mb-1">{t('searchByName')}</label>
                             <input
                                 type="text"
                                 value={search}
@@ -139,7 +141,7 @@ export default function AdminStudentsPage() {
 
                         {/* Course family free-text */}
                         <div>
-                            <label className="block text-white/50 text-xs mb-1">Course contains</label>
+                            <label className="block text-white/50 text-xs mb-1">{t('courseContains')}</label>
                             <input
                                 type="text"
                                 value={courseSearch}
@@ -155,13 +157,13 @@ export default function AdminStudentsPage() {
 
                         {/* Specific course dropdown */}
                         <div>
-                            <label className="block text-white/50 text-xs mb-1">Specific course</label>
+                            <label className="block text-white/50 text-xs mb-1">{t('specificCourse')}</label>
                             <select
                                 value={courseFilter}
                                 onChange={(e) => { setCourseFilter(e.target.value); setCourseSearch(''); }}
                                 className="w-full bg-gray-900 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                             >
-                                <option value="" className="bg-gray-900 text-white">All courses</option>
+                                <option value="" className="bg-gray-900 text-white">{t('allCoursesOption')}</option>
                                 {courses.map(c => (
                                     <option key={c.id} value={c.id} className="bg-gray-900 text-white">{c.name}</option>
                                 ))}
@@ -170,13 +172,13 @@ export default function AdminStudentsPage() {
 
                         {/* Age range */}
                         <div>
-                            <label className="block text-white/50 text-xs mb-1">Age range</label>
+                            <label className="block text-white/50 text-xs mb-1">{t('ageRange')}</label>
                             <div className="flex items-center gap-2">
                                 <input
                                     type="number"
                                     value={ageMin}
                                     onChange={(e) => setAgeMin(e.target.value)}
-                                    placeholder="Min"
+                                    placeholder={t('ageMin')}
                                     min={0}
                                     className={`w-full ${inputClass}`}
                                 />
@@ -185,7 +187,7 @@ export default function AdminStudentsPage() {
                                     type="number"
                                     value={ageMax}
                                     onChange={(e) => setAgeMax(e.target.value)}
-                                    placeholder="Max"
+                                    placeholder={t('ageMax')}
                                     min={0}
                                     className={`w-full ${inputClass}`}
                                 />
@@ -195,7 +197,7 @@ export default function AdminStudentsPage() {
 
                     {hasFilters && (
                         <button onClick={clearFilters} className="mt-3 text-white/40 hover:text-white text-xs transition-colors">
-                            ✕ Clear filters
+                            {tc('clearFilters')}
                         </button>
                     )}
                 </GlassCard>
@@ -205,11 +207,11 @@ export default function AdminStudentsPage() {
                 ) : filtered.length === 0 ? (
                     <GlassCard>
                         <div className="text-center py-12">
-                            <p className="text-white/70 mb-4">{hasFilters ? 'No students match the current filters' : 'No students yet'}</p>
+                            <p className="text-white/70 mb-4">{hasFilters ? t('noMatchFilters') : t('noStudentsYet')}</p>
                             {hasFilters ? (
-                                <button onClick={clearFilters} className="text-primary hover:text-white text-sm transition-colors">Clear filters</button>
+                                <button onClick={clearFilters} className="text-primary hover:text-white text-sm transition-colors">{tc('clearFilters')}</button>
                             ) : (
-                                <Link href={`/${locale}/admin/students/new`} className="btn-glossy inline-block">Add First Student</Link>
+                                <Link href={`/${locale}/admin/students/new`} className="btn-glossy inline-block">{t('addFirst')}</Link>
                             )}
                         </div>
                     </GlassCard>
@@ -219,13 +221,13 @@ export default function AdminStudentsPage() {
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-white/10">
-                                        <th className="text-left py-3 px-4 text-white/70 text-sm">#</th>
-                                        <th className="text-left py-3 px-4 text-white/70 text-sm">Name</th>
-                                        <th className="text-left py-3 px-4 text-white/70 text-sm">Age</th>
-                                        <th className="text-left py-3 px-4 text-white/70 text-sm">Phone</th>
-                                        <th className="text-left py-3 px-4 text-white/70 text-sm">Parent Phone</th>
-                                        <th className="text-left py-3 px-4 text-white/70 text-sm">Courses</th>
-                                        <th className="text-right py-3 px-4 text-white/70 text-sm">Actions</th>
+                                        <th className="text-left py-3 px-4 text-white/70 text-sm">{t('numCol')}</th>
+                                        <th className="text-left py-3 px-4 text-white/70 text-sm">{t('nameCol')}</th>
+                                        <th className="text-left py-3 px-4 text-white/70 text-sm">{t('ageCol')}</th>
+                                        <th className="text-left py-3 px-4 text-white/70 text-sm">{t('phoneCol')}</th>
+                                        <th className="text-left py-3 px-4 text-white/70 text-sm">{t('parentPhoneCol')}</th>
+                                        <th className="text-left py-3 px-4 text-white/70 text-sm">{t('coursesCol')}</th>
+                                        <th className="text-right py-3 px-4 text-white/70 text-sm">{t('actionsCol')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -259,13 +261,13 @@ export default function AdminStudentsPage() {
                                                             href={`/${locale}/admin/students/${s.id}/edit`}
                                                             className="text-primary hover:text-white text-sm transition-colors"
                                                         >
-                                                            Edit
+                                                            {tc('edit')}
                                                         </Link>
                                                         <button
                                                             onClick={() => handleDelete(s.id, s.full_name)}
                                                             className="text-red-400 hover:text-red-300 text-sm transition-colors"
                                                         >
-                                                            Delete
+                                                            {tc('delete')}
                                                         </button>
                                                     </div>
                                                 </td>

@@ -3,12 +3,14 @@ import { redirect } from 'next/navigation';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import Link from 'next/link';
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { DeleteSessionButton } from '@/components/sessions/DeleteSessionButton';
 
 export default async function CoachSessionsPage() {
     const supabase = await createClient();
     const locale = await getLocale();
+    const t = await getTranslations('pages.sessions');
+    const tc = await getTranslations('common');
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
@@ -54,11 +56,11 @@ export default async function CoachSessionsPage() {
             <div className="max-w-7xl mx-auto">
                 <div className="flex justify-between items-start flex-wrap gap-3 mb-6 md:mb-8">
                     <div>
-                        <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">My Sessions</h1>
-                        <p className="text-white/70">View and manage your coaching sessions</p>
+                        <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">{t('title')}</h1>
+                        <p className="text-white/70">{t('subtitle')}</p>
                     </div>
                     <Link href={`/${locale}/coach/sessions/new`} className="btn-glossy">
-                        + Add New Session
+                        + {t('logSession')}
                     </Link>
                 </div>
 
@@ -73,7 +75,7 @@ export default async function CoachSessionsPage() {
                             <div className="flex justify-between items-start flex-wrap gap-2 mb-4">
                                 <h2 className="text-2xl font-semibold text-white">
                                     {new Date(month + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}
-                                    {isCurrentMonth && <span className="ml-2 text-sm text-primary">(Current Month)</span>}
+                                    {isCurrentMonth && <span className="ml-2 text-sm text-primary">({t('currentMonth') || 'Current Month'})</span>}
                                 </h2>
                                 <div className="text-right">
                                     <div className="text-sm text-white/70">Total</div>
@@ -85,14 +87,14 @@ export default async function CoachSessionsPage() {
                                 <table className="w-full">
                                     <thead>
                                         <tr className="border-b border-white/10">
-                                            <th className="text-left py-3 px-4 text-white/70">Date</th>
-                                            <th className="text-left py-3 px-4 text-white/70">Course</th>
-                                            <th className="text-left py-3 px-4 text-white/70">Time</th>
-                                            <th className="text-left py-3 px-4 text-white/70">Type</th>
-                                            <th className="text-left py-3 px-4 text-white/70">Hours</th>
-                                            <th className="text-left py-3 px-4 text-white/70">Rate</th>
-                                            <th className="text-right py-3 px-4 text-white/70">Amount</th>
-                                            <th className="text-right py-3 px-4 text-white/70">Actions</th>
+                                            <th className="text-left py-3 px-4 text-white/70">{tc('date')}</th>
+                                            <th className="text-left py-3 px-4 text-white/70">{tc('course')}</th>
+                                            <th className="text-left py-3 px-4 text-white/70">{t('time')}</th>
+                                            <th className="text-left py-3 px-4 text-white/70">{t('type')}</th>
+                                            <th className="text-left py-3 px-4 text-white/70">{t('hrs')}</th>
+                                            <th className="text-left py-3 px-4 text-white/70">{t('rate')}</th>
+                                            <th className="text-right py-3 px-4 text-white/70">{tc('amount')}</th>
+                                            <th className="text-right py-3 px-4 text-white/70">{tc('actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -113,7 +115,7 @@ export default async function CoachSessionsPage() {
                                                         ? 'bg-blue-500/20 text-blue-300'
                                                         : 'bg-purple-500/20 text-purple-300'
                                                         }`}>
-                                                        {session.session_type === 'online_session' ? 'Online' : 'Offline'}
+                                                        {session.session_type === 'online_session' ? tc('online') : tc('offline')}
                                                     </span>
                                                 </td>
                                                 <td className="py-3 px-4 text-white">{session.computed_hours}h</td>
@@ -126,7 +128,7 @@ export default async function CoachSessionsPage() {
                                                                 href={`/${locale}/coach/sessions/edit/${session.id}`}
                                                                 className="text-primary hover:text-primary-light transition-colors text-sm"
                                                             >
-                                                                Edit
+                                                                {tc('edit')}
                                                             </Link>
                                                             <DeleteSessionButton sessionId={session.id} />
                                                         </div>
@@ -144,9 +146,9 @@ export default async function CoachSessionsPage() {
                 {(!sessions || sessions.length === 0) && (
                     <GlassCard>
                         <div className="text-center py-12">
-                            <p className="text-white/70 mb-4">No sessions logged yet</p>
+                            <p className="text-white/70 mb-4">{t('noSessions')}</p>
                             <Link href={`/${locale}/coach/sessions/new`} className="btn-glossy inline-block">
-                                Log Your First Session
+                                {t('logFirst')}
                             </Link>
                         </div>
                     </GlassCard>

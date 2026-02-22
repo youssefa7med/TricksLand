@@ -2,11 +2,13 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency } from '@/lib/utils';
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 export default async function CoachDashboard() {
     const supabase = await createClient();
     const locale = await getLocale();
+    const t = await getTranslations('pages.coachDashboard');
+    const tc = await getTranslations('common');
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
@@ -62,43 +64,43 @@ export default async function CoachDashboard() {
     return (
         <div className="page-container">
             <div className="max-w-7xl mx-auto">
-                <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">Welcome, {profile?.full_name}!</h1>
-                <p className="text-white/70 mb-8">Here's your monthly summary</p>
+                <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">{t('welcomeMessage')} {profile?.full_name}!</h1>
+                <p className="text-white/70 mb-8">{t('monthlySummary')}</p>
 
                 {/* Monthly Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <GlassCard hover>
                         <div className="text-center">
                             <div className="text-3xl md:text-4xl font-bold text-primary mb-2">{monthlySummary?.session_count || 0}</div>
-                            <div className="text-white/70">Sessions This Month</div>
+                            <div className="text-white/70">{t('sessionsThisMonth')}</div>
                         </div>
                     </GlassCard>
 
                     <GlassCard hover>
                         <div className="text-center">
                             <div className="text-3xl md:text-4xl font-bold text-secondary mb-2">{monthlySummary?.total_hours || 0}</div>
-                            <div className="text-white/70">Total Hours</div>
+                            <div className="text-white/70">{t('totalHours')}</div>
                         </div>
                     </GlassCard>
 
                     <GlassCard hover>
                         <div className="text-center">
                             <div className="text-3xl md:text-4xl font-bold text-primary mb-2">{formatCurrency(Number(monthlySummary?.gross_total) || 0)}</div>
-                            <div className="text-white/70">Gross Total</div>
+                            <div className="text-white/70">{t('grossTotal')}</div>
                         </div>
                     </GlassCard>
 
                     <GlassCard hover>
                         <div className="text-center">
                             <div className="text-3xl md:text-4xl font-bold text-secondary mb-2">{formatCurrency(Number(monthlySummary?.net_total) || 0)}</div>
-                            <div className="text-white/70">Net Payout</div>
+                            <div className="text-white/70">{t('netPayout')}</div>
                         </div>
                     </GlassCard>
                 </div>
 
                 {/* Assigned Courses */}
                 <GlassCard className="mb-8">
-                    <h2 className="text-2xl font-semibold text-white mb-4">Your Courses</h2>
+                    <h2 className="text-2xl font-semibold text-white mb-4">{t('yourCourses')}</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {assignedCourses?.map((assignment: any) => (
                             <div key={assignment.courses.id} className="bg-white/5 rounded-lg p-4 border border-white/10">
@@ -115,22 +117,22 @@ export default async function CoachDashboard() {
                 {/* Recent Sessions */}
                 <GlassCard>
                     <div className="flex justify-between items-center flex-wrap gap-2 mb-4">
-                        <h2 className="text-2xl font-semibold text-white">Recent Sessions</h2>
+                        <h2 className="text-2xl font-semibold text-white">{t('recentSessions')}</h2>
                         <a href={`/${locale}/coach/sessions`} className="btn-glossy text-sm px-4 py-2">
-                            Manage Sessions
+                            {t('manageSessions')}
                         </a>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-white/10">
-                                    <th className="text-left py-3 px-4 text-white/70">Date</th>
-                                    <th className="text-left py-3 px-4 text-white/70">Course</th>
-                                    <th className="text-left py-3 px-4 text-white/70">Time</th>
-                                    <th className="text-left py-3 px-4 text-white/70">Type</th>
-                                    <th className="text-left py-3 px-4 text-white/70">Hours</th>
-                                    <th className="text-left py-3 px-4 text-white/70">Rate</th>
-                                    <th className="text-right py-3 px-4 text-white/70">Amount</th>
+                                    <th className="text-left py-3 px-4 text-white/70">{t('date')}</th>
+                                    <th className="text-left py-3 px-4 text-white/70">{t('course')}</th>
+                                    <th className="text-left py-3 px-4 text-white/70">{t('time')}</th>
+                                    <th className="text-left py-3 px-4 text-white/70">{t('type')}</th>
+                                    <th className="text-left py-3 px-4 text-white/70">{t('hours')}</th>
+                                    <th className="text-left py-3 px-4 text-white/70">{t('rate')}</th>
+                                    <th className="text-right py-3 px-4 text-white/70">{t('amount')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -140,7 +142,7 @@ export default async function CoachDashboard() {
                                         <td className="py-3 px-4 text-white">{session.courses?.name}</td>
                                         <td className="py-3 px-4 text-white text-sm">{session.start_time} - {session.end_time}</td>
                                         <td className="py-3 px-4 text-white text-sm">
-                                            {session.session_type === 'online_session' ? '🌐 Online' : '🏢 Offline'}
+                                            {session.session_type === 'online_session' ? `🌐 ${tc('online')}` : `🏢 ${tc('offline')}`}
                                         </td>
                                         <td className="py-3 px-4 text-white">{session.computed_hours}h</td>
                                         <td className="py-3 px-4 text-white">{formatCurrency(session.applied_rate)}/h</td>

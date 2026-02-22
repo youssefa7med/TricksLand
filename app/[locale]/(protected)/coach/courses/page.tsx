@@ -2,13 +2,15 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { GlassCard } from '@/components/layout/GlassCard';
 import Link from 'next/link';
-import { getLocale } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 export const dynamic = 'force-dynamic';
 
 export default async function CoachMyCoursesPage() {
     const supabase = await createClient();
     const locale = await getLocale();
+    const t = await getTranslations('pages.courses');
+    const tc = await getTranslations('common');
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
@@ -71,14 +73,14 @@ export default async function CoachMyCoursesPage() {
         <div className="page-container">
             <div className="max-w-5xl mx-auto">
                 <div className="mb-8">
-                    <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">My Courses</h1>
+                    <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">{t('title')}</h1>
                     <p className="text-white/70">{courses.length} course{courses.length !== 1 ? 's' : ''} assigned to you</p>
                 </div>
 
                 {courses.length === 0 ? (
                     <GlassCard>
                         <div className="text-center py-12">
-                            <p className="text-white/70 mb-2">You are not assigned to any courses yet.</p>
+                            <p className="text-white/70 mb-2">{tc('noCoursesAssigned')}</p>
                             <p className="text-white/50 text-sm">Contact your admin to be assigned to a course.</p>
                         </div>
                     </GlassCard>
@@ -125,10 +127,10 @@ export default async function CoachMyCoursesPage() {
                                                     href={`/${locale}/coach/sessions/new?course_id=${course.id}`}
                                                     className="btn-glossy text-sm whitespace-nowrap"
                                                 >
-                                                    + Log Session
+                                                    {t('logSession') || '+ Log Session'}
                                                 </Link>
                                             ) : (
-                                                <span className="text-white/30 text-xs">Course archived</span>
+                                                <span className="text-white/30 text-xs">{tc('archived')}</span>
                                             )}
                                         </div>
                                     </div>

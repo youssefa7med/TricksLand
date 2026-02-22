@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 interface Course { id: string; name: string; }
 interface Schedule {
@@ -35,6 +36,8 @@ const labelCls = 'block text-white/70 text-xs font-medium mb-1';
 
 export default function AdminSchedulingPage() {
     const supabase = createClient();
+    const t = useTranslations('pages.scheduling');
+    const tc = useTranslations('common');
 
     const [courses, setCourses] = useState<Course[]>([]);
     const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -150,40 +153,40 @@ export default function AdminSchedulingPage() {
         <div className="min-h-screen p-4 md:p-6 space-y-6">
             <div className="flex justify-between items-center flex-wrap gap-3">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Course Scheduling</h1>
-                    <p className="text-white/60 text-sm mt-1">Define session plans and track progress</p>
+                    <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
+                    <p className="text-white/60 text-sm mt-1">{t('subtitle')}</p>
                 </div>
                 <button onClick={() => { setShowForm(!showForm); setEditId(null); }}
                     className="bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                    {showForm ? 'Cancel' : '+ New Schedule'}
+                    {showForm ? tc('cancel') : `+ ${t('newSchedule')}`}
                 </button>
             </div>
 
             {/* Form */}
             {showForm && (
                 <GlassCard className="p-5">
-                    <h2 className="text-white font-semibold mb-4">{editId ? 'Edit Schedule' : 'New Course Schedule'}</h2>
+                    <h2 className="text-white font-semibold mb-4">{editId ? t('editSchedule') : t('newSchedule')}</h2>
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
-                            <label className={labelCls}>Course *</label>
+                            <label className={labelCls}>{tc('course')} *</label>
                             <select value={selectedCourse} onChange={e => setSelectedCourse(e.target.value)}
                                 className={inputCls} required>
-                                <option value="">— Select Course —</option>
+                                <option value="">{tc('selectCourse')}</option>
                                 {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label className={labelCls}>Total Sessions *</label>
+                            <label className={labelCls}>{t('totalSessionsLabel')} *</label>
                             <input type="number" min="1" value={totalSessions}
                                 onChange={e => setTotalSessions(e.target.value)} className={inputCls} required />
                         </div>
                         <div>
-                            <label className={labelCls}>Sessions per Week *</label>
+                            <label className={labelCls}>{t('perWeekLabel')} *</label>
                             <input type="number" min="1" max="7" value={sessionsPerWeek}
                                 onChange={e => setSessionsPerWeek(e.target.value)} className={inputCls} required />
                         </div>
                         <div>
-                            <label className={labelCls}>Start Date *</label>
+                            <label className={labelCls}>{t('startDateLabel')} *</label>
                             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
                                 className={inputCls} required />
                         </div>
@@ -200,7 +203,7 @@ export default function AdminSchedulingPage() {
                         <div className="flex items-end">
                             <button type="submit" disabled={saving}
                                 className="w-full bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
-                                {saving ? 'Saving…' : editId ? 'Update Schedule' : 'Create Schedule'}
+                                {saving ? tc('saving') : editId ? t('updateBtn') : t('createBtn')}
                             </button>
                         </div>
                     </form>
@@ -209,11 +212,11 @@ export default function AdminSchedulingPage() {
 
             {/* Schedules list */}
             {loading ? (
-                <GlassCard className="p-8 text-center text-white/50">Loading…</GlassCard>
+                <GlassCard className="p-8 text-center text-white/50">{tc('loading')}…</GlassCard>
             ) : schedules.length === 0 ? (
                 <GlassCard className="p-12 text-center">
                     <div className="text-4xl mb-3">📅</div>
-                    <p className="text-white/50">No schedules yet. Create one to start planning.</p>
+                    <p className="text-white/50">{t('noSchedules')}</p>
                 </GlassCard>
             ) : (
                 <div className="space-y-4">
@@ -230,15 +233,15 @@ export default function AdminSchedulingPage() {
                                         <h3 className="text-white font-semibold text-lg">{s.course_name}</h3>
                                         <p className="text-white/60 text-sm mt-0.5">
                                             {s.start_date} → {s.scheduled_end_date}
-                                            {s.sessions_per_week && <span className="ml-2 text-white/40">· {s.sessions_per_week}× / week</span>}
+                                            {s.sessions_per_week && <span className="ml-2 text-white/40">· {s.sessions_per_week}× / {t('weekLabel')}</span>}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[s.status]}`}>
-                                            {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
+                                            {s.status === 'active' ? t('statusActive') : s.status === 'completed' ? t('statusCompleted') : t('statusArchived')}
                                         </span>
                                         <button onClick={() => startEdit(s)}
-                                            className="text-primary hover:text-white text-sm transition-colors">Edit</button>
+                                            className="text-primary hover:text-white text-sm transition-colors">{tc('edit')}</button>
                                     </div>
                                 </div>
 
@@ -257,10 +260,10 @@ export default function AdminSchedulingPage() {
                                 {/* Counters */}
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                                     {[
-                                        { label: 'Completed', field: 'sessions_completed', value: s.sessions_completed, color: 'text-green-400' },
-                                        { label: 'Postponed', field: 'sessions_postponed', value: s.sessions_postponed, color: 'text-yellow-400' },
-                                        { label: 'Cancelled', field: 'sessions_cancelled', value: s.sessions_cancelled, color: 'text-red-400' },
-                                        { label: 'Extra Added', field: 'extra_sessions_added', value: s.extra_sessions_added, color: 'text-blue-400' },
+                                        { label: t('statusCompleted'), field: 'sessions_completed', value: s.sessions_completed, color: 'text-green-400' },
+                                        { label: t('postponed'), field: 'sessions_postponed', value: s.sessions_postponed, color: 'text-yellow-400' },
+                                        { label: t('cancelled'), field: 'sessions_cancelled', value: s.sessions_cancelled, color: 'text-red-400' },
+                                        { label: t('extra'), field: 'extra_sessions_added', value: s.extra_sessions_added, color: 'text-blue-400' },
                                     ].map(item => (
                                         <div key={item.field} className="bg-white/5 rounded-lg p-2 text-center">
                                             <div className={`text-lg font-bold ${item.color}`}>{item.value}</div>
@@ -278,13 +281,13 @@ export default function AdminSchedulingPage() {
                                 {/* Remaining info + status change */}
                                 <div className="flex items-center justify-between flex-wrap gap-3 pt-3 border-t border-white/10">
                                     <p className="text-white/50 text-sm">
-                                        <span className="text-white font-medium">{Math.max(0, remaining)}</span> sessions remaining
+                                        <span className="text-white font-medium">{Math.max(0, remaining)}</span> {t('remaining')}
                                     </p>
                                     <div className="flex gap-2">
                                         {(['active', 'completed', 'archived'] as const).filter(st => st !== s.status).map(st => (
                                             <button key={st} onClick={() => updateStatus(s.id, st)}
-                                                className="px-3 py-1 text-xs rounded-lg bg-white/10 text-white/60 hover:bg-white/20 transition-colors capitalize">
-                                                Mark {st}
+                                                className="px-3 py-1 text-xs rounded-lg bg-white/10 text-white/60 hover:bg-white/20 transition-colors">
+                                                {st === 'active' ? t('markActive') : st === 'completed' ? t('markCompleted') : t('markArchived')}
                                             </button>
                                         ))}
                                     </div>

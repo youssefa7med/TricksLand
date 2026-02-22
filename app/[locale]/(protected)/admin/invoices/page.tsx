@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface CoachMonthlyTotal {
     coach_id: string;
@@ -23,6 +23,7 @@ export default function AdminInvoicesPage() {
     const [loading, setLoading] = useState(true);
     const [monthlyData, setMonthlyData] = useState<{ month: string; totals: CoachMonthlyTotal[]; totalPayout: number; totalSessions: number }[]>([]);
     const locale = useLocale();
+    const t = useTranslations('pages.invoices');
     const supabase = createClient();
 
     // Last 6 months
@@ -92,7 +93,7 @@ export default function AdminInvoicesPage() {
     if (loading) {
         return (
             <div className="page-container flex items-center justify-center">
-                <div className="text-white/70 text-xl">Loading invoices...</div>
+                <div className="text-white/70 text-xl">{t('loadingInvoices')}</div>
             </div>
         );
     }
@@ -101,13 +102,13 @@ export default function AdminInvoicesPage() {
         <div className="page-container">
             <div className="max-w-7xl mx-auto">
                 <div className="flex justify-between items-start flex-wrap gap-3 mb-6 md:mb-8">
-                    <h1 className="text-2xl md:text-4xl font-bold text-white">Invoice Management</h1>
-                    <div className="text-white/70 text-sm">Last 6 months</div>
+                    <h1 className="text-2xl md:text-4xl font-bold text-white">{t('title')}</h1>
+                    <div className="text-white/70 text-sm">{t('last6Months')}</div>
                 </div>
 
                 <div className="space-y-6">
                     {monthlyData.map(({ month, totals, totalPayout, totalSessions }) => {
-                        const monthName = new Date(month + '-01').toLocaleDateString('en-US', {
+                            const monthName = new Date(month + '-01').toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-US', {
                             year: 'numeric',
                             month: 'long',
                         });
@@ -118,11 +119,11 @@ export default function AdminInvoicesPage() {
                                     <div>
                                         <h2 className="text-2xl font-semibold text-white mb-1">{monthName}</h2>
                                         <p className="text-white/70">
-                                            {totals.length} coaches &bull; {totalSessions} sessions
+                                            {totals.length} {t('coaches')} &bull; {totalSessions} sessions
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-sm text-white/70 mb-1">Total Payout</div>
+                                        <div className="text-sm text-white/70 mb-1">{t('totalPayout')}</div>
                                         <div className="text-3xl font-bold text-secondary">
                                             {formatCurrency(totalPayout)}
                                         </div>
@@ -135,14 +136,14 @@ export default function AdminInvoicesPage() {
                                             <table className="w-full">
                                                 <thead>
                                                     <tr className="border-b border-white/10">
-                                                        <th className="text-left py-3 px-4 text-white/70">Coach</th>
-                                                        <th className="text-center py-3 px-4 text-white/70">Sessions</th>
-                                                        <th className="text-center py-3 px-4 text-white/70">Hours</th>
-                                                        <th className="text-right py-3 px-4 text-white/70">Gross</th>
-                                                        <th className="text-right py-3 px-4 text-white/70">Bonuses</th>
-                                                        <th className="text-right py-3 px-4 text-white/70">Discounts</th>
-                                                        <th className="text-right py-3 px-4 text-white/70">Net Total</th>
-                                                        <th className="text-center py-3 px-4 text-white/70">Preview</th>
+                                                        <th className="text-left py-3 px-4 text-white/70">{t('coachCol')}</th>
+                                                        <th className="text-center py-3 px-4 text-white/70">{t('sessionsCol')}</th>
+                                                        <th className="text-center py-3 px-4 text-white/70">{t('hoursCol')}</th>
+                                                        <th className="text-right py-3 px-4 text-white/70">{t('grossCol')}</th>
+                                                        <th className="text-right py-3 px-4 text-white/70">{t('bonusesCol')}</th>
+                                                        <th className="text-right py-3 px-4 text-white/70">{t('discountsCol')}</th>
+                                                        <th className="text-right py-3 px-4 text-white/70">{t('netTotalCol')}</th>
+                                                        <th className="text-center py-3 px-4 text-white/70">{t('previewCol')}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -177,7 +178,7 @@ export default function AdminInvoicesPage() {
                                                                     href={`/${locale}/admin/invoices/preview?coach=${coach.coach_id}&month=${month}`}
                                                                     className="text-primary hover:text-primary/80 text-sm underline"
                                                                 >
-                                                                    View
+                                                                    {t('viewLink')}
                                                                 </a>
                                                             </td>
                                                         </tr>
@@ -191,13 +192,13 @@ export default function AdminInvoicesPage() {
                                                 onClick={() => handleSendInvoices(month)}
                                                 className="btn-glossy"
                                             >
-                                                Send All Invoices ({month})
+                                                {t('sendAll')} ({month})
                                             </button>
                                         </div>
                                     </>
                                 ) : (
                                     <div className="text-center py-8 text-white/70">
-                                        No sessions recorded for this month
+                                        {t('noSessions')}
                                     </div>
                                 )}
                             </GlassCard>

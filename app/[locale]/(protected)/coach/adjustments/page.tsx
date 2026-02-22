@@ -2,9 +2,12 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency } from '@/lib/utils';
+import { getTranslations } from 'next-intl/server';
 
 export default async function CoachAdjustmentsPage() {
     const supabase = await createClient();
+    const t = await getTranslations('pages.adjustments');
+    const tc = await getTranslations('common');
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
@@ -26,13 +29,13 @@ export default async function CoachAdjustmentsPage() {
         <div className="page-container">
             <div className="max-w-4xl mx-auto">
                 <div className="mb-8">
-                    <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">My Adjustments</h1>
-                    <p className="text-white/70">Bonuses and discounts applied to your account</p>
+                    <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">{t('title')}</h1>
+                    <p className="text-white/70">{t('subtitle')}</p>
                 </div>
 
                 {Object.keys(byMonth).length === 0 ? (
                     <GlassCard>
-                        <p className="text-white/70 text-center py-12">No adjustments yet</p>
+                        <p className="text-white/70 text-center py-12">{tc('noData')}</p>
                     </GlassCard>
                 ) : (
                     Object.entries(byMonth).map(([month, items]) => {
@@ -52,7 +55,7 @@ export default async function CoachAdjustmentsPage() {
                                         <div key={a.id} className="flex justify-between items-center bg-white/5 rounded-lg px-4 py-3">
                                             <div className="flex items-center gap-3">
                                                 <span className={`text-xs px-2 py-1 rounded ${a.type === 'bonus' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
-                                                    {a.type === 'bonus' ? 'Bonus' : 'Discount'}
+                                                    {a.type === 'bonus' ? tc('bonus') : tc('discount')}
                                                 </span>
                                                 <span className="text-white/70 text-sm">{a.notes}</span>
                                             </div>

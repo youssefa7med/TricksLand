@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { AttendanceMarker } from '@/components/attendance/AttendanceMarker';
@@ -31,6 +31,7 @@ interface SessionWithAttendance extends Session {
 
 export default function CoachAttendancePage() {
     const locale = useLocale();
+    const t = useTranslations('pages.coachAttendance');
     const supabase = createClient();
 
     const [tab, setTab] = useState<'mark' | 'history'>('mark');
@@ -127,33 +128,33 @@ export default function CoachAttendancePage() {
     const isToday = (d: string) => d === today;
 
     const activityLabel: Record<string, string> = {
-        online_session: 'Session',
-        offline_meeting: 'Offline',
-        training: 'Training',
-        consultation: 'Consultation',
-        workshop: 'Workshop',
-        tutoring: 'Tutoring',
-        other: 'Other',
+        online_session: locale === 'ar' ? 'جلسة' : 'Session',
+        offline_meeting: locale === 'ar' ? 'حضوري' : 'Offline',
+        training: locale === 'ar' ? 'تدريب' : 'Training',
+        consultation: locale === 'ar' ? 'استشارة' : 'Consultation',
+        workshop: locale === 'ar' ? 'ورشة عمل' : 'Workshop',
+        tutoring: locale === 'ar' ? 'تدريس خصوصي' : 'Tutoring',
+        other: locale === 'ar' ? 'أخرى' : 'Other',
     };
 
     return (
         <div className="page-container">
             <div className="max-w-4xl mx-auto">
                 <Link href={`/${locale}/coach/sessions`} className="text-white/60 hover:text-white transition-colors text-sm mb-8 block">
-                    ← Back to Sessions
+                    {t('backToSessions')}
                 </Link>
 
                 <div className="mb-8">
-                    <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">Attendance</h1>
-                    <p className="text-white/70">Mark your attendance or view your history</p>
+                    <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">{t('title')}</h1>
+                    <p className="text-white/70">{t('subtitle')}</p>
                 </div>
 
                 {/* Tabs */}
                 <div className="flex gap-2 mb-6">
                     {([
-                        { key: 'mark', label: 'Mark Attendance' },
-                        { key: 'history', label: 'Attendance History' },
-                    ] as const).map(({ key, label }) => (
+                        { key: 'mark' as const, label: t('markTab') },
+                        { key: 'history' as const, label: t('historyTab') },
+                    ]).map(({ key, label }) => (
                         <button
                             key={key}
                             onClick={() => setTab(key)}
@@ -170,20 +171,20 @@ export default function CoachAttendancePage() {
                 {/* ── MARK TAB ───────────────────────────────── */}
                 {tab === 'mark' && (
                     loading ? (
-                        <GlassCard><p className="text-white/70 text-center py-8">Loading sessions...</p></GlassCard>
+                        <GlassCard><p className="text-white/70 text-center py-8">{t('loadingSessions')}</p></GlassCard>
                     ) : upcoming.length === 0 ? (
                         <GlassCard>
                             <div className="text-center py-12">
-                                <p className="text-white/70 mb-2">No upcoming sessions scheduled</p>
+                                <p className="text-white/70 mb-2">{t('noUpcoming')}</p>
                                 <Link href={`/${locale}/coach/sessions`} className="text-primary hover:underline text-sm">
-                                    View all sessions →
+                                    {t('viewAllSessions')}
                                 </Link>
                             </div>
                         </GlassCard>
                     ) : (
                         <div className="space-y-6">
                             <GlassCard>
-                                <h2 className="text-lg font-semibold text-white mb-4">Select a Session</h2>
+                                <h2 className="text-lg font-semibold text-white mb-4">{t('selectSession')}</h2>
                                 <div className="space-y-2 max-h-96 overflow-y-auto">
                                     {upcoming.map((s) => {
                                         const marked = (markedMap[s.id] || []).length > 0;
@@ -204,7 +205,7 @@ export default function CoachAttendancePage() {
                                                                 {activityLabel[s.session_type] || s.session_type}
                                                             </span>
                                                             {isToday(s.session_date) && (
-                                                                <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-300 rounded">Today</span>
+                                                                <span className="text-xs px-2 py-0.5 bg-green-500/20 text-green-300 rounded">{t('todayBadge')}</span>
                                                             )}
                                                         </div>
                                                         <p className="text-white/60 text-sm">
@@ -213,13 +214,13 @@ export default function CoachAttendancePage() {
                                                     </div>
                                                     {marked && (
                                                         <span className="flex items-center gap-1 text-green-400 text-sm ml-3">
-                                                            ✓ <span className="text-xs">Marked</span>
+                                                            ✓ <span className="text-xs">{t('markedLabel')}</span>
                                                         </span>
                                                     )}
                                                 </div>
                                                 {marked && markedMap[s.id]?.[0] && (
                                                     <p className="mt-2 text-xs text-white/40 border-t border-white/10 pt-2">
-                                                        Last marked at {new Date(markedMap[s.id][0].attendance_timestamp).toLocaleTimeString()} · {markedMap[s.id][0].distance_from_academy}m away
+                                                        {t('lastMarkedAt')} {new Date(markedMap[s.id][0].attendance_timestamp).toLocaleTimeString(locale === 'ar' ? 'ar-EG' : 'en-US')} · {markedMap[s.id][0].distance_from_academy}{t('mAway')}
                                                     </p>
                                                 )}
                                             </div>
@@ -247,7 +248,7 @@ export default function CoachAttendancePage() {
                     <div className="space-y-6">
                         {/* Month filter */}
                         <GlassCard>
-                            <label className="block text-white/70 text-sm font-medium mb-2">Filter by Month</label>
+                            <label className="block text-white/70 text-sm font-medium mb-2">{t('filterByMonth')}</label>
                             <input
                                 type="month"
                                 value={historyMonth}
@@ -257,25 +258,25 @@ export default function CoachAttendancePage() {
                         </GlassCard>
 
                         {historyLoading ? (
-                            <GlassCard><p className="text-white/70 text-center py-8">Loading history...</p></GlassCard>
+                            <GlassCard><p className="text-white/70 text-center py-8">{t('loadingHistory')}</p></GlassCard>
                         ) : history.length === 0 ? (
-                            <GlassCard><p className="text-white/70 text-center py-8">No sessions found for this month</p></GlassCard>
+                            <GlassCard><p className="text-white/70 text-center py-8">{t('noSessionsMonth')}</p></GlassCard>
                         ) : (
                             <div className="space-y-4">
                                 {/* Summary stats */}
                                 <div className="grid grid-cols-3 gap-3">
                                     <GlassCard>
-                                        <p className="text-white/50 text-xs mb-1">Sessions</p>
+                                        <p className="text-white/50 text-xs mb-1">{t('statSessions')}</p>
                                         <p className="text-2xl font-bold text-white">{history.length}</p>
                                     </GlassCard>
                                     <GlassCard>
-                                        <p className="text-white/50 text-xs mb-1">Attended</p>
+                                        <p className="text-white/50 text-xs mb-1">{t('statAttended')}</p>
                                         <p className="text-2xl font-bold text-green-400">
                                             {history.filter((s) => s.attendance.length > 0).length}
                                         </p>
                                     </GlassCard>
                                     <GlassCard>
-                                        <p className="text-white/50 text-xs mb-1">Missed</p>
+                                        <p className="text-white/50 text-xs mb-1">{t('statMissed')}</p>
                                         <p className="text-2xl font-bold text-red-400">
                                             {history.filter((s) => s.attendance.length === 0 && s.session_date < today).length}
                                         </p>
@@ -306,7 +307,7 @@ export default function CoachAttendancePage() {
                                                             ? 'bg-red-500/20 text-red-300'
                                                             : 'bg-yellow-500/20 text-yellow-300'
                                                     }`}>
-                                                    {attended ? 'Attended' : isPast ? 'Missed' : 'Upcoming'}
+                                                    {attended ? t('attendedBadge') : isPast ? t('missedBadge') : t('upcomingBadge')}
                                                 </span>
                                             </div>
 
@@ -316,10 +317,10 @@ export default function CoachAttendancePage() {
                                                         <div key={rec.id} className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
                                                             <div>
                                                                 <p className="text-white text-sm">
-                                                                    {new Date(rec.attendance_timestamp).toLocaleString()}
+                                                                    {new Date(rec.attendance_timestamp).toLocaleString(locale === 'ar' ? 'ar-EG' : 'en-US')}
                                                                 </p>
                                                                 <p className="text-white/40 text-xs">
-                                                                    {rec.distance_from_academy}m from academy
+                                                                    {rec.distance_from_academy}{t('fromAcademy')}
                                                                 </p>
                                                             </div>
                                                             <span className={`text-xs px-2 py-1 rounded font-medium ${rec.status === 'present'
@@ -337,7 +338,7 @@ export default function CoachAttendancePage() {
 
                                             {!attended && isPast && (
                                                 <p className="text-white/30 text-xs border-t border-white/10 pt-3 italic">
-                                                    No attendance record found for this session
+                                                    {t('noRecord')}
                                                 </p>
                                             )}
                                         </GlassCard>

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { toast } from 'sonner';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface Course {
     id: string;
@@ -42,6 +42,8 @@ const STATUS_LABELS = { present: 'Present', absent: 'Absent', late: 'Late' };
 
 export default function AdminStudentAttendancePage() {
     const locale = useLocale();
+    const t = useTranslations('pages.studentAttendance');
+    const tc = useTranslations('common');
     const supabase = createClient();
 
     const [courses, setCourses] = useState<Course[]>([]);
@@ -90,14 +92,14 @@ export default function AdminStudentAttendancePage() {
         setLoadingStudents(true);
 
         // Get enrolled students
-        const { data: enrolledData } = await supabase
+        const { data: enrolledData } = await (supabase as any)
             .from('course_students')
-            .select('student_id, profiles!course_students_student_id_fkey(id, full_name)')
+            .select('student_id, students(id, full_name)')
             .eq('course_id', courseId);
 
         const studentList: Student[] = (enrolledData || []).map((r: any) => ({
-            id: r.profiles?.id || r.student_id,
-            full_name: r.profiles?.full_name || 'Unknown',
+            id: r.students?.id || r.student_id,
+            full_name: r.students?.full_name || 'Unknown',
         }));
         setStudents(studentList);
 
@@ -193,16 +195,16 @@ export default function AdminStudentAttendancePage() {
     return (
         <div className="min-h-screen p-4 md:p-6 space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-white">Student Attendance</h1>
-                <p className="text-white/60 text-sm mt-1">Mark and track student attendance per session</p>
+                <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
+                <p className="text-white/60 text-sm mt-1">{t('subtitle')}</p>
             </div>
 
             {/* Tabs */}
             <div className="flex gap-2">
-                {(['mark', 'summary'] as const).map(t => (
-                    <button key={t} onClick={() => setTab(t)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${tab === t ? 'bg-primary text-white' : 'bg-white/10 text-white/70 hover:bg-white/20'}`}>
-                        {t === 'mark' ? '✏️ Mark Attendance' : '📊 Monthly Summary'}
+                {(['mark', 'summary'] as const).map(tabKey => (
+                    <button key={tabKey} onClick={() => setTab(tabKey)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${tab === tabKey ? 'bg-primary text-white' : 'bg-white/10 text-white/70 hover:bg-white/20'}`}>
+                        {tabKey === 'mark' ? t('markTab') : t('summaryTab')}
                     </button>
                 ))}
             </div>
@@ -211,27 +213,27 @@ export default function AdminStudentAttendancePage() {
             <GlassCard className="p-4">
                 <div className="flex flex-wrap gap-4">
                     <div className="flex-1 min-w-48">
-                        <label className="block text-white/70 text-xs mb-1">Course</label>
+                        <label className="block text-white/70 text-xs mb-1">{t('selectCourseLabel')}</label>
                         <select
                             value={selectedCourse}
                             onChange={e => setSelectedCourse(e.target.value)}
                             className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                         >
-                            <option value="">— Select Course —</option>
+                            <option value="">{tc('selectCourse')}</option>
                             {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                     </div>
 
                     {tab === 'mark' && (
                         <div className="flex-1 min-w-48">
-                            <label className="block text-white/70 text-xs mb-1">Session</label>
+                            <label className="block text-white/70 text-xs mb-1">{t('selectSessionLabel')}</label>
                             <select
                                 value={selectedSession}
                                 onChange={e => setSelectedSession(e.target.value)}
                                 disabled={!selectedCourse || loadingSessions}
                                 className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                             >
-                                <option value="">— Select Session —</option>
+                                <option value="">{tc('selectSession')}</option>
                                 {sessions.map(s => (
                                     <option key={s.id} value={s.id}>
                                         {s.session_date} · {s.start_time?.slice(0, 5)} – {s.end_time?.slice(0, 5)}
@@ -243,7 +245,7 @@ export default function AdminStudentAttendancePage() {
 
                     {tab === 'summary' && (
                         <div>
-                            <label className="block text-white/70 text-xs mb-1">Month</label>
+                            <label className="block text-white/70 text-xs mb-1">{t('monthLabel')}</label>
                             <input
                                 type="month"
                                 value={summaryMonth}
@@ -279,9 +281,9 @@ export default function AdminStudentAttendancePage() {
                                     </div>
                                     {/* Stats */}
                                     <div className="flex gap-3 text-sm">
-                                        <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full">{presentCount} Present</span>
-                                        <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full">{absentCount} Absent</span>
-                                        <span className="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full">{lateCount} Late</span>
+                                        <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full">{presentCount} {t('presentCount')}</span>
+                                        <span className="bg-red-500/20 text-red-400 px-3 py-1 rounded-full">{absentCount} {t('absentCount')}</span>
+                                        <span className="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full">{lateCount} {t('lateCount')}</span>
                                     </div>
                                 </div>
                             )}
@@ -289,18 +291,18 @@ export default function AdminStudentAttendancePage() {
                             {/* Quick mark all */}
                             {students.length > 0 && (
                                 <div className="flex gap-2 flex-wrap">
-                                    <span className="text-white/60 text-sm self-center">Mark all:</span>
-                                    <button onClick={() => markAll('present')} className="px-3 py-1 text-sm rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/40 transition-colors">All Present</button>
-                                    <button onClick={() => markAll('absent')} className="px-3 py-1 text-sm rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/40 transition-colors">All Absent</button>
-                                    <button onClick={() => markAll('late')} className="px-3 py-1 text-sm rounded-lg bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/40 transition-colors">All Late</button>
+                                    <span className="text-white/60 text-sm self-center">{tc('markAll')}:</span>
+                                    <button onClick={() => markAll('present')} className="px-3 py-1 text-sm rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/40 transition-colors">{t('markAllPresent')}</button>
+                                    <button onClick={() => markAll('absent')} className="px-3 py-1 text-sm rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/40 transition-colors">{t('markAllAbsent')}</button>
+                                    <button onClick={() => markAll('late')} className="px-3 py-1 text-sm rounded-lg bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/40 transition-colors">{t('markAllLate')}</button>
                                 </div>
                             )}
 
                             {/* Students list */}
                             {loadingStudents ? (
-                                <div className="py-8 text-center text-white/50">Loading students…</div>
+                                <div className="py-8 text-center text-white/50">{tc('loading')}</div>
                             ) : students.length === 0 ? (
-                                <div className="py-8 text-center text-white/50">No students enrolled in this course</div>
+                                <div className="py-8 text-center text-white/50">{t('noStudents')}</div>
                             ) : (
                                 <div className="space-y-2">
                                     {students.map((student, idx) => {
@@ -325,7 +327,7 @@ export default function AdminStudentAttendancePage() {
                                                                     : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
                                                             }`}
                                                         >
-                                                            {STATUS_LABELS[s]}
+                                                            {s === 'present' ? tc('present') : s === 'absent' ? tc('absent') : tc('late')}
                                                         </button>
                                                     ))}
                                                 </div>
@@ -342,7 +344,7 @@ export default function AdminStudentAttendancePage() {
                                         disabled={saving}
                                         className="bg-primary hover:bg-primary/80 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
                                     >
-                                        {saving ? 'Saving…' : 'Save Attendance'}
+                                        {saving ? tc('saving') : t('saveAttendance')}
                                     </button>
                                 </div>
                             )}
@@ -365,12 +367,12 @@ export default function AdminStudentAttendancePage() {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="text-white/50 border-b border-white/10">
-                                        <th className="text-left py-2 px-3">Student</th>
-                                        <th className="text-center py-2 px-3">Sessions</th>
-                                        <th className="text-center py-2 px-3">Present</th>
-                                        <th className="text-center py-2 px-3">Absent</th>
-                                        <th className="text-center py-2 px-3">Late</th>
-                                        <th className="text-center py-2 px-3">Rate</th>
+                                        <th className="text-left py-2 px-3">{t('studentCol')}</th>
+                                        <th className="text-center py-2 px-3">{t('sessionsCol')}</th>
+                                        <th className="text-center py-2 px-3">{t('attendedCol')}</th>
+                                        <th className="text-center py-2 px-3">{t('absentCol')}</th>
+                                        <th className="text-center py-2 px-3">{t('lateCol')}</th>
+                                        <th className="text-center py-2 px-3">{t('rateCol')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>

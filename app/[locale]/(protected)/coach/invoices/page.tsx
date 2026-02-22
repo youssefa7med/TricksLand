@@ -5,9 +5,13 @@ import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useTranslations, useLocale } from 'next-intl';
 
 export default function CoachInvoicesPage() {
     const [loading, setLoading] = useState(true);
+    const t = useTranslations('pages.invoices');
+    const tc = useTranslations('common');
+    const locale = useLocale();
     const [monthlyData, setMonthlyData] = useState<any[]>([]);
     const [expanded, setExpanded] = useState<string | null>(null);
     const [sessionsByMonth, setSessionsByMonth] = useState<Record<string, any[]>>({});
@@ -71,7 +75,7 @@ export default function CoachInvoicesPage() {
     if (loading) {
         return (
             <div className="page-container flex items-center justify-center">
-                <p className="text-white/70 text-lg">Loading invoices...</p>
+                <p className="text-white/70 text-lg">{t('loadingInvoices')}</p>
             </div>
         );
     }
@@ -80,18 +84,18 @@ export default function CoachInvoicesPage() {
         <div className="page-container">
             <div className="max-w-5xl mx-auto">
                 <div className="mb-8">
-                    <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">My Invoices</h1>
-                    <p className="text-white/70">Monthly earnings breakdown</p>
+                    <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">{t('title') || 'My Invoices'}</h1>
+                    <p className="text-white/70">{t('last6Months') || 'Monthly earnings breakdown'}</p>
                 </div>
 
                 {monthlyData.length === 0 ? (
                     <GlassCard>
-                        <p className="text-white/70 text-center py-12">No invoice data yet. Start logging sessions to see your earnings here.</p>
+                        <p className="text-white/70 text-center py-12">{tc('noData')}</p>
                     </GlassCard>
                 ) : (
                     <div className="space-y-4">
                         {monthlyData.map((row: any) => {
-                            const monthName = new Date(row.month + '-01').toLocaleDateString('en-US', {
+                            const monthName = new Date(row.month + '-01').toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-US', {
                                 year: 'numeric',
                                 month: 'long',
                             });
@@ -115,7 +119,7 @@ export default function CoachInvoicesPage() {
                                             </div>
                                             <div className="flex items-center gap-6">
                                                 <div className="text-right">
-                                                    <div className="text-xs text-white/50 mb-1">Net Payable</div>
+                                                    <div className="text-xs text-white/50 mb-1">{tc('amount') || 'Net Payable'}</div>
                                                     <div className="text-2xl font-bold text-secondary">{formatCurrency(row.net_total)}</div>
                                                 </div>
                                                 <span className="text-white/40 text-lg">{isOpen ? '▲' : '▼'}</span>
@@ -128,21 +132,21 @@ export default function CoachInvoicesPage() {
                                         <div className="mt-6 border-t border-white/10 pt-6 space-y-6">
                                             {/* Sessions Breakdown */}
                                             <div>
-                                                <h3 className="text-white/70 text-xs uppercase font-semibold tracking-wider mb-3">Sessions</h3>
+                                                <h3 className="text-white/70 text-xs uppercase font-semibold tracking-wider mb-3">{tc('sessions')}</h3>
                                                 {sessions.length === 0 ? (
-                                                    <p className="text-white/40 text-sm italic">No sessions found</p>
+                                                    <p className="text-white/40 text-sm italic">{tc('noData')}</p>
                                                 ) : (
                                                     <div className="overflow-x-auto">
                                                         <table className="w-full text-sm">
                                                             <thead>
                                                                 <tr className="border-b border-white/10">
-                                                                    <th className="text-left py-2 px-2 text-white/50 font-medium">Date</th>
-                                                                    <th className="text-left py-2 px-2 text-white/50 font-medium">Course</th>
-                                                                    <th className="text-left py-2 px-2 text-white/50 font-medium">Time</th>
-                                                                    <th className="text-left py-2 px-2 text-white/50 font-medium">Type</th>
-                                                                    <th className="text-right py-2 px-2 text-white/50 font-medium">Hrs</th>
-                                                                    <th className="text-right py-2 px-2 text-white/50 font-medium">Rate</th>
-                                                                    <th className="text-right py-2 px-2 text-white/50 font-medium">Amount</th>
+                                                                    <th className="text-left py-2 px-2 text-white/50 font-medium">{tc('date')}</th>
+                                                                    <th className="text-left py-2 px-2 text-white/50 font-medium">{tc('course')}</th>
+                                                                    <th className="text-left py-2 px-2 text-white/50 font-medium">{t('time') || 'Time'}</th>
+                                                                    <th className="text-left py-2 px-2 text-white/50 font-medium">{tc('type')}</th>
+                                                                    <th className="text-right py-2 px-2 text-white/50 font-medium">{tc('hours')}</th>
+                                                                    <th className="text-right py-2 px-2 text-white/50 font-medium">{t('rate') || 'Rate'}</th>
+                                                                    <th className="text-right py-2 px-2 text-white/50 font-medium">{tc('amount')}</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
@@ -153,7 +157,7 @@ export default function CoachInvoicesPage() {
                                                                         <td className="py-2 px-2 text-white/70">{s.start_time}–{s.end_time}</td>
                                                                         <td className="py-2 px-2">
                                                                             <span className={`text-xs px-2 py-0.5 rounded ${s.session_type === 'online_session' ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300'}`}>
-                                                                                {s.session_type === 'online_session' ? 'Online' : 'Offline'}
+                                                                                {s.session_type === 'online_session' ? tc('online') : tc('offline')}
                                                                             </span>
                                                                         </td>
                                                                         <td className="py-2 px-2 text-white/70 text-right">{s.computed_hours}h</td>
@@ -170,13 +174,13 @@ export default function CoachInvoicesPage() {
                                             {/* Adjustments */}
                                             {adjustments.length > 0 && (
                                                 <div>
-                                                    <h3 className="text-white/70 text-xs uppercase font-semibold tracking-wider mb-3">Adjustments</h3>
+                                                    <h3 className="text-white/70 text-xs uppercase font-semibold tracking-wider mb-3">{t('adjustmentsSectionTitle') || tc('adjustments') || 'Adjustments'}</h3>
                                                     <div className="space-y-2">
                                                         {adjustments.map((a: any) => (
                                                             <div key={a.id} className="flex justify-between items-center bg-white/5 rounded-lg px-4 py-3">
                                                                 <div className="flex items-center gap-3">
                                                                     <span className={`text-xs px-2 py-1 rounded ${a.type === 'bonus' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
-                                                                        {a.type === 'bonus' ? 'Bonus' : 'Discount'}
+                                                                        {a.type === 'bonus' ? tc('bonus') : tc('discount')}
                                                                     </span>
                                                                     <span className="text-white/70 text-sm">{a.notes}</span>
                                                                 </div>
@@ -192,23 +196,23 @@ export default function CoachInvoicesPage() {
                                             {/* Summary */}
                                             <div className="bg-white/5 rounded-xl p-4 space-y-2">
                                                 <div className="flex justify-between text-sm text-white/60">
-                                                    <span>Gross ({row.session_count} sessions)</span>
+                                                        <span>{t('grossSessions') || `Gross (${row.session_count} sessions)`}</span>
                                                     <span>{formatCurrency(row.gross_total)}</span>
                                                 </div>
                                                 {Number(row.total_bonuses) > 0 && (
                                                     <div className="flex justify-between text-sm text-green-300">
-                                                        <span>Bonuses</span>
+                                                            <span>{tc('bonus')}</span>
                                                         <span>+{formatCurrency(row.total_bonuses)}</span>
                                                     </div>
                                                 )}
                                                 {Number(row.total_discounts) > 0 && (
                                                     <div className="flex justify-between text-sm text-red-300">
-                                                        <span>Discounts</span>
+                                                            <span>{tc('discount')}</span>
                                                         <span>-{formatCurrency(row.total_discounts)}</span>
                                                     </div>
                                                 )}
                                                 <div className="flex justify-between font-bold text-white border-t border-white/10 pt-2">
-                                                    <span>Net Payable</span>
+                                                        <span>{tc('amount') || 'Net Payable'}</span>
                                                     <span className="text-secondary">{formatCurrency(row.net_total)}</span>
                                                 </div>
                                             </div>

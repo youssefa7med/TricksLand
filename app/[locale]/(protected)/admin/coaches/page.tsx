@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { toast } from 'sonner';
 
@@ -17,6 +17,8 @@ interface Coach {
 
 export default function AdminCoachesPage() {
     const locale = useLocale();
+    const t = useTranslations('pages.coaches');
+    const tc = useTranslations('common');
     const [coaches, setCoaches] = useState<Coach[]>([]);
     const [loading, setLoading] = useState(true);
     const [showCreate, setShowCreate] = useState(false);
@@ -53,7 +55,7 @@ export default function AdminCoachesPage() {
             });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error);
-            toast.success('Coach created successfully');
+            toast.success(t('coachCreated'));
             setShowCreate(false);
             setNewName('');
             setNewEmail('');
@@ -76,7 +78,7 @@ export default function AdminCoachesPage() {
             });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error);
-            toast.success('Coach updated');
+            toast.success(t('coachUpdated'));
             setEditingId(null);
             fetchCoaches();
         } catch (err: any) {
@@ -87,12 +89,12 @@ export default function AdminCoachesPage() {
     };
 
     const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Delete coach "${name}"? This will remove all their data.`)) return;
+        if (!confirm(t('deleteConfirm').replace('%name%', name))) return;
         try {
             const res = await fetch(`/api/admin/coaches/${id}`, { method: 'DELETE' });
             const json = await res.json();
             if (!res.ok) throw new Error(json.error);
-            toast.success('Coach deleted');
+            toast.success(t('coachDeleted'));
             fetchCoaches();
         } catch (err: any) {
             toast.error(err.message);
@@ -105,7 +107,7 @@ export default function AdminCoachesPage() {
     const filteredCoaches = filter === 'all' ? coaches : filter === 'self' ? selfRegistered : coaches.filter((c) => c.created_by_admin);
 
     if (loading) {
-        return <div className="page-container flex items-center justify-center"><p className="text-white/70 text-lg">Loading coaches...</p></div>;
+        return <div className="page-container flex items-center justify-center"><p className="text-white/70 text-lg">{t('loadingCoaches')}</p></div>;
     }
 
     return (
@@ -114,18 +116,18 @@ export default function AdminCoachesPage() {
                 {/* Header */}
                 <div className="flex justify-between items-start flex-wrap gap-3 mb-6">
                     <div>
-                        <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">Coaches</h1>
+                        <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">{t('title')}</h1>
                         <p className="text-white/70">
-                            {coaches.length} coach{coaches.length !== 1 ? 'es' : ''} total
+                            {coaches.length} {t('subtitle')}
                             {selfRegistered.length > 0 && (
                                 <span className="ml-2 text-green-400">
-                                    · {selfRegistered.length} self-registered
+                                    · {selfRegistered.length} {t('selfRegistered')}
                                 </span>
                             )}
                         </p>
                     </div>
                     <button onClick={() => setShowCreate(!showCreate)} className="btn-glossy">
-                        {showCreate ? 'Cancel' : '+ Add Coach'}
+                        {showCreate ? tc('cancel') : t('addCoach')}
                     </button>
                 </div>
 
@@ -133,9 +135,9 @@ export default function AdminCoachesPage() {
                 {coaches.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-6">
                         {([
-                            { key: 'all', label: `All (${coaches.length})` },
-                            { key: 'self', label: `Self-registered (${selfRegistered.length})` },
-                            { key: 'admin', label: `Admin-created (${coaches.length - selfRegistered.length})` },
+                            { key: 'all', label: `${t('allFilter')} (${coaches.length})` },
+                            { key: 'self', label: `${t('selfFilter')} (${selfRegistered.length})` },
+                            { key: 'admin', label: `${t('adminFilter')} (${coaches.length - selfRegistered.length})` },
                         ] as const).map(({ key, label }) => (
                             <button
                                 key={key}
@@ -154,21 +156,21 @@ export default function AdminCoachesPage() {
                 {/* Create form */}
                 {showCreate && (
                     <GlassCard className="mb-8">
-                        <h2 className="text-xl font-semibold text-white mb-4">New Coach</h2>
+                        <h2 className="text-xl font-semibold text-white mb-4">{t('newCoach')}</h2>
                         <form onSubmit={handleCreate} className="flex gap-4 flex-wrap items-end">
                             <div className="flex-1 min-w-[200px]">
-                                <label className="block text-white/70 text-sm mb-1">Full Name *</label>
+                                <label className="block text-white/70 text-sm mb-1">{t('fullNameLabel')}</label>
                                 <input
                                     type="text"
                                     value={newName}
                                     onChange={(e) => setNewName(e.target.value)}
-                                    placeholder="Coach full name"
+                                    placeholder={t('fullNamePlaceholder')}
                                     className={`w-full ${inputClass}`}
                                     required
                                 />
                             </div>
                             <div className="flex-1 min-w-[200px]">
-                                <label className="block text-white/70 text-sm mb-1">Email Address *</label>
+                                <label className="block text-white/70 text-sm mb-1">{t('emailLabel')}</label>
                                 <input
                                     type="email"
                                     value={newEmail}
@@ -179,10 +181,10 @@ export default function AdminCoachesPage() {
                                 />
                             </div>
                             <button type="submit" disabled={creating} className="btn-glossy disabled:opacity-50">
-                                {creating ? 'Creating...' : 'Create Coach'}
+                                {creating ? tc('creating') : t('newCoach')}
                             </button>
                         </form>
-                        <p className="text-white/40 text-xs mt-3">The coach will use OTP (email code) to sign in — no password needed.</p>
+                        <p className="text-white/40 text-xs mt-3">{t('otpNote')}</p>
                     </GlassCard>
                 )}
 
@@ -190,8 +192,8 @@ export default function AdminCoachesPage() {
                 {coaches.length === 0 ? (
                     <GlassCard>
                         <div className="text-center py-12">
-                            <p className="text-white/70 text-lg mb-2">No coaches yet</p>
-                            <p className="text-white/50 text-sm">Click "Add Coach" to create the first one.</p>
+                            <p className="text-white/70 text-lg mb-2">{t('noCoachesYet')}</p>
+                            <p className="text-white/50 text-sm">{t('noCoachesHint')}</p>
                         </div>
                     </GlassCard>
                 ) : (
@@ -200,10 +202,10 @@ export default function AdminCoachesPage() {
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-white/10">
-                                        <th className="text-left py-3 px-4 text-white/70">Name</th>
-                                        <th className="text-left py-3 px-4 text-white/70">Email</th>
-                                        <th className="text-left py-3 px-4 text-white/70">Courses</th>
-                                        <th className="text-right py-3 px-4 text-white/70">Actions</th>
+                                        <th className="text-left py-3 px-4 text-white/70">{t('nameCol')}</th>
+                                        <th className="text-left py-3 px-4 text-white/70">{t('emailCol')}</th>
+                                        <th className="text-left py-3 px-4 text-white/70">{t('coursesCol')}</th>
+                                        <th className="text-right py-3 px-4 text-white/70">{t('actionsCol')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -235,7 +237,7 @@ export default function AdminCoachesPage() {
                                                                     ? 'bg-green-500/20 text-green-400'
                                                                     : 'bg-blue-500/20 text-blue-400'
                                                                 }`}>
-                                                                {isSelfRegistered ? 'Self-registered' : 'Admin-created'}
+                                                                {isSelfRegistered ? t('selfRegisteredBadge') : t('adminCreatedBadge')}
                                                             </span>
                                                         </div>
                                                     )}
@@ -243,7 +245,7 @@ export default function AdminCoachesPage() {
                                                 <td className="py-3 px-4 text-white/70 text-sm">{coach.email}</td>
                                                 <td className="py-3 px-4">
                                                     {courses.length === 0 ? (
-                                                        <span className="text-white/30 text-sm italic">No courses</span>
+                                                        <span className="text-white/30 text-sm italic">{t('noCourses')}</span>
                                                     ) : (
                                                         <div className="flex flex-wrap gap-1">
                                                             {courses.map((c) => (
@@ -263,13 +265,13 @@ export default function AdminCoachesPage() {
                                                                     disabled={saving}
                                                                     className="text-green-400 hover:text-green-300 text-sm transition-colors disabled:opacity-50"
                                                                 >
-                                                                    {saving ? 'Saving...' : 'Save'}
+                                                                    {saving ? tc('saving') : tc('save')}
                                                                 </button>
                                                                 <button
                                                                     onClick={() => setEditingId(null)}
                                                                     className="text-white/50 hover:text-white text-sm transition-colors"
                                                                 >
-                                                                    Cancel
+                                                                    {tc('cancel')}
                                                                 </button>
                                                             </>
                                                         ) : (
@@ -278,13 +280,13 @@ export default function AdminCoachesPage() {
                                                                     onClick={() => { setEditingId(coach.id); setEditName(coach.full_name); }}
                                                                     className="text-primary hover:text-white text-sm transition-colors"
                                                                 >
-                                                                    Edit
+                                                                    {tc('edit')}
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleDelete(coach.id, coach.full_name)}
                                                                     className="text-red-400 hover:text-red-300 text-sm transition-colors"
                                                                 >
-                                                                    Delete
+                                                                    {tc('delete')}
                                                                 </button>
                                                             </>
                                                         )}
@@ -296,7 +298,7 @@ export default function AdminCoachesPage() {
                                     {filteredCoaches.length === 0 && (
                                         <tr>
                                             <td colSpan={4} className="py-12 text-center text-white/40 text-sm">
-                                                No coaches match this filter
+                                                {t('noFilterMatch')}
                                             </td>
                                         </tr>
                                     )}
