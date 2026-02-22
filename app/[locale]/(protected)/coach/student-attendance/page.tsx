@@ -32,6 +32,7 @@ export default function CoachStudentAttendancePage() {
     const [tab, setTab] = useState<'mark' | 'summary'>('mark');
     const [summaryMonth, setSummaryMonth] = useState(new Date().toISOString().substring(0, 7));
     const [summaryData, setSummaryData] = useState<any[]>([]);
+    const [detailRecords, setDetailRecords] = useState<any[]>([]);
 
     const [loadingSessions, setLoadingSessions] = useState(false);
     const [loadingStudents, setLoadingStudents] = useState(false);
@@ -115,13 +116,28 @@ export default function CoachStudentAttendancePage() {
     // Load summary
     useEffect(() => {
         if (tab !== 'summary' || !selectedCourse) return;
-        (supabase as any)
-            .from('student_monthly_attendance')
-            .select('*')
-            .eq('course_id', selectedCourse)
-            .eq('month', summaryMonth)
-            .order('student_name')
-            .then(({ data }: any) => setSummaryData(data || []));
+        const [y, m] = summaryMonth.split('-').map(Number);
+        const lastDay = new Date(y, m, 0).getDate();
+        const monthStart = `${summaryMonth}-01`;
+        const monthEnd = `${summaryMonth}-${String(lastDay).padStart(2, '0')}`;
+        Promise.all([
+            (supabase as any)
+                .from('student_monthly_attendance')
+                .select('*')
+                .eq('course_id', selectedCourse)
+                .eq('month', summaryMonth)
+                .order('student_name'),
+            (supabase as any)
+                .from('student_attendance')
+                .select('student_id, attendance_date, status, students(full_name)')
+                .eq('course_id', selectedCourse)
+                .gte('attendance_date', monthStart)
+                .lte('attendance_date', monthEnd)
+                .order('attendance_date'),
+        ]).then(([{ data: sumData }, { data: rawData }]) => {
+            setSummaryData(sumData || []);
+            setDetailRecords(rawData || []);
+        });
     }, [tab, selectedCourse, summaryMonth]);
 
     const handleSave = async () => {
@@ -316,38 +332,117 @@ export default function CoachStudentAttendancePage() {
 
             {/* SUMMARY TAB */}
             {tab === 'summary' && (
-                <GlassCard className="p-4">
+                <div className="space-y-4">
                     {!selectedCourse ? (
-                        <div className="py-8 text-center text-white/50">{t('selectCourseFirst')}</div>
+                        <GlassCard className="p-8 text-center text-white/50">{t('selectCourseFirst')}</GlassCard>
                     ) : summaryData.length === 0 ? (
-                        <div className="py-8 text-center text-white/50">{t('summaryNoData')}</div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead><tr className="text-white/50 border-b border-white/10">
-                                    <th className="text-left py-2 px-3">{t('studentCol')}</th>
-                                    <th className="text-center py-2 px-3">{t('sessionsCol')}</th>
-                                    <th className="text-center py-2 px-3">{tc('present')}</th>
-                                    <th className="text-center py-2 px-3">{tc('absent')}</th>
-                                    <th className="text-center py-2 px-3">{t('rateCol')}</th>
-                                </tr></thead>
-                                <tbody>{summaryData.map((row: any) => (
-                                    <tr key={row.student_id} className="border-b border-white/5 hover:bg-white/5">
-                                        <td className="py-3 px-3 text-white font-medium">{row.student_name}</td>
-                                        <td className="py-3 px-3 text-center text-white/80">{row.total_sessions}</td>
-                                        <td className="py-3 px-3 text-center text-green-400">{row.sessions_attended}</td>
-                                        <td className="py-3 px-3 text-center text-red-400">{row.sessions_absent}</td>
-                                        <td className="py-3 px-3 text-center">
-                                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${Number(row.attendance_percentage) >= 80 ? 'bg-green-500/20 text-green-400' : Number(row.attendance_percentage) >= 60 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}`}>
-                                                {row.attendance_percentage}%
+                        <GlassCard className="p-8 text-center text-white/50">{t('summaryNoData')}</GlassCard>
+                    ) : (() => {
+                        const dates = [...new Set(detailRecords.map((r: any) => r.attendance_date as string))].sort();
+                        const pivot: Record<string, Record<string, string>> = {};
+                        detailRecords.forEach((r: any) => {
+                            if (!pivot[r.student_id]) pivot[r.student_id] = {};
+                            pivot[r.student_id][r.attendance_date] = r.status;
+                        });
+                        const STATUS_PILL: Record<string, string> = {
+                            present: 'bg-green-500/20 text-green-400',
+                            absent:  'bg-red-500/20 text-red-400',
+                            late:    'bg-yellow-500/20 text-yellow-400',
+                        };
+                        const STATUS_SHORT: Record<string, string> = {
+                            present: t('presentShort'),
+                            absent:  t('absentShort'),
+                            late:    t('lateShort'),
+                        };
+                        return (
+                            <>
+                                {/* Aggregated totals */}
+                                <GlassCard className="p-4 overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead><tr className="text-white/50 border-b border-white/10">
+                                            <th className="text-left py-2 px-3">{t('studentCol')}</th>
+                                            <th className="text-center py-2 px-3">{t('sessionsCol')}</th>
+                                            <th className="text-center py-2 px-3">{tc('present')}</th>
+                                            <th className="text-center py-2 px-3">{tc('absent')}</th>
+                                            <th className="text-center py-2 px-3">{tc('late')}</th>
+                                            <th className="text-center py-2 px-3">{t('rateCol')}</th>
+                                        </tr></thead>
+                                        <tbody>{summaryData.map((row: any) => (
+                                            <tr key={row.student_id} className="border-b border-white/5 hover:bg-white/5">
+                                                <td className="py-3 px-3 text-white font-medium">{row.student_name}</td>
+                                                <td className="py-3 px-3 text-center text-white/80">{row.total_sessions}</td>
+                                                <td className="py-3 px-3 text-center text-green-400">{row.sessions_attended}</td>
+                                                <td className="py-3 px-3 text-center text-red-400">{row.sessions_absent}</td>
+                                                <td className="py-3 px-3 text-center text-yellow-400">{row.sessions_late ?? 0}</td>
+                                                <td className="py-3 px-3 text-center">
+                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${Number(row.attendance_percentage) >= 80 ? 'bg-green-500/20 text-green-400' : Number(row.attendance_percentage) >= 60 ? 'bg-yellow-500/20 text-yellow-400' : 'bg-red-500/20 text-red-400'}`}>
+                                                        {row.attendance_percentage}%
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}</tbody>
+                                    </table>
+                                </GlassCard>
+
+                                {/* Session detail pivot */}
+                                {dates.length > 0 && (
+                                    <GlassCard className="p-4">
+                                        <h3 className="text-white font-semibold mb-3 text-sm">{t('sessionDetailTitle')}</h3>
+                                        <div className="overflow-x-auto">
+                                            <table className="text-xs border-separate border-spacing-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th className="text-left py-2 px-3 text-white/50 sticky left-0 bg-transparent min-w-36">{t('studentColHeader')}</th>
+                                                        {dates.map(d => (
+                                                            <th key={d} className="py-2 px-2 text-white/50 text-center min-w-16 whitespace-nowrap">
+                                                                {new Date(d + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                                            </th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {summaryData.map((row: any) => (
+                                                        <tr key={row.student_id} className="border-t border-white/5">
+                                                            <td className="py-2 px-3 text-white font-medium sticky left-0 bg-transparent whitespace-nowrap">{row.student_name}</td>
+                                                            {dates.map(d => {
+                                                                const status = pivot[row.student_id]?.[d];
+                                                                return (
+                                                                    <td key={d} className="py-2 px-2 text-center">
+                                                                        {status ? (
+                                                                            <span className={`inline-block w-7 h-7 leading-7 rounded-full text-xs font-bold ${STATUS_PILL[status]}`}>
+                                                                                {STATUS_SHORT[status]}
+                                                                            </span>
+                                                                        ) : (
+                                                                            <span className="text-white/20">{t('noRecord')}</span>
+                                                                        )}
+                                                                    </td>
+                                                                );
+                                                            })}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div className="flex gap-4 mt-3 pt-3 border-t border-white/10 flex-wrap">
+                                            <span className="flex items-center gap-1.5 text-xs text-white/50">
+                                                <span className="inline-block w-5 h-5 leading-5 rounded-full bg-green-500/20 text-green-400 font-bold text-center">{t('presentShort')}</span>
+                                                {tc('present')}
                                             </span>
-                                        </td>
-                                    </tr>
-                                ))}</tbody>
-                            </table>
-                        </div>
-                    )}
-                </GlassCard>
+                                            <span className="flex items-center gap-1.5 text-xs text-white/50">
+                                                <span className="inline-block w-5 h-5 leading-5 rounded-full bg-red-500/20 text-red-400 font-bold text-center">{t('absentShort')}</span>
+                                                {tc('absent')}
+                                            </span>
+                                            <span className="flex items-center gap-1.5 text-xs text-white/50">
+                                                <span className="inline-block w-5 h-5 leading-5 rounded-full bg-yellow-500/20 text-yellow-400 font-bold text-center">{t('lateShort')}</span>
+                                                {tc('late')}
+                                            </span>
+                                        </div>
+                                    </GlassCard>
+                                )}
+                            </>
+                        );
+                    })()}
+                </div>
             )}
         </div>
     );

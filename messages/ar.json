@@ -528,7 +528,13 @@
             "alreadyMarkedNote": "تم حفظ حضور هذه الجلسة مسبقاً.",
             "alreadyMarkedNoteAdmin": "تم حفظ الحضور مسبقاً. يمكنك تعديله بصفتك مسؤولاً.",
             "editAttendance": "تعديل الحضور",
-            "summaryNoData": "لا توجد سجلات حضور لهذا الشهر. سجّل الحضور في جلسة أولاً."
+            "summaryNoData": "لا توجد سجلات حضور لهذا الشهر. سجّل الحضور في جلسة أولاً.",
+            "sessionDetailTitle": "تفاصيل الجلسات بالتاريخ",
+            "studentColHeader": "الطالب",
+            "noRecord": "—",
+            "presentShort": "ح",
+            "absentShort": "غ",
+            "lateShort": "ت"
         },
         "scheduling": {
             "title": "جدولة الكورسات",
