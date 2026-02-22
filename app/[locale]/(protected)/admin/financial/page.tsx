@@ -153,7 +153,7 @@ export default function AdminFinancialPage() {
         setShowPayForm(false);
         setPayForm({ studentId: '', courseFee: '', dueDate: '', notes: '' });
         await loadCourseData(selectedCourse);
-        loadSummaries();
+        await loadSummaries();
     };
 
     const handleRecordPayment = async (e: React.FormEvent) => {
@@ -185,7 +185,7 @@ export default function AdminFinancialPage() {
         setShowRecordForm(false);
         setRecordForm({ paymentId: '', amount: '', method: 'cash', notes: '' });
         await loadCourseData(selectedCourse);
-        loadSummaries();
+        await loadSummaries();
     };
 
     const handleAddExpense = async (e: React.FormEvent) => {
@@ -216,10 +216,16 @@ export default function AdminFinancialPage() {
         await (supabase as any).from('course_expenses').delete().eq('id', id);
         toast.success('Expense deleted');
         await loadCourseData(selectedCourse);
-        loadSummaries();
+        await loadSummaries();
     };
 
     const selectedSummary = summaries.find(s => s.course_id === selectedCourse);
+
+    // Compute course-level stats from already-loaded local state (always up-to-date)
+    const localTotalIncome = payments.reduce((a, p) => a + Number(p.amount_paid), 0);
+    const localPendingIncome = payments.reduce((a, p) => a + Number(p.remaining_balance), 0);
+    const localTotalExpenses = expenses.reduce((a, e) => a + Number(e.amount), 0);
+    const localNetProfit = localTotalIncome - localTotalExpenses;
 
     const inputClass = 'w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary';
     const labelClass = 'block text-white/70 text-xs mb-1';
@@ -295,13 +301,13 @@ export default function AdminFinancialPage() {
             {selectedCourse && (
                 <>
                     {/* Course summary cards */}
-                    {selectedSummary && (
+                    {selectedCourse && (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {[
-                                { label: t('totalStudents'), value: selectedSummary.total_students, color: 'text-white' },
-                                { label: t('collected'), value: formatCurrency(selectedSummary.total_income), color: 'text-green-400' },
-                                { label: t('expensesCol'), value: formatCurrency(selectedSummary.total_expenses), color: 'text-red-400' },
-                                { label: t('netProfit'), value: formatCurrency(selectedSummary.net_profit), color: Number(selectedSummary.net_profit) >= 0 ? 'text-green-400' : 'text-red-400' },
+                                { label: t('totalStudents'), value: courseStudents.length, color: 'text-white' },
+                                { label: t('collected'), value: formatCurrency(localTotalIncome), color: 'text-green-400' },
+                                { label: t('expensesCol'), value: formatCurrency(localTotalExpenses), color: 'text-red-400' },
+                                { label: t('netProfit'), value: formatCurrency(localNetProfit), color: localNetProfit >= 0 ? 'text-green-400' : 'text-red-400' },
                             ].map(card => (
                                 <GlassCard key={card.label} className="p-4">
                                     <p className="text-white/50 text-xs">{card.label}</p>
