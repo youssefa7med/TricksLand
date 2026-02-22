@@ -63,6 +63,7 @@ export default function AdminFinancialPage() {
     const [selectedCourse, setSelectedCourse] = useState('');
     const [payments, setPayments] = useState<StudentPayment[]>([]);
     const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [courseStudents, setCourseStudents] = useState<{ id: string; full_name: string }[]>([]);
     const [tab, setTab] = useState<'overview' | 'payments' | 'expenses'>('overview');
 
     const [loading, setLoading] = useState(true);
@@ -81,23 +82,27 @@ export default function AdminFinancialPage() {
     const [showExpForm, setShowExpForm] = useState(false);
 
     // Load courses + summaries
+    const loadSummaries = useCallback(async () => {
+        const [{ data: coursesData }, { data: summaryData }] = await Promise.all([
+            supabase.from('courses').select('id, name').eq('status', 'active').order('name'),
+            (supabase as any).from('course_financial_summary').select('*').order('course_name'),
+        ]);
+        setCourses(coursesData || []);
+        setSummaries(summaryData || []);
+    }, [supabase]);
+
     useEffect(() => {
         const load = async () => {
-            const [{ data: coursesData }, { data: summaryData }] = await Promise.all([
-                supabase.from('courses').select('id, name').eq('status', 'active').order('name'),
-                (supabase as any).from('course_financial_summary').select('*').order('course_name'),
-            ]);
-            setCourses(coursesData || []);
-            setSummaries(summaryData || []);
+            await loadSummaries();
             setLoading(false);
         };
         load();
-    }, []);
+    }, [loadSummaries]);
 
-    // Load payments + expenses when course changes
+    // Load payments + expenses + enrolled students when course changes
     const loadCourseData = useCallback(async (courseId: string) => {
         if (!courseId) return;
-        const [{ data: paymentsData }, { data: expensesData }] = await Promise.all([
+        const [{ data: paymentsData }, { data: expensesData }, { data: enrolledData }] = await Promise.all([
             (supabase as any)
                 .from('student_payments')
                 .select('id, student_id, course_fee, amount_paid, remaining_balance, payment_status, due_date, notes, profiles!student_payments_student_id_fkey(full_name)')
@@ -108,9 +113,19 @@ export default function AdminFinancialPage() {
                 .select('id, title, amount, expense_date, category, description')
                 .eq('course_id', courseId)
                 .order('expense_date', { ascending: false }),
+            (supabase as any)
+                .from('course_students')
+                .select('student_id, students(id, full_name)')
+                .eq('course_id', courseId),
         ]);
         setPayments(paymentsData || []);
         setExpenses(expensesData || []);
+        // Build list of enrolled students (id + full_name)
+        const enrolled: { id: string; full_name: string }[] = (enrolledData || []).map((r: any) => ({
+            id: r.student_id,
+            full_name: r.students?.full_name || 'Unknown',
+        }));
+        setCourseStudents(enrolled);
     }, [supabase]);
 
     useEffect(() => {
@@ -137,7 +152,8 @@ export default function AdminFinancialPage() {
         toast.success('Payment record saved');
         setShowPayForm(false);
         setPayForm({ studentId: '', courseFee: '', dueDate: '', notes: '' });
-        loadCourseData(selectedCourse);
+        await loadCourseData(selectedCourse);
+        loadSummaries();
     };
 
     const handleRecordPayment = async (e: React.FormEvent) => {
@@ -168,7 +184,8 @@ export default function AdminFinancialPage() {
         toast.success('Payment recorded');
         setShowRecordForm(false);
         setRecordForm({ paymentId: '', amount: '', method: 'cash', notes: '' });
-        loadCourseData(selectedCourse);
+        await loadCourseData(selectedCourse);
+        loadSummaries();
     };
 
     const handleAddExpense = async (e: React.FormEvent) => {
@@ -190,14 +207,16 @@ export default function AdminFinancialPage() {
         toast.success('Expense added');
         setShowExpForm(false);
         setExpForm({ title: '', amount: '', date: new Date().toISOString().split('T')[0], category: 'other', description: '' });
-        loadCourseData(selectedCourse);
+        await loadCourseData(selectedCourse);
+        loadSummaries();
     };
 
     const handleDeleteExpense = async (id: string) => {
         if (!confirm('Delete this expense?')) return;
         await (supabase as any).from('course_expenses').delete().eq('id', id);
         toast.success('Expense deleted');
-        loadCourseData(selectedCourse);
+        await loadCourseData(selectedCourse);
+        loadSummaries();
     };
 
     const selectedSummary = summaries.find(s => s.course_id === selectedCourse);
@@ -323,8 +342,12 @@ export default function AdminFinancialPage() {
                                             <select value={payForm.studentId} onChange={e => setPayForm(p => ({ ...p, studentId: e.target.value }))}
                                                 required className={inputClass}>
                                                 <option value="">Select student</option>
-                                                {/* Students not yet having a payment record */}
-                                                {courses.length > 0 && <option value="">— select —</option>}
+                                                {courseStudents
+                                                    .filter(s => !payments.some(p => p.student_id === s.id))
+                                                    .map(s => (
+                                                        <option key={s.id} value={s.id}>{s.full_name}</option>
+                                                    ))
+                                                }
                                             </select>
                                         </div>
                                         <div>
