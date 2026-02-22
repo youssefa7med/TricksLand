@@ -5,7 +5,7 @@
 
 'use server';
 
-import ExcelJS from 'exceljs';
+import * as ExcelJS from 'exceljs';
 import {
   generateStudentAttendanceReport,
   generateCoursePaymentReport,
@@ -52,7 +52,7 @@ function styleHeaderRow(row: ExcelJS.Row): void {
   row.eachCell((cell) => {
     cell.fill = headerFill;
     cell.font = headerFont;
-    cell.alignment = { horizontal: 'center', vertical: 'center', wrapText: true };
+    cell.alignment = { horizontal: 'center' as any, vertical: 'middle' as any, wrapText: true };
     cell.border = {
       top: { style: 'thin' },
       left: { style: 'thin' },
@@ -134,20 +134,22 @@ export async function exportStudentAttendance(month: string): Promise<Buffer> {
   // Auto-fit columns
   worksheet.columns.forEach((column) => {
     let maxLength = 0;
-    column.eachCell({ includeEmpty: true }, (cell) => {
-      const cellValue = cell.value?.toString() || '';
-      if (cellValue.length > maxLength) {
-        maxLength = cellValue.length;
-      }
-    });
-    column.width = maxLength < 12 ? 12 : maxLength + 2;
+    if (column) {
+      (column as any).eachCell({ includeEmpty: true }, (cell: any) => {
+        const cellValue = cell.value?.toString() || '';
+        if (cellValue.length > maxLength) {
+          maxLength = cellValue.length;
+        }
+      });
+      column.width = maxLength < 12 ? 12 : maxLength + 2;
+    }
   });
 
   // Add metadata
-  worksheet.properties.created = new Date();
+  (worksheet.properties as any).created = new Date();
   workbook.creator = 'TricksLand Academy';
 
-  return await workbook.xlsx.writeBuffer();
+  return (await workbook.xlsx.writeBuffer()) as any;
 }
 
 /**
@@ -216,10 +218,10 @@ export async function exportCoursePayments(courseId: string, courseName: string)
     column.width = 15;
   });
 
-  worksheet.properties.created = new Date();
+  (worksheet.properties as any).created = new Date();
   workbook.creator = 'TricksLand Academy';
 
-  return await workbook.xlsx.writeBuffer();
+  return (await workbook.xlsx.writeBuffer()) as any;
 }
 
 /**
@@ -277,10 +279,10 @@ export async function exportCourseExpenses(
     column.width = 15;
   });
 
-  worksheet.properties.created = new Date();
+  (worksheet.properties as any).created = new Date();
   workbook.creator = 'TricksLand Academy';
 
-  return await workbook.xlsx.writeBuffer();
+  return (await workbook.xlsx.writeBuffer()) as any;
 }
 
 /**
@@ -358,10 +360,10 @@ export async function exportCoachPayroll(month: string): Promise<Buffer> {
     column.width = 15;
   });
 
-  worksheet.properties.created = new Date();
+  (worksheet.properties as any).created = new Date();
   workbook.creator = 'TricksLand Academy';
 
-  return await workbook.xlsx.writeBuffer();
+  return (await workbook.xlsx.writeBuffer()) as any;
 }
 
 /**
@@ -394,9 +396,9 @@ export async function exportRevenueSummary(month?: string): Promise<Buffer> {
 
   for (const [label, value] of rows) {
     const row = worksheet.addRow([label, value]);
-    if (label && !['', 'Number of'].includes(label)) {
+    if (typeof label === 'string' && label && !['', 'Number of'].includes(label)) {
       row.font = { bold: true };
-      if (typeof value === 'number' && label.includes('Income', 'Expenses', 'Profit')) {
+      if (typeof value === 'number' && (label.includes('Income') || label.includes('Expenses') || label.includes('Profit'))) {
         formatCurrency(row.getCell(2));
       }
     }
@@ -406,8 +408,8 @@ export async function exportRevenueSummary(month?: string): Promise<Buffer> {
     column.width = 20;
   });
 
-  worksheet.properties.created = new Date();
+  (worksheet.properties as any).created = new Date();
   workbook.creator = 'TricksLand Academy';
 
-  return await workbook.xlsx.writeBuffer();
+  return (await workbook.xlsx.writeBuffer()) as any;
 }
