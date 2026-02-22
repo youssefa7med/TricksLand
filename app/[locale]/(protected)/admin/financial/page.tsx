@@ -35,7 +35,7 @@ interface StudentPayment {
     payment_status: 'not_paid' | 'partially_paid' | 'paid';
     due_date: string | null;
     notes: string | null;
-    profiles: { full_name: string };
+    students: { full_name: string };
 }
 
 interface Expense {
@@ -105,7 +105,7 @@ export default function AdminFinancialPage() {
         const [{ data: paymentsData }, { data: expensesData }, { data: enrolledData }] = await Promise.all([
             (supabase as any)
                 .from('student_payments')
-                .select('id, student_id, course_fee, amount_paid, remaining_balance, payment_status, due_date, notes, profiles!student_payments_student_id_fkey(full_name)')
+                .select('id, student_id, course_fee, amount_paid, remaining_balance, payment_status, due_date, notes, students(full_name)')
                 .eq('course_id', courseId)
                 .order('created_at', { ascending: false }),
             (supabase as any)
@@ -439,7 +439,7 @@ export default function AdminFinancialPage() {
                                             {payments.map(p => (
                                                 <tr key={p.id} className="border-b border-white/5 hover:bg-white/5">
                                                     <td className="py-3 px-3 text-white font-medium">
-                                                        {(p.profiles as any)?.full_name || '—'}
+                                                        {(p.students as any)?.full_name || '—'}
                                                     </td>
                                                     <td className="py-3 px-3 text-right text-white/80">{formatCurrency(p.course_fee)}</td>
                                                     <td className="py-3 px-3 text-right text-green-400">{formatCurrency(p.amount_paid)}</td>
