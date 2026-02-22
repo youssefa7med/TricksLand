@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دليل المدرب — نظام TricksLand</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+    background: #f5f5f5;
+    color: #1a1a2e;
+    font-size: 13pt;
+    line-height: 1.8;
+    direction: rtl;
+  }
+
+  @page {
+    size: A4;
+    margin: 20mm 18mm 22mm 18mm;
+  }
+  @media print {
+    body { background: #fff; font-size: 11pt; }
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    .section { box-shadow: none !important; border: 1px solid #ddd !important; }
+    a { color: inherit; text-decoration: none; }
+    .cover { page-break-after: always; }
+  }
+
+  /* ── Cover ── */
+  .cover {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0a1628, #1e3a5f, #0d2137);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 40px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+  }
+  .cover .logo-circle {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #06b6d4);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 28px;
+    font-size: 44px;
+    box-shadow: 0 0 40px rgba(59,130,246,0.5);
+  }
+  .cover h1 {
+    font-size: 36pt; font-weight: 900;
+    background: linear-gradient(90deg, #60a5fa, #34d399);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+  }
+  .cover h2 { font-size: 20pt; font-weight: 600; color: #93c5fd; margin-bottom: 6px; }
+  .cover .subtitle { font-size: 14pt; color: #94a3b8; margin-bottom: 40px; }
+  .cover .badge {
+    display: inline-block;
+    background: rgba(59,130,246,0.25);
+    border: 1px solid rgba(147,197,253,0.4);
+    color: #93c5fd;
+    padding: 8px 28px;
+    border-radius: 40px;
+    font-size: 12pt;
+    margin: 6px 8px;
+  }
+  .cover .date { color: #64748b; font-size: 11pt; margin-top: 50px; }
+
+  /* ── TOC ── */
+  .toc-page {
+    background: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+  }
+  .toc-title {
+    font-size: 22pt; font-weight: 900; color: #1e3a5f;
+    border-bottom: 3px solid #3b82f6;
+    padding-bottom: 12px; margin-bottom: 28px;
+  }
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dotted #e2e8f0;
+    font-size: 12pt;
+  }
+  .toc-item .toc-num {
+    background: #3b82f6; color: #fff;
+    width: 28px; height: 28px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10pt; font-weight: 700; margin-left: 12px; flex-shrink: 0;
+  }
+  .toc-item .toc-label { flex: 1; }
+  .toc-item .toc-page-num { color: #3b82f6; font-weight: 700; font-size: 11pt; }
+  .toc-section-header {
+    font-size: 13pt; font-weight: 700; color: #1e3a5f;
+    margin: 20px 0 8px;
+    padding: 6px 14px;
+    background: #eff6ff;
+    border-radius: 6px;
+    border-right: 4px solid #3b82f6;
+  }
+
+  /* ── Sections ── */
+  .section {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+    overflow: hidden;
+  }
+  .section-header {
+    background: linear-gradient(135deg, #1e3a5f, #3b82f6);
+    color: #fff;
+    padding: 22px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .section-header .icon {
+    font-size: 26px;
+    width: 50px; height: 50px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .section-header h2 { font-size: 18pt; font-weight: 900; margin-bottom: 2px; }
+  .section-header .section-sub { font-size: 10pt; color: rgba(255,255,255,0.7); }
+  .section-body { padding: 28px 32px; }
+
+  /* ── Steps ── */
+  .steps { margin: 16px 0; }
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .step-num {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: #fff;
+    font-weight: 900;
+    font-size: 12pt;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-content { flex: 1; }
+  .step-title { font-weight: 700; font-size: 12pt; margin-bottom: 3px; color: #1a1a2e; }
+  .step-desc { color: #475569; font-size: 11pt; }
+
+  /* ── Info boxes ── */
+  .info-box {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 11pt;
+  }
+  .info-box .box-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .info-box.tip    { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+  .info-box.warn   { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
+  .info-box.note   { background: #eff6ff; border: 1px solid #93c5fd; color: #1e40af; }
+  .info-box.danger { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 10.5pt; }
+  th { background: #1e3a5f; color: #fff; padding: 10px 14px; text-align: right; font-weight: 700; }
+  td { padding: 9px 14px; border-bottom: 1px solid #e2e8f0; }
+  tr:nth-child(even) td { background: #f0f7ff; }
+  tr:hover td { background: #dbeafe; }
+
+  /* ── Field list ── */
+  .field-list { list-style: none; margin: 10px 0; }
+  .field-list li {
+    padding: 7px 0;
+    border-bottom: 1px dashed #e2e8f0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 11pt;
+  }
+  .field-list li::before { content: "◆"; color: #3b82f6; font-size: 8pt; margin-top: 5px; flex-shrink: 0; }
+  .field-name { font-weight: 700; min-width: 160px; color: #1e3a5f; }
+  .field-desc { color: #475569; }
+
+  /* ── Badges ── */
+  .badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 9pt; font-weight: 700; }
+  .badge-green  { background: #dcfce7; color: #166534; }
+  .badge-yellow { background: #fef9c3; color: #854d0e; }
+  .badge-red    { background: #fee2e2; color: #991b1b; }
+  .badge-blue   { background: #dbeafe; color: #1e40af; }
+
+  /* ── Feature grid ── */
+  .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 16px 0; }
+  .feature-card {
+    background: #f0f7ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 16px;
+    border-right: 4px solid #3b82f6;
+  }
+  .feature-card h4 { font-size: 11pt; font-weight: 700; color: #1e3a5f; margin-bottom: 6px; }
+  .feature-card p  { font-size: 10pt; color: #475569; }
+
+  /* ── Subsection heading ── */
+  h3.sub {
+    font-size: 14pt; font-weight: 700; color: #1e3a5f;
+    margin: 24px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #bfdbfe;
+    display: flex; align-items: center; gap: 10px;
+  }
+  h3.sub::before { content: "▸"; color: #3b82f6; }
+
+  p { margin: 8px 0; }
+
+  .print-btn {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 40px;
+    font-size: 14pt;
+    font-family: 'Cairo', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(59,130,246,0.4);
+    z-index: 999;
+    direction: rtl;
+  }
+  .print-btn:hover { background: #2563eb; }
+
+  .chapter-label {
+    font-size: 9pt;
+    font-weight: 600;
+    color: #93c5fd;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  /* Comparison box */
+  .compare-box {
+    border: 2px solid #bfdbfe;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 16px 0;
+  }
+  .compare-header {
+    background: #1e3a5f;
+    color: #fff;
+    padding: 10px 18px;
+    font-weight: 700;
+    font-size: 11pt;
+  }
+  .compare-row {
+    display: flex;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .compare-row:last-child { border-bottom: none; }
+  .compare-col {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 10.5pt;
+  }
+  .compare-col:first-child { border-left: 1px solid #e2e8f0; }
+  .compare-col.green-bg { background: #f0fdf4; }
+  .compare-col.red-bg   { background: #fef2f2; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">🖨️ طباعة / حفظ PDF</button>
+
+<!-- ═══════════════════════════════════════════════════════════
+     COVER
+     ═══════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="logo-circle">🏋️</div>
+  <h1>TricksLand</h1>
+  <h2>دليل المستخدم — المدرب</h2>
+  <p class="subtitle">كل ما تحتاج معرفته لاستخدام نظام الأكاديمية كمدرب</p>
+  <div>
+    <span class="badge">📋 دليل غير تقني</span>
+    <span class="badge">🌐 واجهة عربية / إنجليزية</span>
+    <span class="badge">🏋️ صلاحيات المدرب</span>
+  </div>
+  <p class="date">إصدار: فبراير 2026</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="toc-page page-break">
+  <div class="toc-title">📑 فهرس المحتويات</div>
+
+  <div class="toc-section-header">مقدمة</div>
+  <div class="toc-item"><span><span class="toc-num">١</span><span class="toc-label">ما الذي يمكنك فعله كمدرب؟</span></span><span class="toc-page-num">٣</span></div>
+
+  <div class="toc-section-header">أولاً — البداية</div>
+  <div class="toc-item"><span><span class="toc-num">٢</span><span class="toc-label">تسجيل الدخول وإعدادات الحساب</span></span><span class="toc-page-num">٤</span></div>
+  <div class="toc-item"><span><span class="toc-num">٣</span><span class="toc-label">لوحة التحكم الشخصية</span></span><span class="toc-page-num">٥</span></div>
+
+  <div class="toc-section-header">ثانياً — الجلسات والكورسات</div>
+  <div class="toc-item"><span><span class="toc-num">٤</span><span class="toc-label">كورساتي</span></span><span class="toc-page-num">٦</span></div>
+  <div class="toc-item"><span><span class="toc-num">٥</span><span class="toc-label">جلساتي</span></span><span class="toc-page-num">٧</span></div>
+
+  <div class="toc-section-header">ثالثاً — الحضور</div>
+  <div class="toc-item"><span><span class="toc-num">٦</span><span class="toc-label">تسجيل حضوري (حضور المدربين)</span></span><span class="toc-page-num">٩</span></div>
+  <div class="toc-item"><span><span class="toc-num">٧</span><span class="toc-label">حضور الطلاب</span></span><span class="toc-page-num">١٠</span></div>
+
+  <div class="toc-section-header">رابعاً — المالية</div>
+  <div class="toc-item"><span><span class="toc-num">٨</span><span class="toc-label">التعديلات (مكافآتي وخصوماتي)</span></span><span class="toc-page-num">١٢</span></div>
+  <div class="toc-item"><span><span class="toc-num">٩</span><span class="toc-label">فواتيري</span></span><span class="toc-page-num">١٣</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     1. INTRO - WHAT CAN COACH DO
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section page-break">
+  <div class="section-header">
+    <div class="icon">🎯</div>
+    <div>
+      <div class="chapter-label">مقدمة</div>
+      <h2>ما الذي يمكنك فعله كمدرب؟</h2>
+      <div class="section-sub">نظرة سريعة على صلاحياتك في النظام</div>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p>مرحباً بك في نظام <strong>TricksLand</strong>! كمدرب، النظام صُمِّم ليساعدك على متابعة جلساتك وفواتيرك وحضور طلابك بكل سهولة.</p>
+
+    <h3 class="sub">ما يمكنك فعله ✅</h3>
+    <table>
+      <tr><th>القسم</th><th>ما تستطيع فعله</th></tr>
+      <tr><td>🏠 لوحة التحكم</td><td>عرض إحصائياتك الشخصية للشهر الحالي</td></tr>
+      <tr><td>📚 كورساتي</td><td>عرض الكورسات التي أنت مُعيَّن عليها وطلابها</td></tr>
+      <tr><td>🗓️ جلساتي</td><td>عرض جلساتك وإضافة جلسة جديدة وتعديل جلساتك</td></tr>
+      <tr><td>📍 حضوري</td><td>تسجيل حضورك لجلساتك بنفسك</td></tr>
+      <tr><td>✅ حضور الطلاب</td><td>تسجيل حضور الطلاب في جلساتك ومتابعة الملخص الشهري</td></tr>
+      <tr><td>⚖️ التعديلات</td><td>عرض المكافآت والخصومات التي أضافها المدير</td></tr>
+      <tr><td>🧾 فواتيري</td><td>عرض فواتيرك الشهرية بالتفصيل</td></tr>
+    </table>
+
+    <h3 class="sub">ما لا يمكنك فعله ❌</h3>
+    <div class="compare-box">
+      <div class="compare-header">الصلاحيات المحجوبة عن المدرب</div>
+      <div class="compare-row">
+        <div class="compare-col red-bg">لا يمكنك إضافة أو تعديل أو حذف مدربين آخرين</div>
+        <div class="compare-col red-bg">لا يمكنك رؤية جلسات أو بيانات المدربين الآخرين</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-col red-bg">لا يمكنك تعديل الأسعار أو سجل الرواتب</div>
+        <div class="compare-col red-bg">لا يمكنك تعديل أو حذف التعديلات (المكافآت/الخصومات)</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-col red-bg">لا يمكنك إضافة أو حذف الكورسات</div>
+        <div class="compare-col red-bg">لا يمكنك الوصول للتقارير أو الإدارة المالية للأكاديمية</div>
+      </div>
+    </div>
+
+    <div class="info-box note">
+      <span class="box-icon">ℹ️</span>
+      <span>هذا أمر طبيعي. نظام TricksLand مُصمَّم بطريقة تعطي كل شخص صلاحيات ما يحتاجه فقط لحماية خصوصية البيانات.</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     2. LOGIN
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section page-break">
+  <div class="section-header">
+    <div class="icon">🔐</div>
+    <div>
+      <div class="chapter-label">الفصل الثاني</div>
+      <h2>تسجيل الدخول وإعدادات الحساب</h2>
+      <div class="section-sub">كيفية الدخول إلى النظام وتغيير كلمة المرور</div>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <h3 class="sub">كيف تدخل للنظام؟</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">١</div>
+        <div class="step-content">
+          <div class="step-title">افتح الرابط</div>
+          <div class="step-desc">افتح المتصفح وادخل رابط موقع الأكاديمية.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٢</div>
+        <div class="step-content">
+          <div class="step-title">أدخل البريد الإلكتروني وكلمة المرور</div>
+          <div class="step-desc">استخدم البريد الإلكتروني وكلمة المرور التي أعطاها لك المدير عند إنشاء حسابك.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٣</div>
+        <div class="step-content">
+          <div class="step-title">اختر اللغة</div>
+          <div class="step-desc">يمكنك التبديل بين العربية والإنجليزية من زر اللغة في أعلى الصفحة في أي وقت.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٤</div>
+        <div class="step-content">
+          <div class="step-title">اضغط "تسجيل الدخول"</div>
+          <div class="step-desc">ستنتقل مباشرة إلى لوحة التحكم الخاصة بك.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box warn">
+      <span class="box-icon">⚠️</span>
+      <span>إذا نسيت كلمة المرور، اضغط "نسيت كلمة المرور" وسيُرسل لك رابط إعادة تعيينها على بريدك الإلكتروني. أو تواصل مع المدير.</span>
+    </div>
+
+    <h3 class="sub">تغيير كلمة المرور</h3>
+    <p>من القائمة العلوية اضغط على أيقونة <strong>⚙️ الإعدادات</strong>، أدخل كلمة مرورك الجديدة، أكدها، واضغط حفظ.</p>
+
+    <div class="info-box tip">
+      <span class="box-icon">✅</span>
+      <span>يُنصح بتغيير كلمة المرور المبدئية التي أعطاها لك المدير فور أول دخول لك للنظام.</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     3. DASHBOARD
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section page-break">
+  <div class="section-header">
+    <div class="icon">📊</div>
+    <div>
+      <div class="chapter-label">الفصل الثالث</div>
+      <h2>لوحة التحكم الشخصية</h2>
+      <div class="section-sub">ملخص أدائك وإحصائياتك الشهرية</div>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p>فور دخولك للنظام ستجد <strong>لوحة التحكم</strong> التي تعطيك ملخصاً سريعاً عن نشاطك للشهر الحالي.</p>
+
+    <h3 class="sub">ما الذي تراه؟</h3>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h4>🗓️ إجمالي جلساتي</h4>
+        <p>كم جلسة قدّمتها هذا الشهر في جميع الكورسات.</p>
+      </div>
+      <div class="feature-card">
+        <h4>⏱️ ساعاتي هذا الشهر</h4>
+        <p>مجموع ساعات التدريس التي عملتها هذا الشهر.</p>
+      </div>
+      <div class="feature-card">
+        <h4>💰 مستحقاتي الشهرية</h4>
+        <p>إجمالي المبلغ المستحق لك عن هذا الشهر قبل إصدار الفاتورة.</p>
+      </div>
+      <div class="feature-card">
+        <h4>📚 الكورسات النشطة</h4>
+        <p>عدد الكورسات التي أنت مُعيَّن عليها حالياً.</p>
+      </div>
+    </div>
+
+    <h3 class="sub">الجلسات الأخيرة</h3>
+    <p>في أسفل لوحة التحكم ستجد قائمة بآخر جلساتك المسجلة مع الكورس والتاريخ والساعات، لتتمكن من مراجعتها بسرعة.</p>
+
+    <div class="info-box tip">
+      <span class="box-icon">💡</span>
+      <span>لوحة التحكم تُحدَّث تلقائياً في كل مرة تفتح فيها الصفحة. إذا لم تجد بياناتك اضغط تحديث المتصفح.</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     4. MY COURSES
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section page-break">
+  <div class="section-header">
+    <div class="icon">📚</div>
+    <div>
+      <div class="chapter-label">الفصل الرابع</div>
+      <h2>كورساتي</h2>
+      <div class="section-sub">الكورسات التي أنت مُعيَّن عليها وطلابها</div>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p>من قسم <strong>كورساتي</strong> يمكنك الاطلاع على جميع الكورسات التي عيّنك المدير عليها.</p>
+
+    <h3 class="sub">عرض كورساتك</h3>
+    <p>تجد بطاقة لكل كورس تعمل عليه تحتوي على:</p>
+    <ul class="field-list">
+      <li><span class="field-name">اسم الكورس</span><span class="field-desc">الاسم الرسمي للكورس</span></li>
+      <li><span class="field-name">الوصف</span><span class="field-desc">وصف مختصر لمحتوى الكورس</span></li>
+      <li><span class="field-name">عدد الطلاب</span><span class="field-desc">كم طالب مسجل في هذا الكورس</span></li>
+      <li><span class="field-name">الحالة</span><span class="field-desc"><span class="badge badge-green">نشط</span> — يعني الكورس يعمل حالياً</span></li>
+    </ul>
+
+    <h3 class="sub">قائمة الطلاب</h3>
+    <p>اضغط على أي كورس لعرض قائمة الطلاب المسجلين فيه. ستجد اسم كل طالب مع تاريخ تسجيله.</p>
+
+    <div class="info-box note">
+      <span class="box-icon">ℹ️</span>
+      <span>أنت لا تستطيع إضافة أو حذف الطلاب — هذا من اختصاص المدير فقط. إذا كنت تريد إضافة أو حذف طالب تواصل مع المدير.</span>
+    </div>
+
+    <div class="info-box note">
+      <span class="box-icon">ℹ️</span>
+      <span>إذا لم يظهر لك أي كورس، فهذا يعني أن المدير لم يُعيّنك على أي كورس بعد. تواصل معه.</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     5. MY SESSIONS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section page-break">
+  <div class="section-header">
+    <div class="icon">🗓️</div>
+    <div>
+      <div class="chapter-label">الفصل الخامس</div>
+      <h2>جلساتي</h2>
+      <div class="section-sub">عرض جلساتك وإضافة جلسة جديدة</div>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p>من قسم <strong>جلساتي</strong> تجد سجل جميع جلساتك وتستطيع إضافة جلسة جديدة.</p>
+
+    <h3 class="sub">عرض جلساتك</h3>
+    <p>ستجد قائمة بجلساتك مع إمكانية التصفية حسب:</p>
+    <ul class="field-list">
+      <li><span class="field-name">الكورس</span><span class="field-desc">لعرض جلسات كورس محدد فقط</span></li>
+      <li><span class="field-name">الشهر</span><span class="field-desc">لعرض جلسات شهر معين</span></li>
+      <li><span class="field-name">نوع الجلسة</span><span class="field-desc">جلسة عادية، تقييم، إلخ</span></li>
+    </ul>
+
+    <p>يعرض كل صف في الجدول:</p>
+    <table>
+      <tr><th>الحقل</th><th>المعنى</th></tr>
+      <tr><td>الكورس</td><td>اسم الكورس الذي سجلتها له</td></tr>
+      <tr><td>التاريخ</td><td>تاريخ الجلسة</td></tr>
+      <tr><td>الوقت</td><td>من وقت البدء إلى وقت الانتهاء</td></tr>
+      <tr><td>الساعات</td><td>المدة الإجمالية (يحتسبها النظام تلقائياً)</td></tr>
+      <tr><td>السعر</td><td>سعر ساعتك في هذا الكورس</td></tr>
+      <tr><td>المجموع</td><td>الساعات × السعر (يحتسبه النظام تلقائياً)</td></tr>
+      <tr><td>النوع</td><td>نوع الجلسة</td></tr>
+    </table>
+
+    <h3 class="sub">إضافة جلسة جديدة</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">١</div>
+        <div class="step-content">
+          <div class="step-title">اضغط "+ جلسة جديدة"</div>
+          <div class="step-desc">الزر في أعلى صفحة جلساتك.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٢</div>
+        <div class="step-content">
+          <div class="step-title">اختر الكورس</div>
+          <div class="step-desc">من القائمة المنسدلة اختر الكورس الذي قدّمت فيه الجلسة.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٣</div>
+        <div class="step-content">
+          <div class="step-title">أدخل التاريخ والوقت</div>
+          <div class="step-desc">حدد تاريخ الجلسة ووقت بدايتها وانتهائها.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٤</div>
+        <div class="step-content">
+          <div class="step-title">اختر نوع الجلسة</div>
+          <div class="step-desc">هل هي جلسة تدريب عادية، تقييم، أم غير ذلك؟</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٥</div>
+        <div class="step-content">
+          <div class="step-title">هل تتطلب تسجيل حضور طلاب؟</div>
+          <div class="step-desc">إذا أردت تسجيل حضور الطلاب لهذه الجلسة ضع علامة ✅ في مربع "يتطلب الحضور".</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٦</div>
+        <div class="step-content">
+          <div class="step-title">أضف ملاحظات (اختياري)</div>
+          <div class="step-desc">أي معلومات إضافية تريد تسجيلها.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٧</div>
+        <div class="step-content">
+          <div class="step-title">احفظ</div>
+          <div class="step-desc">الجلسة مسجلة والمبلغ محتسب تلقائياً.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box tip">
+      <span class="box-icon">✅</span>
+      <span>النظام يحتسب الساعات والمبلغ تلقائياً لا تحتاج لإدخال أي أرقام مالية بنفسك.</span>
+    </div>
+
+    <div class="info-box warn">
+      <span class="box-icon">⚠️</span>
+      <span>لا يمكن تسجيل جلستين في نفس اليوم بأوقات متداخلة. إذا ظهرت رسالة خطأ تحقق من أوقات جلساتك في ذلك اليوم.</span>
+    </div>
+
+    <h3 class="sub">تعديل أو حذف جلسة</h3>
+    <p>اضغط أيقونة <strong>✏️</strong> لتعديل جلسة قمت بتسجيلها سابقاً، أو أيقونة <strong>🗑️</strong> لحذفها.</p>
+    <div class="info-box note">
+      <span class="box-icon">ℹ️</span>
+      <span>لا يمكنك تعديل أو حذف جلسات المدربين الآخرين، تستطيع فقط التعامل مع جلساتك أنت.</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     6. MY ATTENDANCE
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section page-break">
+  <div class="section-header">
+    <div class="icon">📍</div>
+    <div>
+      <div class="chapter-label">الفصل السادس</div>
+      <h2>تسجيل حضوري</h2>
+      <div class="section-sub">تسجيل حضورك الشخصي كمدرب في الجلسات</div>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p>من قسم <strong>الحضور</strong> يمكنك تسجيل وجودك في الجلسة بشكل رسمي في النظام.</p>
+
+    <h3 class="sub">كيف تسجل حضورك؟</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">١</div>
+        <div class="step-content">
+          <div class="step-title">اذهب إلى قسم "الحضور"</div>
+          <div class="step-desc">من القائمة الجانبية أو العلوية.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٢</div>
+        <div class="step-content">
+          <div class="step-title">اختر الجلسة</div>
+          <div class="step-desc">حدد الجلسة التي تريد تسجيل حضورك فيها.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٣</div>
+        <div class="step-content">
+          <div class="step-title">اضغط "تسجيل الحضور"</div>
+          <div class="step-desc">النظام يسجل الوقت الحالي كوقت حضورك، ويمكن أن يسجل موقعك الجغرافي إذا سمحت بذلك.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box note">
+      <span class="box-icon">ℹ️</span>
+      <span>هذا القسم لتسجيل حضورك <strong>أنت كمدرب</strong>. حضور الطلاب يُسجَّل في قسم منفصل يسمى "حضور الطلاب".</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     7. STUDENT ATTENDANCE
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section page-break">
+  <div class="section-header">
+    <div class="icon">✅</div>
+    <div>
+      <div class="chapter-label">الفصل السابع</div>
+      <h2>حضور الطلاب</h2>
+      <div class="section-sub">تسجيل ومتابعة حضور طلابك</div>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p>من قسم <strong>حضور الطلاب</strong> تسجّل حضور الطلاب في كل جلسة من جلساتك وتتابع ملخص الحضور الشهري.</p>
+
+    <h3 class="sub">تسجيل الحضور (تبويب "تسجيل الحضور")</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">١</div>
+        <div class="step-content">
+          <div class="step-title">اختر الكورس</div>
+          <div class="step-desc">من القائمة المنسدلة اختر الكورس الذي تريد تسجيل حضور طلابه.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٢</div>
+        <div class="step-content">
+          <div class="step-title">اختر الجلسة</div>
+          <div class="step-desc">ستظهر جلسات الكورس المختار، اختر الجلسة المناسبة.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٣</div>
+        <div class="step-content">
+          <div class="step-title">سجّل حالة كل طالب</div>
+          <div class="step-desc">لكل طالب في القائمة اضغط على حالته:</div>
+        </div>
+      </div>
+    </div>
+
+    <table>
+      <tr><th>الحالة</th><th>المعنى</th><th>اللون</th></tr>
+      <tr><td><span class="badge badge-green">حاضر ✓</span></td><td>الطالب حضر الجلسة في وقتها</td><td>أخضر</td></tr>
+      <tr><td><span class="badge badge-red">غائب ✗</span></td><td>الطالب لم يحضر الجلسة</td><td>أحمر</td></tr>
+      <tr><td><span class="badge badge-yellow">متأخر ⏰</span></td><td>الطالب حضر ولكن بتأخير عن الوقت المحدد</td><td>أصفر</td></tr>
+    </table>
+
+    <div class="step">
+      <div class="step-num">٤</div>
+      <div class="step-content">
+        <div class="step-title">اضغط "حفظ الحضور"</div>
+        <div class="step-desc">بعد اختيار حالة جميع الطلاب اضغط الزر للحفظ.</div>
+      </div>
+    </div>
+
+    <div class="info-box warn">
+      <span class="box-icon">⚠️</span>
+      <span>يمكن تسجيل الحضور <strong>مرة واحدة فقط</strong> لكل جلسة. بعد الحفظ لن تتمكن من التعديل. إذا ارتكبت خطأ تواصل مع المدير ليصحح البيانات.</span>
+    </div>
+
+    <h3 class="sub">الملخص الشهري (تبويب "الملخص الشهري")</h3>
+    <p>لعرض تقرير الحضور لشهر معين:</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">١</div>
+        <div class="step-content">
+          <div class="step-title">اختر تبويب "الملخص الشهري"</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٢</div>
+        <div class="step-content">
+          <div class="step-title">اختر الكورس والشهر</div>
+          <div class="step-desc">حدد الكورس والشهر الذي تريد تقريره.</div>
+        </div>
+      </div>
+    </div>
+
+    <p>ستجد تقريرين:</p>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h4>📊 الجدول الإجمالي</h4>
+        <p>يعرض لكل طالب: إجمالي الجلسات، عدد الحضور، الغياب، التأخير، ونسبة الحضور %.</p>
+      </div>
+      <div class="feature-card">
+        <h4>📅 جدول التفاصيل بالتاريخ</h4>
+        <p>جدول يعرض حالة كل طالب في كل تاريخ جلسة في الشهر بواسطة رموز ملونة.</p>
+      </div>
+    </div>
+
+    <h3 class="sub">فهم رموز جدول التفاصيل</h3>
+    <table>
+      <tr><th>الرمز</th><th>المعنى</th><th>اللون</th></tr>
+      <tr><td><span class="badge badge-green">ح</span></td><td>حاضر</td><td>أخضر</td></tr>
+      <tr><td><span class="badge badge-red">غ</span></td><td>غائب</td><td>أحمر</td></tr>
+      <tr><td><span class="badge badge-yellow">ت</span></td><td>متأخر</td><td>أصفر</td></tr>
+      <tr><td style="text-align:center; color:#94a3b8;">—</td><td>لا يوجد تسجيل لهذا التاريخ</td><td>رمادي</td></tr>
+    </table>
+
+    <div class="info-box tip">
+      <span class="box-icon">💡</span>
+      <span>الأعمدة في جدول التفاصيل تمثل التواريخ التي سُجِّلت فيها جلسات، مرتبة من الأقدم للأحدث. كل طالب له صف كامل يظهر تاريخ غيابه وحضوره بدقة.</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     8. ADJUSTMENTS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section page-break">
+  <div class="section-header">
+    <div class="icon">⚖️</div>
+    <div>
+      <div class="chapter-label">الفصل الثامن</div>
+      <h2>التعديلات (مكافآتي وخصوماتي)</h2>
+      <div class="section-sub">عرض المكافآت والخصومات التي أضافها المدير</div>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p>التعديلات هي مبالغ إضافية أو مخصومة يضيفها المدير على راتبك الشهري المحتسب من الجلسات.</p>
+
+    <h3 class="sub">ما الذي يمكنك رؤيته؟</h3>
+    <ul class="field-list">
+      <li><span class="field-name">نوع التعديل</span><span class="field-desc"><span class="badge badge-green">مكافأة</span> أو <span class="badge badge-red">خصم</span></span></li>
+      <li><span class="field-name">المبلغ</span><span class="field-desc">قيمة المكافأة أو الخصم</span></li>
+      <li><span class="field-name">الشهر</span><span class="field-desc">الشهر الذي ينطبق عليه التعديل</span></li>
+      <li><span class="field-name">السبب / الوصف</span><span class="field-desc">توضيح سبب هذا التعديل كما كتبه المدير</span></li>
+    </ul>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h4>🎁 مكافأة (Bonus)</h4>
+        <p>مبلغ إضافي فوق راتبك من الجلسات. مثال: مكافأة أداء ممتاز أو حضور مميز.</p>
+      </div>
+      <div class="feature-card">
+        <h4>➖ خصم (Discount)</h4>
+        <p>مبلغ يُخصم من راتبك. تأكد من قراءة السبب الذي أدرجه المدير.</p>
+      </div>
+    </div>
+
+    <div class="info-box note">
+      <span class="box-icon">ℹ️</span>
+      <span>أنت لا تستطيع إضافة أو تعديل أو حذف التعديلات. هذه من صلاحيات المدير فقط. إذا كان هناك خطأ تواصل مع المدير.</span>
+    </div>
+
+    <h3 class="sub">كيف تؤثر التعديلات على راتبك؟</h3>
+    <div class="info-box tip">
+      <span class="box-icon">📐</span>
+      <div>
+        <strong>راتبك = </strong><br>
+        مجموع (ساعات جلساتك × سعر الساعة)<br>
+        + مجموع مكافآت الشهر<br>
+        − مجموع خصومات الشهر<br>
+        = <strong>صافي مستحقاتك في الفاتورة</strong>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     9. INVOICES
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section page-break">
+  <div class="section-header">
+    <div class="icon">🧾</div>
+    <div>
+      <div class="chapter-label">الفصل التاسع</div>
+      <h2>فواتيري</h2>
+      <div class="section-sub">عرض فواتيرك الشهرية التفصيلية</div>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p>من قسم <strong>فواتيري</strong> يمكنك مراجعة مستحقاتك الشهرية بشكل تفصيلي كامل.</p>
+
+    <h3 class="sub">كيف تشاهد فاتورتك؟</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">١</div>
+        <div class="step-content">
+          <div class="step-title">اذهب إلى قسم "فواتيري"</div>
+          <div class="step-desc">من القائمة الرئيسية.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٢</div>
+        <div class="step-content">
+          <div class="step-title">اختر الشهر</div>
+          <div class="step-desc">اختر الشهر الذي تريد مراجعة فاتورته.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">٣</div>
+        <div class="step-content">
+          <div class="step-title">اضغط "عرض الفاتورة"</div>
+          <div class="step-desc">ستظهر الفاتورة الكاملة أمامك.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="sub">ماذا تحتوي الفاتورة؟</h3>
+    <ul class="field-list">
+      <li><span class="field-name">اسمك</span><span class="field-desc">المدرب المستحق للمبلغ</span></li>
+      <li><span class="field-name">الشهر</span><span class="field-desc">الفترة التي تغطيها الفاتورة</span></li>
+      <li><span class="field-name">جدول الجلسات</span><span class="field-desc">كل جلسة بكورسها وتاريخها وساعاتها وسعرها ومجموعها</span></li>
+      <li><span class="field-name">المكافآت</span><span class="field-desc">قائمة بكل مكافأة أضافها المدير مع سببها</span></li>
+      <li><span class="field-name">الخصومات</span><span class="field-desc">قائمة بكل خصم مع سببه</span></li>
+      <li><span class="field-name">الإجمالي النهائي</span><span class="field-desc">المبلغ الكامل المستحق لك بعد المكافآت والخصومات</span></li>
+    </ul>
+
+    <h3 class="sub">استلام الفاتورة بالبريد الإلكتروني</h3>
+    <p>عندما يصدر المدير فاتورتك ويضغط "إرسال"، يصلك البريد الإلكتروني تلقائياً على عنوانك المسجل في النظام.</p>
+
+    <div class="info-box note">
+      <span class="box-icon">ℹ️</span>
+      <span>أنت تستطيع <strong>فقط عرض</strong> فواتيرك. لا يمكنك تعديلها. إذا وجدت خطأ تواصل مع المدير.</span>
+    </div>
+
+    <div class="info-box tip">
+      <span class="box-icon">💡</span>
+      <span>يمكنك طباعة الفاتورة أو حفظها كملف PDF من متصفحك بالضغط على <strong>Ctrl+P</strong> (أو Cmd+P على Mac) واختيار "حفظ كـ PDF".</span>
+    </div>
+
+    <h3 class="sub">ماذا لو لم تجد فاتورتك؟</h3>
+    <p>قد لا تظهر الفاتورة في النظام إذا لم يُصدرها المدير بعد لذلك الشهر. تواصل مع المدير لإنشائها.</p>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     QUICK REFERENCE
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section page-break">
+  <div class="section-header">
+    <div class="icon">⚡</div>
+    <div>
+      <div class="chapter-label">ملحق</div>
+      <h2>المرجع السريع — أسئلة شائعة</h2>
+      <div class="section-sub">إجابات على الأسئلة التي قد تواجهها</div>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <table>
+      <tr><th>السؤال</th><th>الإجابة</th></tr>
+      <tr>
+        <td>لماذا لا أجد كورساً في قائمتي؟</td>
+        <td>لم يُعيّنك المدير على الكورس بعد. تواصل معه.</td>
+      </tr>
+      <tr>
+        <td>حاولت إضافة جلسة وظهرت رسالة خطأ!</td>
+        <td>على الأرجح الأوقات تتداخل مع جلسة أخرى في نفس اليوم، أو لم يُحدَّد لك سعر لهذا الكورس. تواصل مع المدير.</td>
+      </tr>
+      <tr>
+        <td>سجلت الحضور بالخطأ، كيف أصحح؟</td>
+        <td>تواصل مع المدير. فقط المدير يملك صلاحية تعديل الحضور بعد الحفظ.</td>
+      </tr>
+      <tr>
+        <td>لا أرى فاتورة الشهر الماضي!</td>
+        <td>المدير لم يُصدرها بعد. تواصل معه لإنشائها.</td>
+      </tr>
+      <tr>
+        <td>المبلغ في الفاتورة يبدو خاطئاً!</td>
+        <td>راجع جلساتك في ذلك الشهر وتحقق من الساعات والأسعار. إذا كان هناك خطأ تواصل مع المدير.</td>
+      </tr>
+      <tr>
+        <td>كيف أغير لغة الواجهة؟</td>
+        <td>اضغط زر تبديل اللغة (EN/AR) الموجود في شريط القوائم العلوي.</td>
+      </tr>
+      <tr>
+        <td>هل يمكنني رؤية بيانات المدربين الآخرين؟</td>
+        <td>لا. كل مدرب يرى بياناته الخاصة فقط.</td>
+      </tr>
+      <tr>
+        <td>هل الطلاب يملكون حسابات للدخول؟</td>
+        <td>لا. الطلاب لا يستطيعون الدخول للنظام. يتم إدارتهم من قبل المدير والمدرب فقط.</td>
+      </tr>
+    </table>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════ -->
+<div class="section" style="background: linear-gradient(135deg, #0a1628, #1e3a5f); color: #fff; text-align: center; padding: 40px;">
+  <div style="font-size: 32px; margin-bottom: 12px;">🏋️</div>
+  <div style="font-size: 18pt; font-weight: 900; color: #93c5fd; margin-bottom: 8px;">TricksLand Academy</div>
+  <div style="color: #94a3b8; font-size: 11pt;">دليل المدرب — الإصدار فبراير 2026</div>
+  <div style="color: #64748b; font-size: 10pt; margin-top: 16px;">لأي استفسار تواصل مع المدير أو مسؤول النظام</div>
+</div>
+
+</body>
+</html>

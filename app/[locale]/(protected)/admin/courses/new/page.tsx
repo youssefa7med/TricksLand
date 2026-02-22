@@ -10,6 +10,7 @@ interface Coach {
     id: string;
     full_name: string;
     email: string;
+    base_hourly_rate: number | null;
 }
 
 export default function NewCoursePage() {
@@ -22,6 +23,7 @@ export default function NewCoursePage() {
     const [description, setDescription] = useState('');
     const [status, setStatus] = useState<'active' | 'archived'>('active');
     const [hourlyRate, setHourlyRate] = useState('');
+    const [isCompetition, setIsCompetition] = useState(false);
     const [coaches, setCoaches] = useState<Coach[]>([]);
     const [selectedCoaches, setSelectedCoaches] = useState<string[]>([]);
 
@@ -29,16 +31,40 @@ export default function NewCoursePage() {
         const supabase = createClient();
         supabase
             .from('profiles')
-            .select('id, full_name, email')
+            .select('id, full_name, email, base_hourly_rate')
             .eq('role', 'coach')
             .order('full_name')
-            .then(({ data }) => setCoaches(data || []));
+            .then(({ data }) => setCoaches((data || []) as Coach[]));
     }, []);
 
     const toggleCoach = (id: string) => {
-        setSelectedCoaches((prev) =>
-            prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-        );
+        setSelectedCoaches((prev) => {
+            const isRemoving = prev.includes(id);
+            const next = isRemoving ? prev.filter((c) => c !== id) : [...prev, id];
+            // Auto-fill hourly rate from this coach's profile when selecting (not during competition mode)
+            if (!isRemoving && !isCompetition) {
+                const coach = coaches.find((c) => c.id === id);
+                if (coach?.base_hourly_rate) {
+                    setHourlyRate(String(coach.base_hourly_rate));
+                }
+            }
+            return next;
+        });
+    };
+
+    const handleCompetitionChange = (checked: boolean) => {
+        setIsCompetition(checked);
+        if (checked) {
+            setHourlyRate('75');
+        } else {
+            // Restore rate from last selected coach if any, otherwise clear
+            if (selectedCoaches.length > 0) {
+                const lastCoach = coaches.find((c) => c.id === selectedCoaches[selectedCoaches.length - 1]);
+                setHourlyRate(lastCoach?.base_hourly_rate ? String(lastCoach.base_hourly_rate) : '');
+            } else {
+                setHourlyRate('');
+            }
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -149,15 +175,49 @@ export default function NewCoursePage() {
                             <label className="block text-white/80 text-sm font-medium mb-2">
                                 Default Hourly Rate <span className="text-white/40">(optional, EGP/hr)</span>
                             </label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                min="0.01"
-                                value={hourlyRate}
-                                onChange={(e) => setHourlyRate(e.target.value)}
-                                placeholder="e.g. 200"
-                                className={inputClass}
-                            />
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0.01"
+                                    value={hourlyRate}
+                                    onChange={(e) => setHourlyRate(e.target.value)}
+                                    placeholder="e.g. 200"
+                                    className={`${inputClass} ${isCompetition ? 'opacity-70' : ''}`}
+                                    readOnly={isCompetition}
+                                />
+                            </div>
+                            {/* Competition checkbox */}
+                            <label className="flex items-center gap-2 mt-3 cursor-pointer select-none w-fit">
+                                <div
+                                    className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                                        isCompetition
+                                            ? 'bg-yellow-500 border-yellow-500'
+                                            : 'bg-white/10 border-white/30 hover:border-white/60'
+                                    }`}
+                                    onClick={() => handleCompetitionChange(!isCompetition)}
+                                >
+                                    {isCompetition && (
+                                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    )}
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={isCompetition}
+                                    onChange={(e) => handleCompetitionChange(e.target.checked)}
+                                    className="sr-only"
+                                />
+                                <span className="text-sm font-medium text-white/80">
+                                    Competition
+                                </span>
+                                {isCompetition && (
+                                    <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                                        Rate locked at 75 EGP/hr
+                                    </span>
+                                )}
+                            </label>
                         </div>
 
                         <div>
@@ -214,10 +274,15 @@ export default function NewCoursePage() {
                                                     onChange={() => toggleCoach(coach.id)}
                                                     className="w-4 h-4 accent-primary flex-shrink-0"
                                                 />
-                                                <div className="min-w-0">
+                                                <div className="min-w-0 flex-1">
                                                     <p className="text-white text-sm font-medium truncate">{coach.full_name}</p>
                                                     <p className="text-white/50 text-xs truncate">{coach.email}</p>
                                                 </div>
+                                                {coach.base_hourly_rate && (
+                                                    <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60 flex-shrink-0">
+                                                        {coach.base_hourly_rate} EGP/hr
+                                                    </span>
+                                                )}
                                             </label>
                                         );
                                     })}
