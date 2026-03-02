@@ -91,7 +91,14 @@ export interface CoachAttendance {
     distance_from_academy: number;
     attendance_timestamp: string;
     status: string;
+    // 15-minute module time tracking
+    arrival_time: string | null;    // HH:MM:SS
+    leaving_time: string | null;    // HH:MM:SS
+    duration_minutes: number | null; // auto-computed by trigger
+    billed_hours: number | null;     // FLOOR(duration_minutes/15)*0.25, auto-computed
+    notes: string | null;
     created_at: string;
+    updated_at: string;
 }
 
 export interface Adjustment {
@@ -246,11 +253,20 @@ export interface CoachMonthlyTotal {
     coach_name: string;
     month: string;
     session_count: number;
+    /** Scheduled hours based on session start→end times (original behaviour). */
     total_hours: number;
+    /** Sum of billed_hours from coach_attendance (15-min module rule). Null when arrival/leaving not recorded. */
+    total_billed_hours: number | null;
+    /** Gross total using session start→end times (original behaviour). */
     gross_total: number;
+    /** Gross total using billed_hours × rate (falls back to gross_total when not recorded). */
+    billed_gross_total: number;
     total_bonuses: number;
     total_discounts: number;
+    /** Net payable using session-time-based hours (original behaviour). */
     net_total: number;
+    /** Net payable using 15-minute module billed hours (preferred for payroll). */
+    net_billed_total: number;
 }
 
 // Form types
@@ -336,8 +352,8 @@ export interface Database {
             };
             coach_attendance: {
                 Row: CoachAttendance;
-                Insert: Omit<CoachAttendance, 'id' | 'created_at'>;
-                Update: Partial<Omit<CoachAttendance, 'id' | 'created_at'>>;
+                Insert: Omit<CoachAttendance, 'id' | 'created_at' | 'updated_at' | 'duration_minutes' | 'billed_hours'>;
+                Update: Partial<Omit<CoachAttendance, 'id' | 'created_at' | 'updated_at' | 'duration_minutes' | 'billed_hours'>>;
                 Relationships: [];
             };
             // New enhancement tables
@@ -383,6 +399,7 @@ export interface Database {
                 Row: CoachMonthlyTotal;
                 Relationships: [];
             };
+            // calculate_coach_billed_hours is also available (see Functions below)
             student_monthly_attendance: {
                 Row: StudentMonthlyAttendance;
                 Relationships: [];
@@ -406,6 +423,14 @@ export interface Database {
                 Returns: number;
             };
             calculate_billable_hours: {
+                Args: {
+                    p_arrival_time: string;
+                    p_leaving_time: string;
+                };
+                Returns: number;
+            };
+            /** FLOOR-based coach billing: FLOOR(minutes/15)*0.25. Never rounds up. */
+            calculate_coach_billed_hours: {
                 Args: {
                     p_arrival_time: string;
                     p_leaving_time: string;

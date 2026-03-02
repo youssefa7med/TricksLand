@@ -199,7 +199,9 @@ export async function generateCourseExpenseReport(
 // ============================================================================
 
 /**
- * Generate coach worked hours report
+ * Generate coach worked hours report.
+ * Each row includes both scheduled hours (session time) and billed hours
+ * (15-minute module rule from actual arrival/leaving, when recorded).
  */
 export async function generateCoachHoursReport(
   coachId: string,
@@ -210,8 +212,12 @@ export async function generateCoachHoursReport(
     course_name: string;
     duration_minutes: number;
     computed_hours: number;
+    /** Billed hours via 15-min module rule. null when arrival/leaving not recorded. */
+    billed_hours: number | null;
     applied_rate: number;
     subtotal: number;
+    /** Amount payable using billed_hours × rate (null when billed_hours unavailable). */
+    billed_subtotal: number | null;
   }>
 > {
   const supabase = await createClient();
@@ -222,8 +228,16 @@ export async function generateCoachHoursReport(
 
   const { data, error } = await supabase
     .from('sessions')
-    .select('session_date, courses(name), computed_hours, applied_rate, subtotal')
+    .select(`
+      session_date,
+      courses(name),
+      computed_hours,
+      applied_rate,
+      subtotal,
+      coach_attendance!left(billed_hours, duration_minutes)
+    `)
     .eq('paid_coach_id', coachId)
+    .eq('coach_attendance.coach_id', coachId)
     .gte('session_date', startOfMonth)
     .lte('session_date', endOfMonth)
     .order('session_date', { ascending: false });
@@ -233,18 +247,39 @@ export async function generateCoachHoursReport(
     return [];
   }
 
-  return (data || []).map((session: any) => ({
-    session_date: session.session_date,
-    course_name: session.courses?.name || 'Unknown',
-    duration_minutes: 0, // Would need attendance data
-    computed_hours: session.computed_hours || 0,
-    applied_rate: session.applied_rate || 0,
-    subtotal: session.subtotal || 0,
-  }));
+  return (data || []).map((session: any) => {
+    const attendance = Array.isArray(session.coach_attendance)
+      ? session.coach_attendance[0]
+      : session.coach_attendance;
+    const billedHours: number | null = attendance?.billed_hours ?? null;
+    const appliedRate: number = session.applied_rate ?? 0;
+
+    return {
+      session_date:    session.session_date,
+      course_name:     session.courses?.name || 'Unknown',
+      duration_minutes: attendance?.duration_minutes ?? 0,
+      computed_hours:  session.computed_hours || 0,
+      billed_hours:    billedHours,
+      applied_rate:    appliedRate,
+      subtotal:        session.subtotal || 0,
+      billed_subtotal: billedHours !== null
+        ? Math.round(billedHours * appliedRate * 100) / 100
+        : null,
+    };
+  });
 }
 
 /**
- * Generate coach payroll report
+ * Generate coach payroll report.
+ *
+ * Each record now includes both the original session-time-based figures
+ * AND the new 15-minute-module billed-hours figures:
+ *
+ *  total_hours       – scheduled hours (session start→end)
+ *  total_billed_hours – actual hours via FLOOR(minutes/15)×0.25
+ *                       (null when coach arrival/leaving not yet recorded)
+ *  net_payable        – original net (session-time-based)
+ *  net_billed_payable – preferred net using billed_hours × rate
  */
 export async function generateCoachPayrollReport(
   month: string // YYYY-MM format
@@ -253,11 +288,23 @@ export async function generateCoachPayrollReport(
     coach_id: string;
     coach_name: string;
     total_sessions: number;
+    /** Scheduled hours based on session start→end times. */
     total_hours: number;
+    /**
+     * Coach billed hours calculated via 15-minute module rule.
+     * null when arrival/leaving times have not been recorded yet.
+     */
+    total_billed_hours: number | null;
+    /** Gross earnings using session-time-based hours (original). */
     total_earned: number;
+    /** Gross earnings using billed_hours × rate (preferred). */
+    total_billed_earned: number;
     total_bonuses: number;
     total_discounts: number;
+    /** Net payable using session-time-based hours (original). */
     net_payable: number;
+    /** Net payable using 15-minute module billed hours (preferred for payroll). */
+    net_billed_payable: number;
   }>
 > {
   const supabase = await createClient();
@@ -273,14 +320,17 @@ export async function generateCoachPayrollReport(
   }
 
   return (data || []).map((record: any) => ({
-    coach_id: record.coach_id,
-    coach_name: record.coach_name,
-    total_sessions: record.session_count,
-    total_hours: record.total_hours,
-    total_earned: record.gross_total,
-    total_bonuses: record.total_bonuses,
-    total_discounts: record.total_discounts,
-    net_payable: record.net_total,
+    coach_id:            record.coach_id,
+    coach_name:          record.coach_name,
+    total_sessions:      record.session_count,
+    total_hours:         record.total_hours,
+    total_billed_hours:  record.total_billed_hours ?? null,
+    total_earned:        record.gross_total,
+    total_billed_earned: record.billed_gross_total,
+    total_bonuses:       record.total_bonuses,
+    total_discounts:     record.total_discounts,
+    net_payable:         record.net_total,
+    net_billed_payable:  record.net_billed_total,
   }));
 }
 

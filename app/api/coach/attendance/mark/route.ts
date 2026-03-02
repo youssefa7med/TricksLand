@@ -164,6 +164,12 @@ export async function POST(request: NextRequest) {
         }
 
         // ============ Insert Attendance Record ============
+        // Record the current time as the coach's arrival_time.
+        // billed_hours will be computed by a DB trigger once leaving_time is filled in
+        // via the PATCH /api/coach/attendance/mark endpoint.
+        const now = new Date();
+        const arrivalTime = now.toTimeString().split(' ')[0]; // "HH:MM:SS"
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: attendanceData, error: insertError } = await (supabase as any)
             .from('coach_attendance')
@@ -173,8 +179,10 @@ export async function POST(request: NextRequest) {
                 latitude,
                 longitude,
                 distance_from_academy: distance,
-                attendance_timestamp: new Date().toISOString(),
+                attendance_timestamp: now.toISOString(),
                 status: 'present',
+                arrival_time: arrivalTime,
+                // leaving_time and billed_hours remain NULL until coach checks out
             })
             .select()
             .single();
@@ -197,12 +205,141 @@ export async function POST(request: NextRequest) {
                     id: attendance?.id,
                     distance,
                     timestamp: attendance?.attendance_timestamp,
+                    arrival_time: arrivalTime,
+                    checkout_url: `/api/coach/attendance/mark`,
                 },
             },
             { status: 201 }
         );
     } catch (error) {
         console.error('Attendance API error:', error);
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 }
+        );
+    }
+}
+
+/**
+ * PATCH /api/coach/attendance/mark
+ * Coach check-out: record leaving_time for a session.
+ * The DB trigger will automatically compute duration_minutes and billed_hours
+ * using the 15-minute module rule: FLOOR(duration_minutes / 15) × 0.25.
+ *
+ * Body: { attendanceId: string }
+ *         OR
+ *       { sessionId: string }
+ */
+export async function PATCH(request: NextRequest) {
+    try {
+        const supabase = await createServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const body = await request.json();
+        const { attendanceId, sessionId } = body as {
+            attendanceId?: string;
+            sessionId?: string;
+        };
+
+        if (!attendanceId && !sessionId) {
+            return NextResponse.json(
+                { error: 'Either attendanceId or sessionId is required' },
+                { status: 400 }
+            );
+        }
+
+        // Resolve the attendance record to update
+        let resolvedAttendanceId = attendanceId;
+
+        if (!resolvedAttendanceId && sessionId) {
+            const { data: existing, error: findError } = await (supabase as any)
+                .from('coach_attendance')
+                .select('id')
+                .eq('coach_id', user.id)
+                .eq('session_id', sessionId)
+                .order('attendance_timestamp', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (findError || !existing) {
+                return NextResponse.json(
+                    { error: 'Attendance record not found – check in first' },
+                    { status: 404 }
+                );
+            }
+            resolvedAttendanceId = existing.id;
+        }
+
+        // Security: coach can only update their own records
+        const { data: record, error: ownerError } = await (supabase as any)
+            .from('coach_attendance')
+            .select('id, coach_id, arrival_time, leaving_time')
+            .eq('id', resolvedAttendanceId)
+            .single();
+
+        if (ownerError || !record) {
+            return NextResponse.json({ error: 'Attendance record not found' }, { status: 404 });
+        }
+
+        if (record.coach_id !== user.id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        if (record.leaving_time) {
+            return NextResponse.json(
+                { error: 'Check-out already recorded for this session' },
+                { status: 409 }
+            );
+        }
+
+        if (!record.arrival_time) {
+            return NextResponse.json(
+                { error: 'No arrival time on record – cannot compute billed hours' },
+                { status: 422 }
+            );
+        }
+
+        // Record leaving_time as the current server time.
+        // The trigger compute_coach_attendance_time() will fire automatically and set:
+        //   duration_minutes = leaving_time − arrival_time (in minutes)
+        //   billed_hours     = FLOOR(duration_minutes / 15) × 0.25
+        const leavingTime = new Date().toTimeString().split(' ')[0]; // "HH:MM:SS"
+
+        const { data: updated, error: updateError } = await (supabase as any)
+            .from('coach_attendance')
+            .update({ leaving_time: leavingTime })
+            .eq('id', resolvedAttendanceId)
+            .select('id, arrival_time, leaving_time, duration_minutes, billed_hours')
+            .single();
+
+        if (updateError) {
+            console.error('Check-out update error:', updateError);
+            return NextResponse.json(
+                { error: 'Failed to record check-out' },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json(
+            {
+                success: true,
+                message: 'Check-out recorded. Billed hours calculated.',
+                attendance: {
+                    id: updated.id,
+                    arrival_time:     updated.arrival_time,
+                    leaving_time:     updated.leaving_time,
+                    duration_minutes: updated.duration_minutes,
+                    billed_hours:     updated.billed_hours,
+                },
+            },
+            { status: 200 }
+        );
+    } catch (error) {
+        console.error('Checkout API error:', error);
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }

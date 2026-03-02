@@ -68,6 +68,121 @@ export function calculateBillableHoursFromTimes(startTime: string, endTime: stri
   return calculateBillableHours(durationMinutes);
 }
 
+// ============================================================================
+// COACH TIME CALCULATION – 15-MINUTE MODULES (FLOOR, no rounding up)
+// ============================================================================
+
+/**
+ * Calculate coach billed hours using strict 15-minute completed modules.
+ *
+ * Business rules:
+ *  - If duration < 15 minutes          → billed_hours = 0
+ *  - completed_modules = FLOOR(minutes / 15)
+ *  - billed_hours      = completed_modules × 0.25
+ *  - Partial modules are NEVER billed  (do NOT round up)
+ *
+ * Examples:
+ *  10 min  → 0      |  15 min → 0.25  |  16 min → 0.25
+ *  29 min  → 0.25   |  30 min → 0.5   |  44 min → 0.5
+ *  45 min  → 0.75   |  60 min → 1.0   |  61 min → 1.0
+ *  75 min  → 1.25
+ *
+ * @param durationMinutes Total minutes the coach was present
+ * @returns Billed hours in 0.25 increments (FLOOR-based)
+ */
+export function calculateCoachBilledHours(durationMinutes: number): number {
+  // Less than one full module → no billing
+  if (durationMinutes < 15) {
+    return 0;
+  }
+
+  // Completed 15-minute modules (FLOOR – never round up)
+  const completedModules = Math.floor(durationMinutes / 15);
+
+  // Each completed module = 0.25 hours
+  return completedModules * 0.25;
+}
+
+/**
+ * Calculate coach billed hours directly from arrival and leaving time strings.
+ *
+ * @param arrivalTime  Time in format "HH:MM" or "HH:MM:SS"
+ * @param leavingTime  Time in format "HH:MM" or "HH:MM:SS"
+ * @returns Billed hours using the 15-minute module rule (FLOOR)
+ */
+export function calculateCoachBilledHoursFromTimes(
+  arrivalTime: string,
+  leavingTime: string
+): number {
+  const durationMinutes = calculateDurationMinutes(arrivalTime, leavingTime);
+  return calculateCoachBilledHours(durationMinutes);
+}
+
+/**
+ * Calculate total coach session payment using the 15-minute module rule.
+ *
+ * @param arrivalTime  Time in format "HH:MM" or "HH:MM:SS"
+ * @param leavingTime  Time in format "HH:MM" or "HH:MM:SS"
+ * @param hourlyRate   Coach's hourly rate (EGP/hr)
+ */
+export function calculateCoachSessionPayment(
+  arrivalTime: string,
+  leavingTime: string,
+  hourlyRate: number
+): {
+  durationMinutes: number;
+  billedHours: number;
+  totalAmount: number;
+} {
+  const durationMinutes = calculateDurationMinutes(arrivalTime, leavingTime);
+  const billedHours = calculateCoachBilledHours(durationMinutes);
+  const totalAmount = Math.round(billedHours * hourlyRate * 100) / 100;
+
+  return {
+    durationMinutes,
+    billedHours,
+    totalAmount,
+  };
+}
+
+/**
+ * Get 15-minute module breakdown for display (coach billing).
+ * Shows completed modules, ignored remainder minutes, and final billed hours.
+ */
+export function getCoachModuleBreakdown(durationMinutes: number): {
+  completedModules: number;
+  remainderMinutes: number;
+  billedHours: number;
+  billable: boolean;
+  message: string;
+} {
+  if (durationMinutes < 15) {
+    return {
+      completedModules: 0,
+      remainderMinutes: durationMinutes,
+      billedHours: 0,
+      billable: false,
+      message: `Not billable – less than one full module (${durationMinutes} min < 15 min)`,
+    };
+  }
+
+  const completedModules = Math.floor(durationMinutes / 15);
+  const remainderMinutes = durationMinutes % 15;
+  const billedHours = completedModules * 0.25;
+
+  return {
+    completedModules,
+    remainderMinutes,
+    billedHours,
+    billable: true,
+    message:
+      `${billedHours} hrs — ${completedModules} module${completedModules !== 1 ? 's' : ''} × 0.25` +
+      (remainderMinutes > 0
+        ? ` (${remainderMinutes} min remainder ignored)`
+        : ''),
+  };
+}
+
 /**
  * Format hours to display string (e.g., "1.25 hours" or "1.5 hours")
  */
