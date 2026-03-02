@@ -144,13 +144,15 @@ WHERE arrival_time IS NULL
 -- The original columns (total_hours, gross_total, net_total) are preserved
 -- so existing reports & queries continue to work unchanged.
 --
--- NOTE: DROP + CREATE is required because CREATE OR REPLACE VIEW cannot add
--- new columns or change column order on an existing view in PostgreSQL.
+-- NOTE: DROP CASCADE is required because Supabase holds a GRANT on the view
+-- which creates a dependency that prevents a plain DROP without CASCADE.
 -- ============================================================================
 
-DROP VIEW IF EXISTS public.coach_monthly_totals;
+DROP VIEW IF EXISTS public.coach_monthly_totals CASCADE;
 
-CREATE VIEW public.coach_monthly_totals AS
+CREATE VIEW public.coach_monthly_totals
+WITH (security_invoker = true)
+AS
 SELECT
     s.paid_coach_id                             AS coach_id,
     p.full_name                                 AS coach_name,
@@ -235,6 +237,9 @@ COMMENT ON VIEW coach_monthly_totals IS
     'total_billed_hours / billed_gross_total / net_billed_total use the '
     '15-minute module rule (FLOOR) when coach arrival/leaving times are recorded. '
     'total_hours / gross_total / net_total retain the original session-time-based values.';
+
+-- Restore the grant that CASCADE dropped
+GRANT SELECT ON public.coach_monthly_totals TO authenticated;
 
 
 -- ============================================================================
