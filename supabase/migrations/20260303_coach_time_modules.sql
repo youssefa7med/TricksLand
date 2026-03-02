@@ -143,9 +143,14 @@ WHERE arrival_time IS NULL
 --
 -- The original columns (total_hours, gross_total, net_total) are preserved
 -- so existing reports & queries continue to work unchanged.
+--
+-- NOTE: DROP + CREATE is required because CREATE OR REPLACE VIEW cannot add
+-- new columns or change column order on an existing view in PostgreSQL.
 -- ============================================================================
 
-CREATE OR REPLACE VIEW coach_monthly_totals AS
+DROP VIEW IF EXISTS public.coach_monthly_totals;
+
+CREATE VIEW public.coach_monthly_totals AS
 SELECT
     s.paid_coach_id                             AS coach_id,
     p.full_name                                 AS coach_name,
