@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import {
     getUserLocation,
     isWithinAcademy,
@@ -35,6 +36,7 @@ export function AttendanceMarker({
     onSuccess,
 }: AttendanceMarkerProps) {
     const router = useRouter();
+    const t = useTranslations('pages.coachAttendance');
     const [loading, setLoading] = useState(false);
     const [marked, setMarked] = useState(false);
     const [checkedOut, setCheckedOut] = useState(false);
@@ -58,11 +60,9 @@ export function AttendanceMarker({
     // Check if HTTPS is available
     useEffect(() => {
         if (!isSecureContext()) {
-            setLocationError(
-                'This feature requires HTTPS. Please use a secure connection.'
-            );
+            setLocationError(t('httpsRequired'));
         }
-    }, []);
+    }, [t]);
 
     const handleMarkAttendance = async () => {
         setLoading(true);
@@ -157,7 +157,7 @@ export function AttendanceMarker({
             const data = await response.json();
 
             if (!response.ok) {
-                setLocationError(data.error || 'Failed to record check-out');
+                setLocationError(data.error || t('checkoutFailed'));
                 return;
             }
 
@@ -165,9 +165,8 @@ export function AttendanceMarker({
             setCheckout(data.attendance);
 
             const breakdown = getCoachModuleBreakdown(data.attendance.duration_minutes ?? 0);
-            toast.success(
-                `✓ Checked out — ${breakdown.billedHours} billed hr${breakdown.billedHours !== 1 ? 's' : ''}`
-            );
+            const unit = breakdown.billedHours !== 1 ? t('hrUnit') + 's' : t('hrUnit');
+            toast.success(t('checkedOutToast', { hours: breakdown.billedHours, unit }));
 
             if (onSuccess) onSuccess();
             setTimeout(() => router.refresh(), 1000);
@@ -187,24 +186,24 @@ export function AttendanceMarker({
             <div className="bg-gradient-to-r from-blue-600/10 to-purple-600/10 border border-blue-500/20 rounded-xl p-6">
                 {/* Session Info */}
                 <div className="mb-6">
-                    <h3 className="text-white font-semibold mb-3">Session Details</h3>
+                    <h3 className="text-white font-semibold mb-3">{t('sessionDetails')}</h3>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <p className="text-white/60">Course</p>
+                            <p className="text-white/60">{t('courseLabel')}</p>
                             <p className="text-white font-medium">{courseName}</p>
                         </div>
                         <div>
-                            <p className="text-white/60">Date</p>
+                            <p className="text-white/60">{t('dateLabel')}</p>
                             <p className="text-white font-medium">{sessionDate}</p>
                         </div>
                         <div>
-                            <p className="text-white/60">Time</p>
+                            <p className="text-white/60">{t('timeLabel')}</p>
                             <p className="text-white font-medium">
                                 {startTime} – {endTime}
                             </p>
                         </div>
                         <div>
-                            <p className="text-white/60">Academy Radius</p>
+                            <p className="text-white/60">{t('academyRadius')}</p>
                             <p className="text-white font-medium">{academy.radius}m</p>
                         </div>
                     </div>
@@ -219,7 +218,7 @@ export function AttendanceMarker({
                         </p>
                         {distance !== null && (
                             <p className="text-red-300 text-xs mt-2">
-                                Distance: {distance}m
+                                {t('distanceAway', { distance })}
                             </p>
                         )}
                     </div>
@@ -231,13 +230,12 @@ export function AttendanceMarker({
                         <p className="text-green-200 text-sm flex items-center gap-2">
                             <span className="text-lg">✓</span>
                             <span>
-                                Checked in at {checkinResult?.arrival_time ?? '—'}.
-                                Remember to check out when you leave so your billed hours are recorded.
+                                {t('checkedInAt', { time: checkinResult?.arrival_time ?? '—' })}
                             </span>
                         </p>
                         {distance !== null && (
                             <p className="text-green-300 text-xs mt-2">
-                                Distance verified: {distance}m from academy
+                                {t('distanceVerified', { distance })}
                             </p>
                         )}
                     </div>
@@ -246,24 +244,24 @@ export function AttendanceMarker({
                 {/* Check-out Success State */}
                 {checkedOut && checkout && (
                     <div className="mb-4 bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
-                        <p className="text-purple-200 text-sm font-medium mb-2">✓ Session complete</p>
+                        <p className="text-purple-200 text-sm font-medium mb-2">{t('sessionComplete')}</p>
                         <div className="grid grid-cols-2 gap-2 text-xs text-purple-300">
                             <div>
-                                <span className="text-purple-400">Arrived:</span>{' '}
+                                <span className="text-purple-400">{t('arrivedLabel')}</span>{' '}
                                 {checkout.arrival_time}
                             </div>
                             <div>
-                                <span className="text-purple-400">Left:</span>{' '}
+                                <span className="text-purple-400">{t('leftLabel')}</span>{' '}
                                 {checkout.leaving_time}
                             </div>
                             <div>
-                                <span className="text-purple-400">Duration:</span>{' '}
-                                {checkout.duration_minutes} min
+                                <span className="text-purple-400">{t('durationLabel')}</span>{' '}
+                                {checkout.duration_minutes} {t('minUnit')}
                             </div>
                             <div>
-                                <span className="text-purple-400">Billed hours:</span>{' '}
+                                <span className="text-purple-400">{t('billedHoursLabel')}</span>{' '}
                                 <span className="text-purple-200 font-semibold">
-                                    {checkout.billed_hours} hr
+                                    {checkout.billed_hours} {t('hrUnit')}
                                 </span>
                             </div>
                         </div>
@@ -271,8 +269,7 @@ export function AttendanceMarker({
                             const bd = getCoachModuleBreakdown(checkout.duration_minutes);
                             return bd.remainderMinutes > 0 ? (
                                 <p className="text-purple-400 text-xs mt-2">
-                                    ℹ️ {bd.remainderMinutes} min remainder not billed
-                                    (15-min module rule)
+                                    ℹ️ {t('remainderNotBilled', { minutes: bd.remainderMinutes })}
                                 </p>
                             ) : null;
                         })()}
@@ -300,12 +297,12 @@ export function AttendanceMarker({
                             {loading ? (
                                 <>
                                     <span className="inline-block animate-spin">⏳</span>
-                                    Getting location...
+                                    {t('gettingLocation')}
                                 </>
                             ) : (
                                 <>
                                     <span>📍</span>
-                                    Check In
+                                    {t('checkInBtn')}
                                 </>
                             )}
                         </button>
@@ -313,7 +310,7 @@ export function AttendanceMarker({
                             disabled={loading}
                             className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors disabled:opacity-50"
                         >
-                            ℹ️ Help
+                            {t('helpBtn')}
                         </button>
                     </div>
                 )}
@@ -328,12 +325,12 @@ export function AttendanceMarker({
                         {loading ? (
                             <>
                                 <span className="inline-block animate-spin">⏳</span>
-                                Recording check-out...
+                                {t('recordingCheckout')}
                             </>
                         ) : (
                             <>
                                 <span>🏁</span>
-                                Check Out (record billed hours)
+                                {t('checkOutBtn')}
                             </>
                         )}
                     </button>
@@ -343,21 +340,15 @@ export function AttendanceMarker({
                 <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                     {!alreadyCheckedIn ? (
                         <p className="text-blue-200 text-xs">
-                            ℹ️ <strong>How it works:</strong> Check in when you arrive (GPS
-                            verified within {academy.radius}m). Check out when you leave — your
-                            billed hours are calculated automatically using completed 15-minute
-                            modules.
+                            ℹ️ {t('infoPreCheckin', { radius: academy.radius })}
                         </p>
                     ) : !checkedOut ? (
                         <p className="text-blue-200 text-xs">
-                            ℹ️ <strong>Remember to check out</strong> when you leave. Billed
-                            hours = completed 15-minute modules only. E.g. 44 min = 0.5 hrs,
-                            45 min = 0.75 hrs.
+                            ℹ️ {t('infoPostCheckin')}
                         </p>
                     ) : (
                         <p className="text-blue-200 text-xs">
-                            ℹ️ Your billed hours have been saved and will appear in your
-                            monthly payroll report.
+                            ℹ️ {t('infoPostCheckout')}
                         </p>
                     )}
                 </div>
