@@ -13,6 +13,8 @@ interface AssignedCoach {
     profiles: { id: string; full_name: string; email: string } | null;
 }
 interface Rate { id: string; rate: number; effective_from: string; }
+interface FeeItem { id: string; name: string; amount: number; sort_order: number; }
+interface FeeItemDraft { name: string; amount: string; }
 
 export default function AdminEditCoursePage() {
     const params = useParams();
@@ -33,6 +35,13 @@ export default function AdminEditCoursePage() {
     const [allCoaches, setAllCoaches] = useState<Coach[]>([]);
     const [rates, setRates] = useState<Record<string, Rate[]>>({});
 
+    // Fee items
+    const [feeItems, setFeeItems] = useState<FeeItem[]>([]);
+    const [newFeeItem, setNewFeeItem] = useState<FeeItemDraft>({ name: '', amount: '' });
+    const [addingFeeItem, setAddingFeeItem] = useState(false);
+    const [editingFeeItem, setEditingFeeItem] = useState<string | null>(null);
+    const [editFeeValues, setEditFeeValues] = useState<FeeItemDraft>({ name: '', amount: '' });
+
     // Assign form
     const [assignCoachId, setAssignCoachId] = useState('');
     const [assigning, setAssigning] = useState(false);
@@ -50,6 +59,15 @@ export default function AdminEditCoursePage() {
     const [addingRate, setAddingRate] = useState(false);
 
     const inputClass = "w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary";
+
+    const fetchFeeItems = useCallback(async () => {
+        const { data } = await (supabase as any)
+            .from('course_fee_items')
+            .select('id, name, amount, sort_order')
+            .eq('course_id', courseId)
+            .order('sort_order');
+        setFeeItems(data || []);
+    }, [courseId]);
 
     const fetchCoaches = useCallback(async () => {
         const [{ data: assigned }, { data: all }] = await Promise.all([
@@ -99,11 +117,49 @@ export default function AdminEditCoursePage() {
             setDescription(course.description || '');
             setStatus(course.status);
             setHourlyRate(course.hourly_rate != null ? String(course.hourly_rate) : '');
-            await fetchCoaches();
+            await Promise.all([fetchCoaches(), fetchFeeItems()]);
             setLoading(false);
         };
         load();
     }, [courseId]);
+
+    const handleAddFeeItem = async () => {
+        if (!newFeeItem.name.trim() || !newFeeItem.amount) return;
+        const amount = parseFloat(newFeeItem.amount);
+        if (isNaN(amount) || amount < 0) { toast.error('Enter a valid amount'); return; }
+        setAddingFeeItem(true);
+        const { error } = await (supabase as any).from('course_fee_items').insert({
+            course_id: courseId,
+            name: newFeeItem.name.trim(),
+            amount,
+            sort_order: feeItems.length,
+        });
+        setAddingFeeItem(false);
+        if (error) { toast.error(error.message); return; }
+        toast.success('Fee item added');
+        setNewFeeItem({ name: '', amount: '' });
+        await fetchFeeItems();
+    };
+
+    const handleDeleteFeeItem = async (id: string) => {
+        if (!confirm('Delete this fee item? Any student payment records for this item will also be removed.')) return;
+        const { error } = await (supabase as any).from('course_fee_items').delete().eq('id', id);
+        if (error) { toast.error(error.message); return; }
+        toast.success('Fee item deleted');
+        await fetchFeeItems();
+    };
+
+    const handleSaveFeeItem = async (id: string) => {
+        const amount = parseFloat(editFeeValues.amount);
+        if (!editFeeValues.name.trim() || isNaN(amount) || amount < 0) { toast.error('Enter valid values'); return; }
+        const { error } = await (supabase as any).from('course_fee_items')
+            .update({ name: editFeeValues.name.trim(), amount })
+            .eq('id', id);
+        if (error) { toast.error(error.message); return; }
+        toast.success('Fee item updated');
+        setEditingFeeItem(null);
+        await fetchFeeItems();
+    };
 
     const handleSaveCourse = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -229,6 +285,94 @@ export default function AdminEditCoursePage() {
                             </Link>
                         </div>
                     </form>
+                </GlassCard>
+
+                {/* ── Fee Items ── */}
+                <GlassCard className="mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 className="text-lg font-semibold text-white">Student Fee Items</h2>
+                            <p className="text-white/40 text-xs mt-0.5">Define what students are charged (e.g., course fees, competition registration)</p>
+                        </div>
+                    </div>
+
+                    {/* Existing fee items */}
+                    {feeItems.length === 0 ? (
+                        <p className="text-white/30 text-sm text-center py-4">No fee items defined yet</p>
+                    ) : (
+                        <div className="space-y-2 mb-4">
+                            {feeItems.map((fi) => (
+                                <div key={fi.id} className="bg-white/5 rounded-lg border border-white/10 px-4 py-3">
+                                    {editingFeeItem === fi.id ? (
+                                        <div className="flex gap-2 items-center flex-wrap">
+                                            <input
+                                                value={editFeeValues.name}
+                                                onChange={(e) => setEditFeeValues(v => ({ ...v, name: e.target.value }))}
+                                                className={`${inputClass} flex-1 min-w-[130px] text-sm py-1.5`}
+                                            />
+                                            <div className="relative w-28 flex-shrink-0">
+                                                <input
+                                                    type="number" min="0" step="0.01"
+                                                    value={editFeeValues.amount}
+                                                    onChange={(e) => setEditFeeValues(v => ({ ...v, amount: e.target.value }))}
+                                                    className={`${inputClass} text-sm py-1.5 pr-10`}
+                                                />
+                                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 text-xs">EGP</span>
+                                            </div>
+                                            <button onClick={() => handleSaveFeeItem(fi.id)}
+                                                className="bg-primary/20 hover:bg-primary/40 text-primary text-xs px-3 py-1.5 rounded transition-colors">Save</button>
+                                            <button onClick={() => setEditingFeeItem(null)}
+                                                className="bg-white/10 hover:bg-white/20 text-white/60 text-xs px-3 py-1.5 rounded transition-colors">Cancel</button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-white text-sm font-medium">{fi.name}</p>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-green-400 font-semibold text-sm">{fi.amount.toLocaleString()} EGP</span>
+                                                <button
+                                                    onClick={() => { setEditingFeeItem(fi.id); setEditFeeValues({ name: fi.name, amount: String(fi.amount) }); }}
+                                                    className="text-white/40 hover:text-primary text-xs transition-colors">Edit</button>
+                                                <button onClick={() => handleDeleteFeeItem(fi.id)}
+                                                    className="text-white/30 hover:text-red-400 text-xs transition-colors">✕</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Add new fee item */}
+                    <div className="border-t border-white/10 pt-4">
+                        <p className="text-white/50 text-xs mb-2 uppercase tracking-wide">Add new fee item</p>
+                        <div className="flex gap-2 flex-wrap items-center">
+                            <input
+                                value={newFeeItem.name}
+                                onChange={(e) => setNewFeeItem(v => ({ ...v, name: e.target.value }))}
+                                placeholder="e.g. Competition registration"
+                                className={`${inputClass} flex-1 min-w-[150px] text-sm py-1.5`}
+                            />
+                            <div className="relative w-32 flex-shrink-0">
+                                <input
+                                    type="number" min="0" step="0.01"
+                                    value={newFeeItem.amount}
+                                    onChange={(e) => setNewFeeItem(v => ({ ...v, amount: e.target.value }))}
+                                    placeholder="0.00"
+                                    className={`${inputClass} text-sm py-1.5 pr-10`}
+                                />
+                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-white/40 text-xs">EGP</span>
+                            </div>
+                            <button
+                                onClick={handleAddFeeItem}
+                                disabled={addingFeeItem || !newFeeItem.name.trim() || !newFeeItem.amount}
+                                className="bg-primary/20 hover:bg-primary/40 text-primary border border-primary/30 text-sm px-4 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+                            >
+                                {addingFeeItem ? 'Adding...' : '+ Add'}
+                            </button>
+                        </div>
+                    </div>
                 </GlassCard>
 
                 {/* ── Coaches & Rates ── */}

@@ -450,7 +450,12 @@
             "paymentRecordSaved": "تم حفظ سجل الدفع",
             "paymentRecorded": "تم تسجيل الدفعة بنجاح",
             "expenseAdded": "تمت إضافة النفقة",
-            "expenseDeleted": "تم حذف النفقة"
+            "expenseDeleted": "تم حذف النفقة",
+            "feeItemLabel": "بند الرسوم",
+            "feeItemOptional": "(اختياري)",
+            "feeItemGeneral": "عام",
+            "feeItemGeneralOther": "عام / أخرى",
+            "feeItemCollectedOf": "محصّل"
         },
         "invoices": {
             "title": "إدارة الفواتير",

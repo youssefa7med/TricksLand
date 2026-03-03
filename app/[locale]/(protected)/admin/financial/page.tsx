@@ -12,6 +12,13 @@ interface Course {
     name: string;
 }
 
+interface CourseFeeItem {
+    id: string;
+    name: string;
+    amount: number;
+    sort_order: number;
+}
+
 interface CourseSummary {
     course_id: string;
     course_name: string;
@@ -29,6 +36,7 @@ interface CourseSummary {
 interface StudentPayment {
     id: string;
     student_id: string;
+    fee_item_id: string | null;
     course_fee: number;
     amount_paid: number;
     remaining_balance: number;
@@ -36,6 +44,7 @@ interface StudentPayment {
     due_date: string | null;
     notes: string | null;
     students: { full_name: string };
+    course_fee_items: { name: string } | null;
 }
 
 interface Expense {
@@ -80,8 +89,11 @@ export default function AdminFinancialPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
+    // Fee items for the selected course
+    const [feeItems, setFeeItems] = useState<CourseFeeItem[]>([]);
+
     // Payment form
-    const [payForm, setPayForm] = useState({ studentId: '', courseFee: '', dueDate: '', notes: '' });
+    const [payForm, setPayForm] = useState({ studentId: '', feeItemId: '', courseFee: '', dueDate: '', notes: '' });
     const [showPayForm, setShowPayForm] = useState(false);
 
     // Payment recording form (add payment to existing record)
@@ -112,10 +124,10 @@ export default function AdminFinancialPage() {
 
     const loadCourseData = useCallback(async (courseId: string) => {
         if (!courseId) return;
-        const [{ data: paymentsData }, { data: expensesData }, { data: enrolledData }] = await Promise.all([
+        const [{ data: paymentsData }, { data: expensesData }, { data: enrolledData }, { data: feeItemsData }] = await Promise.all([
             (supabase as any)
                 .from('student_payments')
-                .select('id, student_id, course_fee, amount_paid, remaining_balance, payment_status, due_date, notes, students(full_name)')
+                .select('id, student_id, fee_item_id, course_fee, amount_paid, remaining_balance, payment_status, due_date, notes, students(full_name), course_fee_items(name)')
                 .eq('course_id', courseId)
                 .order('created_at', { ascending: false }),
             (supabase as any)
@@ -127,9 +139,15 @@ export default function AdminFinancialPage() {
                 .from('course_students')
                 .select('student_id, students(id, full_name)')
                 .eq('course_id', courseId),
+            (supabase as any)
+                .from('course_fee_items')
+                .select('id, name, amount, sort_order')
+                .eq('course_id', courseId)
+                .order('sort_order'),
         ]);
         setPayments(paymentsData || []);
         setExpenses(expensesData || []);
+        setFeeItems(feeItemsData || []);
         // Build list of enrolled students (id + full_name)
         const enrolled: { id: string; full_name: string }[] = (enrolledData || []).map((r: any) => ({
             id: r.student_id,
@@ -168,20 +186,28 @@ export default function AdminFinancialPage() {
         setSaving(true);
 
         const { data: { user } } = await supabase.auth.getUser();
-        const { error } = await (supabase as any).from('student_payments').upsert({
+        const insertData: Record<string, unknown> = {
             student_id: payForm.studentId,
             course_id: selectedCourse,
             course_fee: parseFloat(payForm.courseFee),
             due_date: payForm.dueDate || null,
             notes: payForm.notes || null,
             created_by: user?.id,
-        }, { onConflict: 'student_id,course_id' });
+        };
+        if (payForm.feeItemId) {
+            insertData.fee_item_id = payForm.feeItemId;
+        }
+        // Use insert with specific conflict target depending on whether fee_item_id is set
+        const conflictTarget = payForm.feeItemId ? 'student_id,course_id,fee_item_id' : 'student_id,course_id';
+        const { error } = await (supabase as any)
+            .from('student_payments')
+            .upsert(insertData, { onConflict: conflictTarget });
 
         setSaving(false);
         if (error) { toast.error(error.message); return; }
         toast.success(t('paymentRecordSaved'));
         setShowPayForm(false);
-        setPayForm({ studentId: '', courseFee: '', dueDate: '', notes: '' });
+        setPayForm({ studentId: '', feeItemId: '', courseFee: '', dueDate: '', notes: '' });
         await loadCourseData(selectedCourse);
         await loadSummaries();
     };
@@ -317,7 +343,7 @@ export default function AdminFinancialPage() {
             {/* Course selector */}
             <GlassCard className="p-4">
                 <label className={labelClass}>{t('selectCourse')}</label>
-                <select value={selectedCourse} onChange={e => { setSelectedCourse(e.target.value); setTab('overview'); }}
+                <select value={selectedCourse} onChange={e => { setSelectedCourse(e.target.value); setTab('overview'); setFeeItems([]); }}
                     className={inputClass}>
                     <option value="">{t('allCoursesOverview')}</option>
                     {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -398,6 +424,25 @@ export default function AdminFinancialPage() {
                                 </button>
                             </div>
 
+                            {/* Fee items summary chips */}
+                            {feeItems.length > 0 && (
+                                <div className="flex flex-wrap gap-2 pb-2 border-b border-white/10">
+                                    {feeItems.map(fi => {
+                                        const fiPayments = payments.filter(p => p.fee_item_id === fi.id);
+                                        const collected = fiPayments.reduce((a, p) => a + Number(p.amount_paid), 0);
+                                        const total = fiPayments.reduce((a, p) => a + Number(p.course_fee), 0);
+                                        return (
+                                            <div key={fi.id} className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs">
+                                                <span className="text-primary font-medium">{fi.name}</span>
+                                                <span className="text-white/40 mx-1">·</span>
+                                                <span className="text-green-400">{formatCurrency(collected)} {t('feeItemCollectedOf')}</span>
+                                                {total > 0 && <span className="text-white/30"> / {formatCurrency(total)}</span>}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
                             {/* Add payment record form */}
                             {showPayForm && (
                                 <form onSubmit={handleAddPaymentRecord} className="bg-white/5 rounded-xl p-4 space-y-3">
@@ -409,13 +454,42 @@ export default function AdminFinancialPage() {
                                                 required className={inputClass}>
                                                 <option value="">{t('selectStudentPlaceholder')}</option>
                                                 {courseStudents
-                                                    .filter(s => !payments.some(p => p.student_id === s.id))
+                                                    .filter(s => {
+                                                        // If a fee item is selected, only hide students who already paid that item
+                                                        if (payForm.feeItemId) {
+                                                            return !payments.some(p => p.student_id === s.id && p.fee_item_id === payForm.feeItemId);
+                                                        }
+                                                        // Legacy: hide students with a general (no fee item) record
+                                                        return !payments.some(p => p.student_id === s.id && !p.fee_item_id);
+                                                    })
                                                     .map(s => (
                                                         <option key={s.id} value={s.id}>{s.full_name}</option>
                                                     ))
                                                 }
                                             </select>
                                         </div>
+                                        {feeItems.length > 0 && (
+                                            <div>
+                                                <label className={labelClass}>{t('feeItemLabel')} <span className="text-white/30">{t('feeItemOptional')}</span></label>
+                                                <select
+                                                    value={payForm.feeItemId}
+                                                    onChange={e => {
+                                                        const fi = feeItems.find(f => f.id === e.target.value);
+                                                        setPayForm(p => ({
+                                                            ...p,
+                                                            feeItemId: e.target.value,
+                                                            courseFee: fi ? String(fi.amount) : p.courseFee,
+                                                        }));
+                                                    }}
+                                                    className={inputClass}
+                                                >
+                                                    <option value="">— {t('feeItemGeneralOther')} —</option>
+                                                    {feeItems.map(fi => (
+                                                        <option key={fi.id} value={fi.id}>{fi.name} ({fi.amount} EGP)</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
                                         <div>
                                             <label className={labelClass}>{t('courseFeeLabel')}</label>
                                             <input type="number" min="1" step="0.01" required value={payForm.courseFee}
@@ -428,7 +502,7 @@ export default function AdminFinancialPage() {
                                                 onChange={e => setPayForm(p => ({ ...p, dueDate: e.target.value }))}
                                                 className={inputClass} />
                                         </div>
-                                        <div>
+                                        <div className={feeItems.length > 0 ? '' : 'col-span-2'}>
                                             <label className={labelClass}>{tc('notes')}</label>
                                             <input value={payForm.notes}
                                                 onChange={e => setPayForm(p => ({ ...p, notes: e.target.value }))}
@@ -506,6 +580,7 @@ export default function AdminFinancialPage() {
                                         <thead>
                                             <tr className="text-white/50 border-b border-white/10">
                                                 <th className="text-left py-2 px-3">{tc('name')}</th>
+                                                {feeItems.length > 0 && <th className="text-left py-2 px-3">{t('feeItemLabel')}</th>}
                                                 <th className="text-right py-2 px-3">{t('incomeCol')}</th>
                                                 <th className="text-right py-2 px-3">{tc('paid')}</th>
                                                 <th className="text-right py-2 px-3">{tc('pending')}</th>
@@ -520,6 +595,14 @@ export default function AdminFinancialPage() {
                                                     <td className="py-3 px-3 text-white font-medium">
                                                         {(p.students as any)?.full_name || '—'}
                                                     </td>
+                                                    {feeItems.length > 0 && (
+                                                        <td className="py-3 px-3 text-white/60 text-xs">
+                                                            {p.fee_item_id && (p as any).course_fee_items?.name
+                                                                ? <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full">{(p as any).course_fee_items.name}</span>
+                                                                : <span className="text-white/30">{t('feeItemGeneral')}</span>
+                                                            }
+                                                        </td>
+                                                    )}
                                                     <td className="py-3 px-3 text-right text-white/80">{formatCurrency(p.course_fee)}</td>
                                                     <td className="py-3 px-3 text-right text-green-400">{formatCurrency(p.amount_paid)}</td>
                                                     <td className="py-3 px-3 text-right text-yellow-400">{formatCurrency(p.remaining_balance)}</td>
@@ -549,7 +632,7 @@ export default function AdminFinancialPage() {
                                                 </tr>
                                                 {expandedPayment === p.id && (
                                                     <tr>
-                                                        <td colSpan={6} className="px-6 py-3 bg-black/20">
+                                                        <td colSpan={feeItems.length > 0 ? 7 : 6} className="px-6 py-3 bg-black/20">
                                                             {(!transactions[p.id] || transactions[p.id].length === 0) ? (
                                                                 <p className="text-white/40 text-xs text-center py-2">{t('noTransactions')}</p>
                                                             ) : (

@@ -324,6 +324,19 @@ export async function PATCH(request: NextRequest) {
             );
         }
 
+        // Auto-insert course_expense for this session (fire-and-forget, non-blocking)
+        // The RPC reads billed_hours (already computed by trigger) and coach hourly rate
+        // to record the instructor cost against the course.
+        if (updated.billed_hours && updated.billed_hours > 0) {
+            (supabase as any).rpc('record_coach_session_expense', {
+                p_attendance_id: resolvedAttendanceId as string,
+            }).then(({ error: rpcErr }: { error: { message: string } | null }) => {
+                if (rpcErr) {
+                    console.error('Auto-expense RPC error (non-critical):', rpcErr.message);
+                }
+            });
+        }
+
         return NextResponse.json(
             {
                 success: true,

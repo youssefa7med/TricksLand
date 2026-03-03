@@ -450,7 +450,12 @@
             "paymentRecordSaved": "Payment record saved",
             "paymentRecorded": "Payment recorded successfully",
             "expenseAdded": "Expense added",
-            "expenseDeleted": "Expense deleted"
+            "expenseDeleted": "Expense deleted",
+            "feeItemLabel": "Fee Item",
+            "feeItemOptional": "(optional)",
+            "feeItemGeneral": "General",
+            "feeItemGeneralOther": "General / Other",
+            "feeItemCollectedOf": "collected"
         },
         "invoices": {
             "title": "Invoice Management",

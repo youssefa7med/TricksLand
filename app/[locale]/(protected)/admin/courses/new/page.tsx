@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, useParams } from 'next/navigation';
@@ -11,6 +11,11 @@ interface Coach {
     full_name: string;
     email: string;
     base_hourly_rate: number | null;
+}
+
+interface FeeItemDraft {
+    name: string;
+    amount: string;
 }
 
 export default function NewCoursePage() {
@@ -26,6 +31,7 @@ export default function NewCoursePage() {
     const [isCompetition, setIsCompetition] = useState(false);
     const [coaches, setCoaches] = useState<Coach[]>([]);
     const [selectedCoaches, setSelectedCoaches] = useState<string[]>([]);
+    const [feeItems, setFeeItems] = useState<FeeItemDraft[]>([{ name: 'Course fees', amount: '' }]);
 
     useEffect(() => {
         const supabase = createClient();
@@ -41,7 +47,6 @@ export default function NewCoursePage() {
         setSelectedCoaches((prev) => {
             const isRemoving = prev.includes(id);
             const next = isRemoving ? prev.filter((c) => c !== id) : [...prev, id];
-            // Auto-fill hourly rate from this coach's profile when selecting (not during competition mode)
             if (!isRemoving && !isCompetition) {
                 const coach = coaches.find((c) => c.id === id);
                 if (coach?.base_hourly_rate) {
@@ -57,7 +62,6 @@ export default function NewCoursePage() {
         if (checked) {
             setHourlyRate('75');
         } else {
-            // Restore rate from last selected coach if any, otherwise clear
             if (selectedCoaches.length > 0) {
                 const lastCoach = coaches.find((c) => c.id === selectedCoaches[selectedCoaches.length - 1]);
                 setHourlyRate(lastCoach?.base_hourly_rate ? String(lastCoach.base_hourly_rate) : '');
@@ -66,6 +70,15 @@ export default function NewCoursePage() {
             }
         }
     };
+
+    const addFeeItem = () =>
+        setFeeItems((prev) => [...prev, { name: '', amount: '' }]);
+
+    const removeFeeItem = (idx: number) =>
+        setFeeItems((prev) => prev.filter((_, i) => i !== idx));
+
+    const updateFeeItem = (idx: number, field: keyof FeeItemDraft, value: string) =>
+        setFeeItems((prev) => prev.map((fi, i) => (i === idx ? { ...fi, [field]: value } : fi)));
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -123,6 +136,23 @@ export default function NewCoursePage() {
             }
         }
 
+        // Insert fee items
+        const validItems = feeItems.filter(fi => fi.name.trim() && parseFloat(fi.amount) > 0);
+        if (validItems.length > 0) {
+            const itemRows = validItems.map((fi, idx) => ({
+                course_id: course.id,
+                name: fi.name.trim(),
+                amount: parseFloat(fi.amount),
+                sort_order: idx,
+            }));
+            const { error: feeErr } = await (supabase as any)
+                .from('course_fee_items')
+                .insert(itemRows);
+            if (feeErr) {
+                toast.error('Course created but fee items failed: ' + feeErr.message);
+            }
+        }
+
         toast.success('Course created!');
         router.push(`/${locale}/admin/courses`);
         setLoading(false);
@@ -134,7 +164,7 @@ export default function NewCoursePage() {
         <div className="page-container">
             <div className="max-w-2xl mx-auto">
                 <Link href={`/${locale}/admin/courses`} className="text-white/60 hover:text-white transition-colors text-sm mb-8 block">
-                    ← Back to Courses
+                    â† Back to Courses
                 </Link>
 
                 <div className="mb-8">
@@ -261,6 +291,61 @@ export default function NewCoursePage() {
                                     )}
                                 </label>
                             </div>
+                        </div>
+
+                        {/* Fee Items */}
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-white/80 text-sm font-medium">
+                                    Student Fee Items
+                                    <span className="ml-2 text-white/40 font-normal text-xs">(what students are charged)</span>
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={addFeeItem}
+                                    className="text-xs bg-primary/20 hover:bg-primary/40 text-primary px-3 py-1 rounded-full transition-colors"
+                                >
+                                    + Add item
+                                </button>
+                            </div>
+                            <div className="space-y-2">
+                                {feeItems.map((fi, idx) => (
+                                    <div key={idx} className="flex gap-2 items-center">
+                                        <input
+                                            type="text"
+                                            value={fi.name}
+                                            onChange={(e) => updateFeeItem(idx, 'name', e.target.value)}
+                                            placeholder="e.g. Course fees, Competition registration"
+                                            className={`${inputClass} flex-1`}
+                                        />
+                                        <div className="relative w-32 flex-shrink-0">
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                value={fi.amount}
+                                                onChange={(e) => updateFeeItem(idx, 'amount', e.target.value)}
+                                                placeholder="0.00"
+                                                className={`${inputClass} pr-12`}
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 text-xs pointer-events-none">EGP</span>
+                                        </div>
+                                        {feeItems.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeFeeItem(idx)}
+                                                className="flex-shrink-0 text-white/30 hover:text-red-400 transition-colors p-1"
+                                                title="Remove fee item"
+                                            >
+                                                âœ•
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-white/40 text-xs mt-2">
+                                These define what students owe. You can charge per fee item separately in Financials.
+                            </p>
                         </div>
 
                         <div>

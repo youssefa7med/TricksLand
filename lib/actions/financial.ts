@@ -14,6 +14,7 @@ import {
   CourseExpense,
   CourseFinancialSummary,
   PaymentStatus,
+  CourseFeeItem,
 } from '@/types/database';
 
 // ============================================================================
@@ -444,3 +445,95 @@ export async function getPlatformRevenueSummary(): Promise<{
 }
 
 
+
+// ============================================================================
+// COURSE FEE ITEMS
+// ============================================================================
+
+/**
+ * Get all fee items defined for a course, ordered by sort_order.
+ */
+export async function getCourseFeeItems(courseId: string): Promise<CourseFeeItem[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('course_fee_items')
+    .select('*')
+    .eq('course_id', courseId)
+    .order('sort_order')
+    .order('created_at');
+  if (error) {
+    console.error('Error fetching fee items:', error);
+    return [];
+  }
+  return data || [];
+}
+
+/**
+ * Create a new fee item for a course.
+ */
+export async function createCourseFeeItem(
+  courseId: string,
+  name: string,
+  amount: number,
+  sortOrder = 0
+): Promise<{ success: boolean; data?: CourseFeeItem; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('course_fee_items')
+      .insert({ course_id: courseId, name: name.trim(), amount, sort_order: sortOrder })
+      .select()
+      .single();
+    if (error) return { success: false, error: error.message };
+    revalidatePath('/admin/courses');
+    revalidatePath('/admin/financial');
+    return { success: true, data };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
+ * Update a fee item's name and/or amount.
+ */
+export async function updateCourseFeeItem(
+  id: string,
+  name: string,
+  amount: number,
+  sortOrder?: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const update: Partial<CourseFeeItem> = { name: name.trim(), amount };
+    if (sortOrder !== undefined) update.sort_order = sortOrder;
+    const { error } = await supabase
+      .from('course_fee_items')
+      .update(update)
+      .eq('id', id);
+    if (error) return { success: false, error: error.message };
+    revalidatePath('/admin/courses');
+    revalidatePath('/admin/financial');
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+/**
+ * Delete a fee item (cascade will remove linked student_payments).
+ */
+export async function deleteCourseFeeItem(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from('course_fee_items')
+      .delete()
+      .eq('id', id);
+    if (error) return { success: false, error: error.message };
+    revalidatePath('/admin/courses');
+    revalidatePath('/admin/financial');
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}

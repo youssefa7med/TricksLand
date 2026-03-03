@@ -164,10 +164,21 @@ export interface CourseExpense {
     updated_at: string;
 }
 
+export interface CourseFeeItem {
+    id: string;
+    course_id: string;
+    name: string;          // e.g. "Course fees", "Competition registration"
+    amount: number;
+    sort_order: number;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface StudentPayment {
     id: string;
     student_id: string;
     course_id: string;
+    fee_item_id: string | null;   // null = legacy single-fee record
     course_fee: number;
     amount_paid: number;
     remaining_balance: number; // Generated column
@@ -375,6 +386,12 @@ export interface Database {
                 Update: Partial<Omit<CourseExpense, 'id' | 'created_at' | 'updated_at'>>;
                 Relationships: [];
             };
+            course_fee_items: {
+                Row: CourseFeeItem;
+                Insert: Omit<CourseFeeItem, 'id' | 'created_at' | 'updated_at'>;
+                Update: Partial<Omit<CourseFeeItem, 'id' | 'created_at' | 'updated_at'>>;
+                Relationships: [];
+            };
             student_payments: {
                 Row: StudentPayment;
                 Insert: Omit<StudentPayment, 'id' | 'created_at' | 'updated_at' | 'remaining_balance'>;
@@ -443,6 +460,10 @@ export interface Database {
                     p_default_value?: string;
                 };
                 Returns: string;
+            };
+            record_coach_session_expense: {
+                Args: { p_attendance_id: string };
+                Returns: void;
             };
         };
         Enums: {
