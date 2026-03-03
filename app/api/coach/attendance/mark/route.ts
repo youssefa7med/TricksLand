@@ -2,6 +2,35 @@ import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import type { Profile, Session, CoachAttendance } from '@/types/database';
 
+// ─── Egypt timezone helper ─────────────────────────────────────────────────
+// Vercel runs on UTC. Egypt is always UTC+2 (no DST since 2011).
+// We format times explicitly in Africa/Cairo so arrival/leaving stored as
+// TIME match what the coach sees on their device.
+function getCairoNow() {
+    const now = new Date();
+    const fmt = (part: Intl.DateTimeFormatPartTypes) =>
+        new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Africa/Cairo',
+            year:   part === 'year'   ? 'numeric' : undefined,
+            month:  part === 'month'  ? '2-digit' : undefined,
+            day:    part === 'day'    ? '2-digit' : undefined,
+            hour:   part === 'hour'   ? '2-digit' : undefined,
+            minute: part === 'minute' ? '2-digit' : undefined,
+            second: part === 'second' ? '2-digit' : undefined,
+            hour12: false,
+        }).formatToParts(now).find(p => p.type === part)?.value ?? '00';
+
+    return {
+        /** YYYY-MM-DD in Cairo local time */
+        date: `${fmt('year')}-${fmt('month')}-${fmt('day')}`,
+        /** HH:MM:SS in Cairo local time — for TIME columns */
+        time: `${fmt('hour')}:${fmt('minute')}:${fmt('second')}`,
+        /** UTC ISO — for TIMESTAMPTZ columns */
+        iso: now.toISOString(),
+    };
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Academy location constants (backend source of truth)
 const ACADEMY_LOCATION = {
     latitude: 29.073694,
@@ -146,7 +175,7 @@ export async function POST(request: NextRequest) {
         }
 
         // ============ Check for Duplicate Attendance ============
-        const today = new Date().toISOString().split('T')[0];
+        const { date: today, iso: nowIso } = getCairoNow();
         const { data: existingAttendance } = await supabase
             .from('coach_attendance')
             .select('id')
@@ -167,8 +196,7 @@ export async function POST(request: NextRequest) {
         // Record the current time as the coach's arrival_time.
         // billed_hours will be computed by a DB trigger once leaving_time is filled in
         // via the PATCH /api/coach/attendance/mark endpoint.
-        const now = new Date();
-        const arrivalTime = now.toTimeString().split(' ')[0]; // "HH:MM:SS"
+        const { time: arrivalTime, iso: arrivalIso } = getCairoNow();
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: attendanceData, error: insertError } = await (supabase as any)
@@ -179,7 +207,7 @@ export async function POST(request: NextRequest) {
                 latitude,
                 longitude,
                 distance_from_academy: distance,
-                attendance_timestamp: now.toISOString(),
+                attendance_timestamp: arrivalIso,
                 status: 'present',
                 arrival_time: arrivalTime,
                 // leaving_time and billed_hours remain NULL until coach checks out
@@ -303,11 +331,11 @@ export async function PATCH(request: NextRequest) {
             );
         }
 
-        // Record leaving_time as the current server time.
+        // Record leaving_time in Cairo local time (UTC+2 year-round for Egypt).
         // The trigger compute_coach_attendance_time() will fire automatically and set:
         //   duration_minutes = leaving_time − arrival_time (in minutes)
         //   billed_hours     = FLOOR(duration_minutes / 15) × 0.25
-        const leavingTime = new Date().toTimeString().split(' ')[0]; // "HH:MM:SS"
+        const leavingTime = getCairoNow().time; // "HH:MM:SS" in Africa/Cairo
 
         const { data: updated, error: updateError } = await (supabase as any)
             .from('coach_attendance')

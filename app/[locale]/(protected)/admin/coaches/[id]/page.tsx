@@ -77,10 +77,20 @@ export default function AdminCoachProfilePage() {
     const handleUpdateRate = async () => {
         const baseRate = parseFloat(rateForm.base_hourly_rate);
         if (isNaN(baseRate) || baseRate <= 0) { toast.error('Please enter a valid base rate'); return; }
+
+        const effectiveFrom = rateForm.rate_effective_from || new Date().toISOString().split('T')[0];
+        // Auto-derive: if admin didn't set a next increase date, schedule it 1 year after effective_from
+        let nextIncreaseDate = rateForm.next_rate_increase_date || null;
+        if (!nextIncreaseDate) {
+            const d = new Date(effectiveFrom);
+            d.setFullYear(d.getFullYear() + 1);
+            nextIncreaseDate = d.toISOString().split('T')[0];
+        }
+
         const { error } = await (supabase as any).from('profiles').update({
             base_hourly_rate: baseRate,
-            rate_effective_from: rateForm.rate_effective_from || new Date().toISOString().split('T')[0],
-            next_rate_increase_date: rateForm.next_rate_increase_date || null,
+            rate_effective_from: effectiveFrom,
+            next_rate_increase_date: nextIncreaseDate,
         }).eq('id', coachId);
         if (error) { toast.error(error.message); }
         else { toast.success('Rate updated'); setEditingRate(false); loadCoachData(); }
@@ -253,7 +263,7 @@ export default function AdminCoachProfilePage() {
                                     <input type="date" value={rateForm.next_rate_increase_date}
                                         onChange={(e) => setRateForm({ ...rateForm, next_rate_increase_date: e.target.value })}
                                         className={inputClass} />
-                                    <p className="text-white/40 text-xs mt-1">Rate increases 25% per year automatically</p>
+                                    <p className="text-white/40 text-xs mt-1">Leave blank to auto-schedule 1 year after effective date</p>
                                 </div>
                             </div>
                             <button onClick={handleUpdateRate} className="btn-glossy">Save Rate</button>

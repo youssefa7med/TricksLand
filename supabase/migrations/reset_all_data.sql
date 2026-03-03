@@ -26,7 +26,10 @@ TRUNCATE TABLE public.course_schedules         RESTART IDENTITY CASCADE;
 -- ─────────────────────────────────────────────────────────────
 TRUNCATE TABLE public.sessions                 RESTART IDENTITY CASCADE;
 TRUNCATE TABLE public.hourly_rates             RESTART IDENTITY CASCADE;
-TRUNCATE TABLE public.course_coach_rates       RESTART IDENTITY CASCADE;
+-- course_coach_rates may not exist in all deployments — skip safely
+DO $$ BEGIN
+    TRUNCATE TABLE public.course_coach_rates RESTART IDENTITY CASCADE;
+EXCEPTION WHEN undefined_table THEN NULL; END $$;
 
 -- ─────────────────────────────────────────────────────────────
 -- Course-level: students, coaches assignments, then courses
