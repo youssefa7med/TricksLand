@@ -123,7 +123,14 @@ export default function AdminFinancialPage() {
     }, [loadSummaries]);
 
     const loadCourseData = useCallback(async (courseId: string) => {
-        if (!courseId) return;
+        if (!courseId) {
+            setPayments([]);
+            setExpenses([]);
+            setCourseStudents([]);
+            setFeeItems([]);
+            setTransactions({});
+            return;
+        }
         const [{ data: paymentsData }, { data: expensesData }, { data: enrolledData }, { data: feeItemsData }] = await Promise.all([
             (supabase as any)
                 .from('student_payments')
@@ -343,7 +350,21 @@ export default function AdminFinancialPage() {
             {/* Course selector */}
             <GlassCard className="p-4">
                 <label className={labelClass}>{t('selectCourse')}</label>
-                <select value={selectedCourse} onChange={e => { setSelectedCourse(e.target.value); setTab('overview'); setFeeItems([]); }}
+                <select value={selectedCourse} onChange={e => {
+                    setSelectedCourse(e.target.value);
+                    setTab('overview');
+                    // Clear all course-specific data immediately so stale data from
+                    // the previous course is never shown while new data loads
+                    setPayments([]);
+                    setExpenses([]);
+                    setCourseStudents([]);
+                    setFeeItems([]);
+                    setTransactions({});
+                    setExpandedPayment(null);
+                    setShowPayForm(false);
+                    setShowRecordForm(false);
+                    setShowExpForm(false);
+                }}
                     className={inputClass}>
                     <option value="">{t('allCoursesOverview')}</option>
                     {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
