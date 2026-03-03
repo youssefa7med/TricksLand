@@ -18,14 +18,20 @@ TRUNCATE TABLE public.course_expenses          RESTART IDENTITY CASCADE;
 TRUNCATE TABLE public.course_fee_items         RESTART IDENTITY CASCADE;  -- cascades → student_payments rows with fee_item_id
 TRUNCATE TABLE public.student_payments         RESTART IDENTITY CASCADE;
 TRUNCATE TABLE public.coach_attendance         RESTART IDENTITY CASCADE;
-TRUNCATE TABLE public.adjustments              RESTART IDENTITY CASCADE;
+-- adjustments may not exist in all deployments — skip safely
+DO $$ BEGIN
+    TRUNCATE TABLE public.adjustments RESTART IDENTITY CASCADE;
+EXCEPTION WHEN undefined_table THEN NULL; END $$;
 TRUNCATE TABLE public.course_schedules         RESTART IDENTITY CASCADE;
 
 -- ─────────────────────────────────────────────────────────────
 -- Mid-level: sessions + coach rates
 -- ─────────────────────────────────────────────────────────────
 TRUNCATE TABLE public.sessions                 RESTART IDENTITY CASCADE;
-TRUNCATE TABLE public.hourly_rates             RESTART IDENTITY CASCADE;
+-- hourly_rates may not exist in all deployments — skip safely
+DO $$ BEGIN
+    TRUNCATE TABLE public.hourly_rates RESTART IDENTITY CASCADE;
+EXCEPTION WHEN undefined_table THEN NULL; END $$;
 -- course_coach_rates may not exist in all deployments — skip safely
 DO $$ BEGIN
     TRUNCATE TABLE public.course_coach_rates RESTART IDENTITY CASCADE;
@@ -70,12 +76,10 @@ SELECT 'course_students',                      COUNT(*) FROM public.course_stude
 SELECT 'course_fee_items',                     COUNT(*) FROM public.course_fee_items    UNION ALL
 SELECT 'course_schedules',                     COUNT(*) FROM public.course_schedules    UNION ALL
 SELECT 'sessions',                             COUNT(*) FROM public.sessions            UNION ALL
-SELECT 'hourly_rates',                         COUNT(*) FROM public.hourly_rates        UNION ALL
 SELECT 'coach_attendance',                     COUNT(*) FROM public.coach_attendance    UNION ALL
 SELECT 'student_attendance',                   COUNT(*) FROM public.student_attendance  UNION ALL
 SELECT 'student_payments',                     COUNT(*) FROM public.student_payments    UNION ALL
 SELECT 'payment_transactions',                 COUNT(*) FROM public.payment_transactions UNION ALL
 SELECT 'course_expenses',                      COUNT(*) FROM public.course_expenses     UNION ALL
-SELECT 'adjustments',                          COUNT(*) FROM public.adjustments         UNION ALL
 SELECT 'admin_settings (defaults restored)',   COUNT(*) FROM public.admin_settings
 ORDER BY 1;
