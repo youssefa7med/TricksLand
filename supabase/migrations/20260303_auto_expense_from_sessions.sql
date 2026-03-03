@@ -57,33 +57,32 @@ BEGIN
     FROM   public.profiles
     WHERE  id = NEW.paid_coach_id;
 
-    -- Upsert: insert new expense or update only if amount changed
-    INSERT INTO public.course_expenses (
-        course_id,
-        session_id,
-        title,
-        description,
-        amount,
-        expense_date,
-        category,
-        created_by
-    ) VALUES (
-        NEW.course_id,
-        NEW.id,
-        'Coach session – ' || COALESCE(v_coach_name, 'Unknown'),
-        ROUND(COALESCE(NEW.computed_hours, 0), 2)::TEXT
-            || ' hr(s) × ' || COALESCE(NEW.applied_rate, 0)::TEXT || ' EGP/hr',
-        NEW.subtotal,
-        NEW.session_date,
-        'instructor',
-        NEW.paid_coach_id
-    )
-    ON CONFLICT (session_id)
-    DO UPDATE SET
-        amount       = EXCLUDED.amount,
-        description  = EXCLUDED.description,
-        expense_date = EXCLUDED.expense_date,
-        title        = EXCLUDED.title;
+    -- Insert or update expense for this session
+    IF EXISTS (SELECT 1 FROM public.course_expenses WHERE session_id = NEW.id) THEN
+        UPDATE public.course_expenses
+        SET
+            amount       = NEW.subtotal,
+            description  = ROUND(COALESCE(NEW.computed_hours, 0), 2)::TEXT
+                               || ' hr(s) × ' || COALESCE(NEW.applied_rate, 0)::TEXT || ' EGP/hr',
+            expense_date = NEW.session_date,
+            title        = 'Coach session – ' || COALESCE(v_coach_name, 'Unknown')
+        WHERE session_id = NEW.id;
+    ELSE
+        INSERT INTO public.course_expenses (
+            course_id, session_id, title, description,
+            amount, expense_date, category, created_by
+        ) VALUES (
+            NEW.course_id,
+            NEW.id,
+            'Coach session – ' || COALESCE(v_coach_name, 'Unknown'),
+            ROUND(COALESCE(NEW.computed_hours, 0), 2)::TEXT
+                || ' hr(s) × ' || COALESCE(NEW.applied_rate, 0)::TEXT || ' EGP/hr',
+            NEW.subtotal,
+            NEW.session_date,
+            'instructor',
+            NEW.paid_coach_id
+        );
+    END IF;
 
     RETURN NEW;
 END;
@@ -170,34 +169,31 @@ BEGIN
     FROM   public.profiles
     WHERE  id = v_coach_id;
 
-    -- Upsert: GPS billed hours take priority over scheduled hours
-    -- Use session_id as the dedup key (same row the session trigger created,
-    -- or a new row if the session expense hasn't been recorded yet).
-    INSERT INTO public.course_expenses (
-        course_id,
-        session_id,
-        title,
-        description,
-        amount,
-        expense_date,
-        category,
-        created_by
-    ) VALUES (
-        v_course_id,
-        v_session_id,
-        'Coach session – ' || COALESCE(v_coach_name, 'Unknown'),
-        v_billed_hours::TEXT || ' billed hr(s) × ' || v_rate::TEXT
-            || ' EGP/hr (GPS check-in/out, 15-min modules)',
-        v_amount,
-        v_session_date,
-        'instructor',
-        v_coach_id
-    )
-    ON CONFLICT (session_id)
-    DO UPDATE SET
-        amount      = EXCLUDED.amount,
-        description = EXCLUDED.description,
-        title       = EXCLUDED.title;
+    -- GPS billed hours take priority over scheduled hours — update if row exists
+    IF EXISTS (SELECT 1 FROM public.course_expenses WHERE session_id = v_session_id) THEN
+        UPDATE public.course_expenses
+        SET
+            amount      = v_amount,
+            description = v_billed_hours::TEXT || ' billed hr(s) × ' || v_rate::TEXT
+                              || ' EGP/hr (GPS check-in/out, 15-min modules)',
+            title       = 'Coach session – ' || COALESCE(v_coach_name, 'Unknown')
+        WHERE session_id = v_session_id;
+    ELSE
+        INSERT INTO public.course_expenses (
+            course_id, session_id, title, description,
+            amount, expense_date, category, created_by
+        ) VALUES (
+            v_course_id,
+            v_session_id,
+            'Coach session – ' || COALESCE(v_coach_name, 'Unknown'),
+            v_billed_hours::TEXT || ' billed hr(s) × ' || v_rate::TEXT
+                || ' EGP/hr (GPS check-in/out, 15-min modules)',
+            v_amount,
+            v_session_date,
+            'instructor',
+            v_coach_id
+        );
+    END IF;
 END;
 $$;
 
@@ -236,5 +232,4 @@ WHERE  s.subtotal IS NOT NULL
   AND  NOT EXISTS (
       SELECT 1 FROM public.course_expenses ce
       WHERE ce.session_id = s.id
-  )
-ON CONFLICT (session_id) DO NOTHING;
+  );
