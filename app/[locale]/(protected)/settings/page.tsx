@@ -28,6 +28,8 @@ export default function SettingsPage() {
     const [email, setEmail] = useState('');
     const [role, setRole] = useState('');
     const [selfId, setSelfId] = useState('');
+    const [baseHourlyRate, setBaseHourlyRate] = useState<number | null>(null);
+    const [rateEffectiveFrom, setRateEffectiveFrom] = useState<string | null>(null);
     const locale = useLocale();
     const t = useTranslations('pages.settings');
     const supabase = createClient();
@@ -41,7 +43,7 @@ export default function SettingsPage() {
 
             const { data: profile } = await supabase
                 .from('profiles')
-                .select('full_name, email, role')
+                .select('full_name, email, role, base_hourly_rate, rate_effective_from')
                 .eq('id', user.id)
                 .single();
 
@@ -49,6 +51,8 @@ export default function SettingsPage() {
                 setFullName((profile as any).full_name || '');
                 setEmail((profile as any).email || '');
                 setRole((profile as any).role || '');
+                setBaseHourlyRate((profile as any).base_hourly_rate ?? null);
+                setRateEffectiveFrom((profile as any).rate_effective_from ?? null);
             }
             setLoading(false);
         };
@@ -119,8 +123,22 @@ export default function SettingsPage() {
                             />
                             <p className="text-white/40 text-xs mt-1">{t('emailHint')}</p>
                         </div>
+                        {/* Base rate — visible to coaches only, read-only */}
+                        {role === 'coach' && (
+                            <div>
+                                <label className={labelClass}>Base Hourly Rate</label>
+                                <div className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white/70">
+                                    {baseHourlyRate != null
+                                        ? `${Number(baseHourlyRate).toLocaleString()} EGP / hr`
+                                        : 'Not set yet — contact your admin'}
+                                    {rateEffectiveFrom && (
+                                        <span className="text-white/40 text-xs ml-2">(effective {rateEffectiveFrom})</span>
+                                    )}
+                                </div>
+                                <p className="text-white/40 text-xs mt-1">Set by admin. Contact admin to update.</p>
+                            </div>
+                        )}
                         <div>
-                            <label className={labelClass}>{t('roleLabel')}</label>
                             <div className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2">
                                 <span className={`inline-block px-2 py-1 rounded text-sm font-medium ${role === 'admin' ? 'bg-secondary/20 text-secondary' : 'bg-primary/20 text-primary'
                                     }`}>

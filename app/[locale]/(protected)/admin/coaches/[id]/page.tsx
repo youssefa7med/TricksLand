@@ -87,12 +87,18 @@ export default function AdminCoachProfilePage() {
             nextIncreaseDate = d.toISOString().split('T')[0];
         }
 
-        const { error } = await (supabase as any).from('profiles').update({
-            base_hourly_rate: baseRate,
-            rate_effective_from: effectiveFrom,
-            next_rate_increase_date: nextIncreaseDate,
-        }).eq('id', coachId);
-        if (error) { toast.error(error.message); }
+        // Use the API route (service role) so RLS doesn't block updating another user's profile
+        const res = await fetch(`/api/admin/coaches/${coachId}/rate`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                base_hourly_rate: baseRate,
+                rate_effective_from: effectiveFrom,
+                next_rate_increase_date: nextIncreaseDate,
+            }),
+        });
+        const json = await res.json();
+        if (!res.ok) { toast.error(json.error || 'Failed to update rate'); }
         else { toast.success('Rate updated'); setEditingRate(false); loadCoachData(); }
     };
 
