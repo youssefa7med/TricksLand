@@ -35,24 +35,25 @@ export default function SettingsPage() {
     const supabase = createClient();
 
     // ── Profile ──────────────────────────────────────────────────────────────
+    // Use the server-side API (service role) so base_hourly_rate is always
+    // fresh — the Supabase browser singleton can serve stale data after
+    // switching accounts due to Next.js internal fetch caching.
     useEffect(() => {
         const load = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
             setSelfId(user.id);
 
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('full_name, email, role, base_hourly_rate, rate_effective_from')
-                .eq('id', user.id)
-                .single();
+            const res = await fetch('/api/coach/profile', { cache: 'no-store' });
+            if (!res.ok) { setLoading(false); return; }
+            const { profile } = await res.json();
 
             if (profile) {
-                setFullName((profile as any).full_name || '');
-                setEmail((profile as any).email || '');
-                setRole((profile as any).role || '');
-                setBaseHourlyRate((profile as any).base_hourly_rate ?? null);
-                setRateEffectiveFrom((profile as any).rate_effective_from ?? null);
+                setFullName(profile.full_name || '');
+                setEmail(profile.email || '');
+                setRole(profile.role || '');
+                setBaseHourlyRate(profile.base_hourly_rate ?? null);
+                setRateEffectiveFrom(profile.rate_effective_from ?? null);
             }
             setLoading(false);
         };
