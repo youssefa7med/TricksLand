@@ -1,9 +1,10 @@
 -- ============================================================
 -- FULL DATA RESET SCRIPT
--- ⚠️  THIS DELETES ALL APPLICATION DATA — SCHEMA IS PRESERVED
+-- ⚠️  Deletes all COURSE / STUDENT / FINANCIAL / SESSION data
+-- ⚠️  PRESERVES admin and coach profiles (and their auth.users rows)
+-- ⚠️  Student auth.users are NOT deleted here — remove them manually
+--     via Supabase Dashboard → Authentication → Users if needed
 -- ⚠️  Run in Supabase SQL Editor
--- ⚠️  Auth users (auth.users) must be deleted separately via
---     Supabase Dashboard → Authentication → Users
 -- ============================================================
 
 -- Disable triggers temporarily so truncate doesn't fire expense triggers etc.
@@ -45,10 +46,10 @@ TRUNCATE TABLE public.course_coaches           RESTART IDENTITY CASCADE;
 TRUNCATE TABLE public.courses                  RESTART IDENTITY CASCADE;
 
 -- ─────────────────────────────────────────────────────────────
--- Profiles (linked to auth.users — deleting here is safe;
--- the auth.users rows stay until you delete them in the dashboard)
+-- Student profiles only — admin and coach profiles are kept
+-- (course/session data was already cleared above so no FK blocks)
 -- ─────────────────────────────────────────────────────────────
-TRUNCATE TABLE public.profiles                 RESTART IDENTITY CASCADE;
+DELETE FROM public.profiles WHERE role = 'student';
 
 -- ─────────────────────────────────────────────────────────────
 -- Admin settings: restore defaults after clearing
@@ -66,10 +67,11 @@ ON CONFLICT (key) DO NOTHING;
 SET session_replication_role = DEFAULT;
 
 -- ─────────────────────────────────────────────────────────────
--- Verification: row counts should all be 0 (except admin_settings)
+-- Verification: all counts should be 0 except profiles
+-- (admins + coaches are intentionally preserved) and admin_settings
 -- ─────────────────────────────────────────────────────────────
 SELECT
-    'profiles'            AS "table", COUNT(*) AS rows FROM public.profiles            UNION ALL
+    'profiles (admins+coaches kept)' AS "table", COUNT(*) AS rows FROM public.profiles  UNION ALL
 SELECT 'courses',                              COUNT(*) FROM public.courses             UNION ALL
 SELECT 'course_coaches',                       COUNT(*) FROM public.course_coaches      UNION ALL
 SELECT 'course_students',                      COUNT(*) FROM public.course_students     UNION ALL
