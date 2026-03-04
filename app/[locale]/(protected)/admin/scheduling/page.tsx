@@ -124,6 +124,16 @@ export default function AdminSchedulingPage() {
         setShowForm(true);
     };
 
+    const confirmIfCompleted = (schedule: Schedule, action: () => void) => {
+        if (schedule.status === 'completed') {
+            const ok = window.confirm(
+                'This schedule is marked as completed.\nAre you sure you want to edit it?'
+            );
+            if (!ok) return;
+        }
+        action();
+    };
+
     const updateStatus = async (id: string, status: Schedule['status']) => {
         const { error } = await (supabase as any)
             .from('course_schedules')
@@ -240,7 +250,7 @@ export default function AdminSchedulingPage() {
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[s.status]}`}>
                                             {s.status === 'active' ? t('statusActive') : s.status === 'completed' ? t('statusCompleted') : t('statusArchived')}
                                         </span>
-                                        <button onClick={() => startEdit(s)}
+                                        <button onClick={() => confirmIfCompleted(s, () => startEdit(s))}
                                             className="text-primary hover:text-white text-sm transition-colors">{tc('edit')}</button>
                                     </div>
                                 </div>
@@ -260,20 +270,26 @@ export default function AdminSchedulingPage() {
                                 {/* Counters */}
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                                     {[
-                                        { label: t('statusCompleted'), field: 'sessions_completed', value: s.sessions_completed, color: 'text-green-400' },
-                                        { label: t('postponed'), field: 'sessions_postponed', value: s.sessions_postponed, color: 'text-yellow-400' },
-                                        { label: t('cancelled'), field: 'sessions_cancelled', value: s.sessions_cancelled, color: 'text-red-400' },
-                                        { label: t('extra'), field: 'extra_sessions_added', value: s.extra_sessions_added, color: 'text-blue-400' },
+                                        { label: t('statusCompleted'), field: 'sessions_completed', value: s.sessions_completed, color: 'text-green-400', autoTracked: true },
+                                        { label: t('postponed'), field: 'sessions_postponed', value: s.sessions_postponed, color: 'text-yellow-400', autoTracked: false },
+                                        { label: t('cancelled'), field: 'sessions_cancelled', value: s.sessions_cancelled, color: 'text-red-400', autoTracked: false },
+                                        { label: t('extra'), field: 'extra_sessions_added', value: s.extra_sessions_added, color: 'text-blue-400', autoTracked: false },
                                     ].map(item => (
                                         <div key={item.field} className="bg-white/5 rounded-lg p-2 text-center">
                                             <div className={`text-lg font-bold ${item.color}`}>{item.value}</div>
                                             <div className="text-white/50 text-xs">{item.label}</div>
-                                            <div className="flex justify-center gap-2 mt-1">
-                                                <button onClick={() => updateSessionCount(s.id, item.field, -1, item.value)}
-                                                    className="text-white/40 hover:text-white text-sm w-5 h-5 rounded bg-white/10 hover:bg-white/20 transition-colors">−</button>
-                                                <button onClick={() => updateSessionCount(s.id, item.field, 1, item.value)}
-                                                    className="text-white/40 hover:text-white text-sm w-5 h-5 rounded bg-white/10 hover:bg-white/20 transition-colors">+</button>
-                                            </div>
+                                            {item.autoTracked ? (
+                                                <div className="text-white/30 text-xs mt-1 italic">auto</div>
+                                            ) : (
+                                                <div className="flex justify-center gap-2 mt-1">
+                                                    <button
+                                                        onClick={() => confirmIfCompleted(s, () => updateSessionCount(s.id, item.field, -1, item.value))}
+                                                        className="text-white/40 hover:text-white text-sm w-5 h-5 rounded bg-white/10 hover:bg-white/20 transition-colors">−</button>
+                                                    <button
+                                                        onClick={() => confirmIfCompleted(s, () => updateSessionCount(s.id, item.field, 1, item.value))}
+                                                        className="text-white/40 hover:text-white text-sm w-5 h-5 rounded bg-white/10 hover:bg-white/20 transition-colors">+</button>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
