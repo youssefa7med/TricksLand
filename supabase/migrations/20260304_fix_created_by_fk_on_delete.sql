@@ -122,3 +122,16 @@ DO $$ BEGIN
         ADD CONSTRAINT course_fee_items_created_by_fkey
             FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
 EXCEPTION WHEN undefined_column THEN NULL; END $$;
+
+-- ─────────────────────────────────────────────────────────────
+-- COURSE_SCHEDULES — created_by
+-- ─────────────────────────────────────────────────────────────
+ALTER TABLE public.course_schedules
+    ALTER COLUMN created_by DROP NOT NULL;
+
+ALTER TABLE public.course_schedules
+    DROP CONSTRAINT IF EXISTS course_schedules_created_by_fkey;
+
+ALTER TABLE public.course_schedules
+    ADD CONSTRAINT course_schedules_created_by_fkey
+        FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON DELETE SET NULL;

@@ -33,6 +33,11 @@ export default function NewCoursePage() {
     const [selectedCoaches, setSelectedCoaches] = useState<string[]>([]);
     const [feeItems, setFeeItems] = useState<FeeItemDraft[]>([{ name: 'Course fees', amount: '' }]);
 
+    // ── Schedule fields (auto-created with the course) ──────────────────────
+    const [scheduleStartDate, setScheduleStartDate] = useState(new Date().toISOString().split('T')[0]);
+    const [scheduleTotalSessions, setScheduleTotalSessions] = useState('20');
+    const [scheduleSessionsPerWeek, setScheduleSessionsPerWeek] = useState('3');
+
     useEffect(() => {
         const supabase = createClient();
         supabase
@@ -154,6 +159,25 @@ export default function NewCoursePage() {
         }
 
         toast.success('Course created!');
+
+        // Auto-create a course schedule
+        const weeksNeeded = Math.ceil(Number(scheduleTotalSessions) / Number(scheduleSessionsPerWeek));
+        const endDate = new Date(scheduleStartDate);
+        endDate.setDate(endDate.getDate() + weeksNeeded * 7);
+        await (supabase as any).from('course_schedules').insert({
+            course_id: course.id,
+            total_sessions: Number(scheduleTotalSessions),
+            sessions_per_week: Number(scheduleSessionsPerWeek),
+            start_date: scheduleStartDate,
+            scheduled_end_date: endDate.toISOString().split('T')[0],
+            sessions_completed: 0,
+            sessions_cancelled: 0,
+            sessions_postponed: 0,
+            extra_sessions_added: 0,
+            status: 'active',
+            created_by: user.id,
+        });
+
         router.push(`/${locale}/admin/courses`);
         setLoading(false);
     };
@@ -358,6 +382,41 @@ export default function NewCoursePage() {
                                 <option value="active" className="bg-gray-900">Active</option>
                                 <option value="archived" className="bg-gray-900">Archived</option>
                             </select>
+                        </div>
+
+                        {/* Schedule */}
+                        <div className="border-t border-white/10 pt-5">
+                            <p className="text-white font-semibold mb-1">Course Schedule</p>
+                            <p className="text-white/40 text-xs mb-4">A schedule is created automatically — you can edit it later from the Scheduling page.</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-white/70 text-sm mb-1">Start Date <span className="text-red-400">*</span></label>
+                                    <input type="date" value={scheduleStartDate}
+                                        onChange={e => setScheduleStartDate(e.target.value)}
+                                        className={inputClass} required />
+                                </div>
+                                <div>
+                                    <label className="block text-white/70 text-sm mb-1">Total Sessions <span className="text-red-400">*</span></label>
+                                    <input type="number" min="1" value={scheduleTotalSessions}
+                                        onChange={e => setScheduleTotalSessions(e.target.value)}
+                                        className={inputClass} required />
+                                </div>
+                                <div>
+                                    <label className="block text-white/70 text-sm mb-1">Sessions / Week</label>
+                                    <input type="number" min="1" max="7" value={scheduleSessionsPerWeek}
+                                        onChange={e => setScheduleSessionsPerWeek(e.target.value)}
+                                        className={inputClass} />
+                                    {scheduleStartDate && scheduleTotalSessions && scheduleSessionsPerWeek && (
+                                        <p className="text-white/40 text-xs mt-1">
+                                            Est. end: {(() => {
+                                                const d = new Date(scheduleStartDate);
+                                                d.setDate(d.getDate() + Math.ceil(Number(scheduleTotalSessions) / Number(scheduleSessionsPerWeek)) * 7);
+                                                return d.toLocaleDateString();
+                                            })()}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         <div className="flex gap-3 pt-2">

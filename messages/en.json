@@ -305,7 +305,8 @@
             "sessionsFound": "sessions found",
             "sessionFound": "session found",
             "deleteConfirm": "Delete this session?",
-            "sessionDeleted": "Session deleted"
+            "sessionDeleted": "Session deleted",
+            "currentMonth": "Current Month"
         },
         "coaches": {
             "title": "Coaches",

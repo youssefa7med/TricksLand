@@ -305,7 +305,8 @@
             "sessionsFound": "جلسة بالنتائج",
             "sessionFound": "جلسة",
             "deleteConfirm": "حذف هذه الجلسة؟",
-            "sessionDeleted": "تم حذف الجلسة"
+            "sessionDeleted": "تم حذف الجلسة",
+            "currentMonth": "الشهر الحالي"
         },
         "coaches": {
             "title": "المدربون",
