@@ -204,11 +204,36 @@ export default function AdminFinancialPage() {
         if (payForm.feeItemId) {
             insertData.fee_item_id = payForm.feeItemId;
         }
-        // Use insert with specific conflict target depending on whether fee_item_id is set
-        const conflictTarget = payForm.feeItemId ? 'student_id,course_id,fee_item_id' : 'student_id,course_id';
-        const { error } = await (supabase as any)
+
+        // Check if a record already exists for this student + course + fee_item combo.
+        // We can't use upsert() because there is no DB unique constraint on these columns.
+        let existingQuery = (supabase as any)
             .from('student_payments')
-            .upsert(insertData, { onConflict: conflictTarget });
+            .select('id')
+            .eq('student_id', payForm.studentId)
+            .eq('course_id', selectedCourse);
+        if (payForm.feeItemId) {
+            existingQuery = existingQuery.eq('fee_item_id', payForm.feeItemId);
+        } else {
+            existingQuery = existingQuery.is('fee_item_id', null);
+        }
+        const { data: existing } = await existingQuery.maybeSingle();
+
+        let error: any;
+        if (existing) {
+            ({ error } = await (supabase as any)
+                .from('student_payments')
+                .update({
+                    course_fee: parseFloat(payForm.courseFee),
+                    due_date: payForm.dueDate || null,
+                    notes: payForm.notes || null,
+                })
+                .eq('id', existing.id));
+        } else {
+            ({ error } = await (supabase as any)
+                .from('student_payments')
+                .insert(insertData));
+        }
 
         setSaving(false);
         if (error) { toast.error(error.message); return; }
