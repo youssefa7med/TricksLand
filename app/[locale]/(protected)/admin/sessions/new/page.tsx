@@ -16,6 +16,9 @@ export default function AdminNewSessionPage() {
     const [coaches, setCoaches] = useState<any[]>([]);
     const [courses, setCourses] = useState<any[]>([]);
     const [hasReplacement, setHasReplacement] = useState(false);
+    // course_id → ordered list of assigned coach ids
+    const [courseCoachMap, setCourseCoachMap] = useState<Record<string, string[]>>({});
+    const [coachAutoFilled, setCoachAutoFilled] = useState(false);
 
     const [form, setForm] = useState({
         course_id: '',
@@ -31,15 +34,31 @@ export default function AdminNewSessionPage() {
 
     useEffect(() => {
         const load = async () => {
-            const [{ data: coachData }, { data: courseData }] = await Promise.all([
+            const [{ data: coachData }, { data: courseData }, { data: ccData }] = await Promise.all([
                 supabase.from('profiles').select('id, full_name').eq('role', 'coach').order('full_name'),
                 supabase.from('courses').select('id, name').eq('status', 'active').order('name'),
+                (supabase as any).from('course_coaches').select('course_id, coach_id'),
             ]);
             setCoaches(coachData || []);
             setCourses(courseData || []);
+            // Build map: course_id → [coach_id, ...]
+            const map: Record<string, string[]> = {};
+            for (const row of (ccData || [])) {
+                if (!map[row.course_id]) map[row.course_id] = [];
+                map[row.course_id].push(row.coach_id);
+            }
+            setCourseCoachMap(map);
         };
         load();
     }, []);
+
+    // When course changes, auto-fill paid coach with first assigned coach
+    const handleCourseChange = (courseId: string) => {
+        const assignedCoaches = courseCoachMap[courseId] || [];
+        const firstCoach = assignedCoaches[0] || '';
+        setForm(prev => ({ ...prev, course_id: courseId, paid_coach_id: firstCoach }));
+        setCoachAutoFilled(!!firstCoach);
+    };
 
     // Helper: compute decimal hours from HH:MM strings
     const computeHours = (start: string, end: string) => {
@@ -217,15 +236,25 @@ export default function AdminNewSessionPage() {
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
                             <label className={labelClass}>Course <span className="text-red-400">*</span></label>
-                            <select value={form.course_id} onChange={(e) => setForm({ ...form, course_id: e.target.value })} className={selectClass} required>
+                            <select value={form.course_id} onChange={(e) => handleCourseChange(e.target.value)} className={selectClass} required>
                                 <option value="" className="bg-gray-900">Select a course</option>
                                 {courses.map((c) => <option key={c.id} value={c.id} className="bg-gray-900">{c.name}</option>)}
                             </select>
                         </div>
 
                         <div>
-                            <label className={labelClass}>Paid Coach <span className="text-red-400">*</span></label>
-                            <select value={form.paid_coach_id} onChange={(e) => setForm({ ...form, paid_coach_id: e.target.value })} className={selectClass} required>
+                            <label className={labelClass}>
+                                Paid Coach <span className="text-red-400">*</span>
+                                {coachAutoFilled && (
+                                    <span className="ml-2 text-xs text-primary/80 font-normal">auto-assigned · can be changed</span>
+                                )}
+                            </label>
+                            <select
+                                value={form.paid_coach_id}
+                                onChange={(e) => { setForm({ ...form, paid_coach_id: e.target.value }); setCoachAutoFilled(false); }}
+                                className={selectClass}
+                                required
+                            >
                                 <option value="" className="bg-gray-900">Select coach who gets paid</option>
                                 {coaches.map((c) => <option key={c.id} value={c.id} className="bg-gray-900">{c.full_name}</option>)}
                             </select>
