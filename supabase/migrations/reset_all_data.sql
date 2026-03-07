@@ -1,9 +1,10 @@
 -- ============================================================
 -- FULL DATA RESET SCRIPT
--- ⚠️  Deletes all COURSE / STUDENT / FINANCIAL / SESSION data
--- ⚠️  PRESERVES admin and coach profiles (and their auth.users rows)
--- ⚠️  Student auth.users are NOT deleted here — remove them manually
---     via Supabase Dashboard → Authentication → Users if needed
+-- ⚠️  Deletes ALL data — courses, sessions, students, coaches,
+--     financial records, schedules, etc.
+-- ✅  PRESERVES admin profiles only (role = 'admin')
+-- ✅  Admin auth.users rows are kept untouched
+-- ⚠️  Coach AND student auth.users are deleted automatically below
 -- ⚠️  Run in Supabase SQL Editor
 -- ============================================================
 
@@ -42,14 +43,24 @@ EXCEPTION WHEN undefined_table THEN NULL; END $$;
 -- Course-level: students, coaches assignments, then courses
 -- ─────────────────────────────────────────────────────────────
 TRUNCATE TABLE public.course_students          RESTART IDENTITY CASCADE;
+TRUNCATE TABLE public.students                 RESTART IDENTITY CASCADE;  -- global students table (not in profiles)
 TRUNCATE TABLE public.course_coaches           RESTART IDENTITY CASCADE;
 TRUNCATE TABLE public.courses                  RESTART IDENTITY CASCADE;
 
 -- ─────────────────────────────────────────────────────────────
--- Student profiles only — admin and coach profiles are kept
+-- Coach auth.users — delete BEFORE profiles so the cascade hits
+-- (students are in public.students, not in auth.users / profiles)
+-- ─────────────────────────────────────────────────────────────
+DELETE FROM auth.users
+WHERE id IN (
+    SELECT id FROM public.profiles WHERE role = 'coach'
+);
+
+-- ─────────────────────────────────────────────────────────────
+-- Coach profiles — keep admins only
 -- (course/session data was already cleared above so no FK blocks)
 -- ─────────────────────────────────────────────────────────────
-DELETE FROM public.profiles WHERE role = 'student';
+DELETE FROM public.profiles WHERE role = 'coach';
 
 -- ─────────────────────────────────────────────────────────────
 -- Admin settings: restore defaults after clearing
@@ -68,12 +79,13 @@ SET session_replication_role = DEFAULT;
 
 -- ─────────────────────────────────────────────────────────────
 -- Verification: all counts should be 0 except profiles
--- (admins + coaches are intentionally preserved) and admin_settings
+-- (admins ONLY intentionally preserved) and admin_settings
 -- ─────────────────────────────────────────────────────────────
 SELECT
-    'profiles (admins+coaches kept)' AS "table", COUNT(*) AS rows FROM public.profiles  UNION ALL
+    'profiles (admins only kept)' AS "table", COUNT(*) AS rows FROM public.profiles  UNION ALL
 SELECT 'courses',                              COUNT(*) FROM public.courses             UNION ALL
 SELECT 'course_coaches',                       COUNT(*) FROM public.course_coaches      UNION ALL
+SELECT 'students',                             COUNT(*) FROM public.students            UNION ALL
 SELECT 'course_students',                      COUNT(*) FROM public.course_students     UNION ALL
 SELECT 'course_fee_items',                     COUNT(*) FROM public.course_fee_items    UNION ALL
 SELECT 'course_schedules',                     COUNT(*) FROM public.course_schedules    UNION ALL

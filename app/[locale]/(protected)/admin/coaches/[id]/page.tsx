@@ -88,6 +88,21 @@ export default function AdminCoachProfilePage() {
         }
 
         // Use the API route (service role) so RLS doesn't block updating another user's profile
+        // Validate: next increase date must be in the future and after effective date
+        if (nextIncreaseDate) {
+            const today = new Date(new Date().toDateString());
+            const increaseDate = new Date(nextIncreaseDate);
+            const effectiveDateObj = new Date(effectiveFrom);
+            if (increaseDate <= today) {
+                toast.error('Next increase date must be a future date');
+                return;
+            }
+            if (increaseDate <= effectiveDateObj) {
+                toast.error('Next increase date must be after the effective date');
+                return;
+            }
+        }
+
         const res = await fetch(`/api/admin/coaches/${coachId}/rate`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -236,9 +251,16 @@ export default function AdminCoachProfilePage() {
                                     {coach.rate_effective_from && (
                                         <p className="text-white/50 text-sm">Effective from: {formatDate(coach.rate_effective_from)}</p>
                                     )}
-                                    {coach.next_rate_increase_date && (
-                                        <p className="text-yellow-400 text-sm">Next 25% increase: {formatDate(coach.next_rate_increase_date)}</p>
-                                    )}
+                                    {coach.next_rate_increase_date && (() => {
+                                        const isOverdue = new Date(coach.next_rate_increase_date) < new Date(new Date().toDateString());
+                                        return isOverdue ? (
+                                            <p className="text-red-400 text-sm font-semibold">
+                                                ⚠️ Overdue increase: {formatDate(coach.next_rate_increase_date)} — increase not yet applied. Run the cron manually or update the rate.
+                                            </p>
+                                        ) : (
+                                            <p className="text-yellow-400 text-sm">Next 25% increase: {formatDate(coach.next_rate_increase_date)}</p>
+                                        );
+                                    })()}
                                 </div>
                             ) : (
                                 <p className="text-white/60">No base rate set</p>
@@ -267,9 +289,10 @@ export default function AdminCoachProfilePage() {
                                 <div>
                                     <label className="block text-white/80 text-sm font-medium mb-2">Next Increase Date</label>
                                     <input type="date" value={rateForm.next_rate_increase_date}
+                                        min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
                                         onChange={(e) => setRateForm({ ...rateForm, next_rate_increase_date: e.target.value })}
                                         className={inputClass} />
-                                    <p className="text-white/40 text-xs mt-1">Leave blank to auto-schedule 1 year after effective date</p>
+                                    <p className="text-white/40 text-xs mt-1">Leave blank to auto-schedule 1 year after effective date. Must be a future date.</p>
                                 </div>
                             </div>
                             <button onClick={handleUpdateRate} className="btn-glossy">Save Rate</button>

@@ -59,6 +59,11 @@ export default function CoachEditSessionPage() {
                 router.push(`/${locale}/coach/sessions`);
                 return;
             }
+            if (!session.course_id) {
+                toast.error('Activities cannot be edited here');
+                router.push(`/${locale}/coach/sessions?tab=activities`);
+                return;
+            }
 
             setForm({
                 course_id: session.course_id,
