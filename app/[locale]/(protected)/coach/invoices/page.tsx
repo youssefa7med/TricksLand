@@ -11,6 +11,7 @@ export default function CoachInvoicesPage() {
     const [loading, setLoading] = useState(true);
     const t = useTranslations('pages.invoices');
     const tc = useTranslations('common');
+    const ts = useTranslations('pages.sessions');
     const locale = useLocale();
     const [monthlyData, setMonthlyData] = useState<any[]>([]);
     const [expanded, setExpanded] = useState<string | null>(null);
@@ -55,7 +56,7 @@ export default function CoachInvoicesPage() {
         const [{ data: sessions }, { data: adjustments }] = await Promise.all([
             supabase
                 .from('sessions')
-                .select('id, session_date, start_time, end_time, session_type, computed_hours, applied_rate, subtotal, notes, courses (name)')
+                .select('id, session_date, start_time, end_time, session_type, computed_hours, applied_rate, subtotal, notes, activity_type, activity_description, courses (name)')
                 .eq('paid_coach_id', user.id)
                 .gte('session_date', `${month}-01`)
                 .lt('session_date', new Date(parseInt(month.split('-')[0]), parseInt(month.split('-')[1]), 1).toISOString().split('T')[0])
@@ -153,12 +154,24 @@ export default function CoachInvoicesPage() {
                                                                 {sessions.map((s: any) => (
                                                                     <tr key={s.id} className="border-b border-white/5">
                                                                         <td className="py-2 px-2 text-white">{formatDate(s.session_date)}</td>
-                                                                        <td className="py-2 px-2 text-white">{(s.courses as any)?.name}</td>
+                                                                        <td className="py-2 px-2">
+                                                                            {(s.courses as any)?.name
+                                                                                ? <span className="text-white">{(s.courses as any).name}</span>
+                                                                                : s.activity_type
+                                                                                    ? <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+                                                                                        {s.activity_type === 'kit_arrangement' ? ts('kitArrangement') : s.activity_type === 'supervision' ? ts('supervision') : ts('other')}
+                                                                                      </span>
+                                                                                    : <span className="text-white/30">—</span>
+                                                                            }
+                                                                        </td>
                                                                         <td className="py-2 px-2 text-white/70">{s.start_time}–{s.end_time}</td>
                                                                         <td className="py-2 px-2">
-                                                                            <span className={`text-xs px-2 py-0.5 rounded ${s.session_type === 'online_session' ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300'}`}>
-                                                                                {s.session_type === 'online_session' ? tc('online') : tc('offline')}
-                                                                            </span>
+                                                                            {s.activity_type
+                                                                                ? <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Activity</span>
+                                                                                : <span className={`text-xs px-2 py-0.5 rounded ${s.session_type === 'online_session' ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300'}`}>
+                                                                                    {s.session_type === 'online_session' ? tc('online') : tc('offline')}
+                                                                                  </span>
+                                                                            }
                                                                         </td>
                                                                         <td className="py-2 px-2 text-white/70 text-right">{s.computed_hours}h</td>
                                                                         <td className="py-2 px-2 text-white/70 text-right">{formatCurrency(s.applied_rate)}</td>

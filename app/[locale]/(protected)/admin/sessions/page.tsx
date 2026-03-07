@@ -30,8 +30,7 @@ export default function AdminSessionsPage() {
             .select(`
                 id, session_date, start_time, end_time, session_type,
                 computed_hours, applied_rate, subtotal, notes,
-                attendance_required, attendance_marked_by_admin,
-                courses (id, name),
+                attendance_required, attendance_marked_by_admin,                activity_type, activity_description,                courses (id, name),
                 paid_coach:profiles!sessions_paid_coach_id_fkey (id, full_name),
                 original_coach:profiles!sessions_originally_scheduled_coach_id_fkey (full_name),
                 coach_attendance (id, status, attendance_timestamp)
@@ -135,7 +134,10 @@ export default function AdminSessionsPage() {
                         <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">{t('title')}</h1>
                         <p className="text-white/70">{t('subtitle')}</p>
                     </div>
-                    <Link href={`/${locale}/admin/sessions/new`} className="btn-glossy">{t('logSession')}</Link>
+                    <div className="flex gap-2">
+                        <Link href={`/${locale}/admin/sessions/new`} className="btn-glossy">{t('logSession')}</Link>
+                        <Link href={`/${locale}/admin/sessions/log-activity`} className="btn-glossy">{t('logActivity')}</Link>
+                    </div>
                 </div>
 
                 {/* Filters */}
@@ -221,12 +223,24 @@ export default function AdminSessionsPage() {
                                                         </div>
                                                     )}
                                             </td>
-                                            <td className="py-3 px-3 text-white text-sm">{(s.courses as any)?.name}</td>
+                                            <td className="py-3 px-3 text-sm">
+                                                {(s.courses as any)?.name
+                                                    ? <span className="text-white">{(s.courses as any).name}</span>
+                                                    : s.activity_type
+                                                        ? <span className="text-xs px-2 py-1 rounded bg-emerald-500/20 text-emerald-300">
+                                                            {s.activity_type === 'kit_arrangement' ? t('kitArrangement') : s.activity_type === 'supervision' ? t('supervision') : t('other')}
+                                                          </span>
+                                                        : <span className="text-white/30">—</span>
+                                                }
+                                            </td>
                                             <td className="py-3 px-3 text-white text-sm">{s.start_time}–{s.end_time}</td>
                                             <td className="py-3 px-3">
-                                                <span className={`text-xs px-2 py-1 rounded ${s.session_type === 'online_session' ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300'}`}>
-                                                    {s.session_type === 'online_session' ? tc('online') : tc('offline')}
-                                                </span>
+                                                {s.activity_type
+                                                    ? <span className="text-xs px-2 py-1 rounded bg-emerald-500/20 text-emerald-300">Activity</span>
+                                                    : <span className={`text-xs px-2 py-1 rounded ${s.session_type === 'online_session' ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300'}`}>
+                                                        {s.session_type === 'online_session' ? tc('online') : tc('offline')}
+                                                      </span>
+                                                }
                                             </td>
                                             <td className="py-3 px-3 text-white text-sm">{s.computed_hours}h</td>
                                             <td className="py-3 px-3 text-white text-sm">{formatCurrency(s.applied_rate)}</td>

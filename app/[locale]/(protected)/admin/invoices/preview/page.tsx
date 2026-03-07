@@ -7,13 +7,14 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 export default function AdminInvoicePreviewPage() {
     const searchParams = useSearchParams();
     const coachId = searchParams.get('coach');
     const month = searchParams.get('month');
     const locale = useLocale();
+    const ts = useTranslations('pages.sessions');
     const supabase = createClient();
 
     const [coach, setCoach] = useState<any>(null);
@@ -30,6 +31,7 @@ export default function AdminInvoicePreviewPage() {
                 supabase.from('sessions').select(`
                     id, session_date, start_time, end_time, session_type,
                     computed_hours, applied_rate, subtotal, notes,
+                    activity_type, activity_description,
                     courses(name)
                 `).eq('paid_coach_id', coachId)
                   .gte('session_date', `${month}-01`)
@@ -138,9 +140,23 @@ export default function AdminInvoicePreviewPage() {
                                     {sessions.map((s: any) => (
                                         <tr key={s.id} className="border-b border-white/5">
                                             <td className="py-2 px-3 text-white text-sm">{formatDate(s.session_date)}</td>
-                                            <td className="py-2 px-3 text-white text-sm">{(s.courses as any)?.name}</td>
+                                            <td className="py-2 px-3 text-sm">
+                                                {(s.courses as any)?.name
+                                                    ? <span className="text-white">{(s.courses as any).name}</span>
+                                                    : s.activity_type
+                                                        ? <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+                                                            {s.activity_type === 'kit_arrangement' ? ts('kitArrangement') : s.activity_type === 'supervision' ? ts('supervision') : ts('other')}
+                                                          </span>
+                                                        : <span className="text-white/30">—</span>
+                                                }
+                                            </td>
                                             <td className="py-2 px-3 text-white text-sm">{s.start_time}–{s.end_time}</td>
-                                            <td className="py-2 px-3 text-white text-sm">{s.session_type === 'online_session' ? 'Online' : 'Offline'}</td>
+                                            <td className="py-2 px-3 text-sm">
+                                                {s.activity_type
+                                                    ? <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Activity</span>
+                                                    : <span>{s.session_type === 'online_session' ? 'Online' : 'Offline'}</span>
+                                                }
+                                            </td>
                                             <td className="py-2 px-3 text-white text-right text-sm">{Number(s.computed_hours).toFixed(2)}</td>
                                             <td className="py-2 px-3 text-white text-right text-sm">{formatCurrency(s.applied_rate)}</td>
                                             <td className="py-2 px-3 text-white text-right font-semibold">{formatCurrency(s.subtotal)}</td>
@@ -149,7 +165,7 @@ export default function AdminInvoicePreviewPage() {
                                 </tbody>
                                 <tfoot>
                                     <tr className="border-t border-white/20">
-                                        <td colSpan={4} className="py-2 px-3 text-white/60 text-sm">{sessions.length} sessions</td>
+                                        <td colSpan={4} className="py-2 px-3 text-white/60 text-sm">{sessions.length} {sessions.length === 1 ? 'entry' : 'entries'}</td>
                                         <td className="py-2 px-3 text-white text-right font-semibold">{totalHours.toFixed(2)}</td>
                                         <td></td>
                                         <td className="py-2 px-3 text-white text-right font-bold">{formatCurrency(totalSessionAmount)}</td>
