@@ -105,28 +105,29 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
 
     return (
         <motion.nav 
-            className="sticky top-0 z-50 glass-nav border-b border-white/5"
+            className={`sticky top-0 z-50 glass-nav border-b border-white/5 ${locale === 'ar' ? 'rtl' : 'ltr'}`}
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
+            dir={locale === 'ar' ? 'rtl' : 'ltr'}
         >
-            <div className="max-w-full px-4 sm:px-6 lg:px-8">
+            <div className="max-w-full px-3 xs:px-4 sm:px-6 lg:px-8">
                 {/* Top Navigation Bar */}
-                <div className="flex justify-between items-center h-16 md:h-20">
+                <div className="flex justify-between items-center h-14 sm:h-16 lg:h-20">
                     {/* Logo Section */}
                     <motion.div 
-                        className="shrink-0 flex items-center gap-2 sm:gap-3"
+                        className="shrink-0 flex items-center gap-1 xs:gap-2 sm:gap-3"
                         whileHover={{ y: -1 }}
                         transition={{ type: "spring", stiffness: 400, damping: 10 }}
                     >
                         <Link 
                             href={`/${locale}`}
-                            className="group relative flex items-center gap-2 sm:gap-3 rounded-lg border border-white/10 bg-white/[0.05] px-2 sm:px-3 py-1.5 sm:py-2 transition-all duration-300 hover:bg-white/10 hover:border-white/20"
+                            className="group relative flex items-center gap-1 xs:gap-2 sm:gap-3 rounded-lg border border-white/10 bg-white/[0.05] px-1.5 xs:px-2 sm:px-3 py-1 sm:py-1.5 transition-all duration-300 hover:bg-white/10 hover:border-white/20"
                         >
                             <img
                                 src="/images/tricksland-lux-logo.svg"
                                 alt="TricksLand"
-                                className="h-10 sm:h-12 w-auto object-contain"
+                                className="h-8 xs:h-10 sm:h-12 w-auto object-contain"
                             />
                             <div className="hidden sm:block">
                                 <div className="text-xs sm:text-sm font-bold tracking-widest text-primary whitespace-nowrap">
@@ -140,7 +141,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                     </motion.div>
 
                     {/* Desktop Navigation */}
-                    <div className="hidden lg:flex items-center gap-0.5 flex-1 mx-6 max-w-4xl">
+                    <div className="hidden xl:flex items-center gap-1 flex-1 mx-4 lg:mx-6 max-w-5xl overflow-x-auto no-scrollbar">
                         {navItems.map((item, idx) => (
                             <motion.div
                                 key={item.href}
@@ -150,7 +151,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                             >
                                 <Link
                                     href={item.href}
-                                    className={`relative px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap text-nowrap ${
+                                    className={`relative px-2.5 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                                         isActive(item.href)
                                             ? 'text-primary bg-primary/10'
                                             : 'text-white/70 hover:text-white hover:bg-white/5'
@@ -173,81 +174,81 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                     </div>
 
                     {/* Right Controls */}
-                    <div className="flex items-center gap-1 sm:gap-2 ml-auto">
+                    <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 ml-auto">
                         {/* Theme Toggle */}
                         {mounted && (
                             <motion.button
                                 onClick={toggleTheme}
-                                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition-all duration-200"
+                                className="p-1.5 xs:p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition-all duration-200"
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 title={theme === 'light' ? 'Dark mode' : 'Light mode'}
                                 aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
                             >
-                                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                                {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
                             </motion.button>
                         )}
 
                         {/* Language Toggle */}
                         <motion.button
                             onClick={handleToggleLanguage}
-                            className="hidden sm:block px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+                            className="hidden xs:block px-2.5 xs:px-3 py-1 xs:py-1.5 text-xs font-medium rounded-lg border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:border-white/20 transition-all duration-200 whitespace-nowrap"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             title={locale === 'en' ? 'العربية' : 'English'}
                         >
-                            {langLabel}
+                            {locale === 'en' ? 'ع' : 'EN'}
                         </motion.button>
 
                         {/* Desktop: User Menu with Dropdown */}
-                        <div className="hidden lg:block ml-2 pl-2 border-l border-white/10">
+                        <div className="hidden lg:block ml-1 xs:ml-2 sm:ml-3 pl-1 xs:pl-2 sm:pl-3 border-l border-white/10">
                             <div className="relative">
                                 <motion.button
                                     onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-all"
+                                    className="flex items-center gap-1.5 xs:gap-2 px-2 xs:px-2.5 py-1 xs:py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs xs:text-sm font-medium transition-all"
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     title={role.charAt(0).toUpperCase() + role.slice(1)}
                                 >
-                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-xs font-bold text-white">
+                                    <div className="w-5 xs:w-6 h-5 xs:h-6 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-xs font-bold text-white">
                                         {role.charAt(0).toUpperCase()}
                                     </div>
-                                    <span className="hidden xl:inline capitalize">{role}</span>
+                                    <span className="hidden 2xl:inline capitalize">{role}</span>
                                 </motion.button>
 
                                 {/* User Dropdown Menu */}
                                 <AnimatePresence>
                                     {isUserDropdownOpen && (
                                         <motion.div
-                                            className="absolute right-0 mt-2 w-56 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 shadow-lg overflow-hidden"
+                                            className={`absolute ${locale === 'ar' ? 'left-0' : 'right-0'} mt-2 w-48 xs:w-56 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 shadow-lg overflow-hidden`}
                                             initial={{ opacity: 0, y: -10, scale: 0.95 }}
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
                                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
                                             transition={{ duration: 0.2 }}
                                         >
                                             {/* User Header */}
-                                            <div className="px-4 py-3 border-b border-white/10 bg-white/5">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-sm font-bold text-white">
+                                            <div className="px-3 xs:px-4 py-2 xs:py-3 border-b border-white/10 bg-white/5">
+                                                <div className="flex items-center gap-2 xs:gap-3">
+                                                    <div className="w-8 xs:w-10 h-8 xs:h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-xs font-bold text-white">
                                                         {role.charAt(0).toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-semibold text-white capitalize">{role}</p>
-                                                        <p className="text-xs text-white/60">Administrator</p>
+                                                        <p className="text-xs xs:text-sm font-semibold text-white capitalize">{role}</p>
+                                                        <p className="text-[10px] xs:text-xs text-white/60">Administrator</p>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             {/* Dropdown Actions */}
-                                            <div className="py-2 px-2 space-y-1">
-                                                <motion.div whileHover={{ x: 2 }}>
+                                            <div className="py-1.5 xs:py-2 px-1 xs:px-2 space-y-1">
+                                                <motion.div whileHover={{ x: locale === 'ar' ? -2 : 2 }}>
                                                     <Link
                                                         href={`/${locale}/settings`}
                                                         onClick={() => setIsUserDropdownOpen(false)}
-                                                        className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm font-medium text-white/80 hover:bg-white/10 hover:text-primary transition-all"
+                                                        className="flex items-center gap-1.5 xs:gap-2 w-full px-2 xs:px-3 py-1.5 xs:py-2 rounded-md text-xs xs:text-sm font-medium text-white/80 hover:bg-white/10 hover:text-primary transition-all"
                                                     >
-                                                        <Settings size={16} />
-                                                        {t('settings')}
+                                                        <Settings size={14} />
+                                                        <span className="truncate">{t('settings')}</span>
                                                     </Link>
                                                 </motion.div>
 
@@ -258,11 +259,11 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                                                         setIsUserDropdownOpen(false);
                                                         handleLogout();
                                                     }}
-                                                    whileHover={{ x: 2 }}
-                                                    className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
+                                                    whileHover={{ x: locale === 'ar' ? -2 : 2 }}
+                                                    className="flex items-center gap-1.5 xs:gap-2 w-full px-2 xs:px-3 py-1.5 xs:py-2 rounded-md text-xs xs:text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
                                                 >
-                                                    <LogOut size={16} />
-                                                    {tc('logout')}
+                                                    <LogOut size={14} />
+                                                    <span className="truncate">{tc('logout')}</span>
                                                 </motion.button>
                                             </div>
                                         </motion.div>
@@ -272,21 +273,21 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                         </div>
 
                         {/* Mobile Language + Theme + Menu Toggle */}
-                        <div className="flex md:hidden items-center gap-1.5">
+                        <div className="flex lg:hidden items-center gap-1">
                             {mounted && (
                                 <motion.button
                                     onClick={toggleTheme}
-                                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-all"
+                                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-all"
                                     whileTap={{ scale: 0.95 }}
                                     title={theme === 'light' ? 'Dark mode' : 'Light mode'}
                                 >
-                                    {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                                    {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
                                 </motion.button>
                             )}
 
                             <motion.button
                                 onClick={handleToggleLanguage}
-                                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-all"
+                                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-all"
                                 whileTap={{ scale: 0.95 }}
                                 title={locale === 'en' ? 'العربية' : 'English'}
                             >
@@ -295,11 +296,11 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
 
                             <motion.button
                                 onClick={() => setIsOpen(!isOpen)}
-                                className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-all"
+                                className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-all"
                                 whileTap={{ scale: 0.95 }}
                                 aria-label="Toggle menu"
                             >
-                                {isOpen ? <X size={20} /> : <Menu size={20} />}
+                                {isOpen ? <X size={18} /> : <Menu size={18} />}
                             </motion.button>
                         </div>
                     </div>
@@ -309,13 +310,13 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                 <AnimatePresence>
                     {isOpen && (
                         <motion.div 
-                            className="lg:hidden border-t border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent max-h-[calc(100vh-80px)] overflow-y-auto"
+                            className="lg:hidden border-t border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent max-h-[calc(100vh-56px)] sm:max-h-[calc(100vh-64px)] overflow-y-auto"
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <div className="py-3 px-2 space-y-1">
+                            <div className="py-2 xs:py-2.5 sm:py-3 px-2 xs:px-2.5 sm:px-3 space-y-0.5">
                                 {/* Navigation Items */}
                                 {navItems.map((item, idx) => (
                                     <motion.div
@@ -326,16 +327,16 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                                     >
                                         <Link
                                             href={item.href}
-                                            className={`flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                                            className={`flex items-center justify-between px-3 xs:px-3.5 sm:px-4 py-2 xs:py-2.5 rounded-lg text-xs xs:text-sm font-medium transition-all ${
                                                 isActive(item.href)
                                                     ? 'bg-primary/15 text-primary border border-primary/30'
                                                     : 'text-white/70 hover:bg-white/5 hover:text-white'
                                             }`}
                                         >
-                                            <span>{item.name}</span>
+                                            <span className="truncate">{item.name}</span>
                                             {isActive(item.href) && (
                                                 <motion.span 
-                                                    className="w-2 h-2 rounded-full bg-primary"
+                                                    className="w-1.5 xs:w-2 h-1.5 xs:h-2 rounded-full bg-primary ml-2"
                                                     initial={{ scale: 0 }}
                                                     animate={{ scale: 1 }}
                                                 />
@@ -345,22 +346,22 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                                 ))}
 
                                 {/* Mobile User Actions */}
-                                <div className="border-t border-white/5 pt-3 mt-3 space-y-2">
-                                    <div className="px-4 py-1 text-xs font-bold uppercase tracking-wider text-white/40">
+                                <div className="border-t border-white/5 pt-2 xs:pt-2.5 sm:pt-3 mt-2 xs:mt-2.5 sm:mt-3 space-y-1.5">
+                                    <div className="px-3 xs:px-3.5 sm:px-4 py-1 text-xs font-bold uppercase tracking-wider text-white/40">
                                         {role} Profile
                                     </div>
                                     <motion.div
-                                        className="flex items-center gap-3 px-4 py-2.5"
+                                        className="flex items-center gap-2 xs:gap-2.5 px-3 xs:px-3.5 sm:px-4 py-2 xs:py-2.5"
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         transition={{ delay: 0.08 }}
                                     >
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-xs font-bold text-white">
+                                        <div className="w-7 xs:w-8 h-7 xs:h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
                                             {role.charAt(0).toUpperCase()}
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-semibold text-white capitalize">{role}</p>
-                                            <p className="text-xs text-white/60">Administrator</p>
+                                        <div className="min-w-0">
+                                            <p className="text-xs xs:text-sm font-semibold text-white capitalize truncate">{role}</p>
+                                            <p className="text-[10px] xs:text-xs text-white/60">Administrator</p>
                                         </div>
                                     </motion.div>
                                     <motion.div
@@ -370,21 +371,21 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                                     >
                                         <Link
                                             href={`/${locale}/settings`}
-                                            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-white/70 hover:bg-primary/10 hover:text-primary transition-all"
+                                            className="flex items-center gap-2 px-3 xs:px-3.5 sm:px-4 py-2 xs:py-2.5 rounded-lg text-xs xs:text-sm font-medium text-white/70 hover:bg-primary/10 hover:text-primary transition-all"
                                         >
-                                            <Settings size={16} />
+                                            <Settings size={14} />
                                             {t('settings')}
                                         </Link>
                                     </motion.div>
                                     <motion.button
                                         onClick={handleLogout}
-                                        className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-500/10 transition-all"
+                                        className="w-full flex items-center gap-2 px-3 xs:px-3.5 sm:px-4 py-2 xs:py-2.5 rounded-lg text-xs xs:text-sm font-medium text-red-500 hover:bg-red-500/10 transition-all"
                                         whileTap={{ scale: 0.98 }}
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         transition={{ delay: 0.12 }}
                                     >
-                                        <LogOut size={16} />
+                                        <LogOut size={14} />
                                         {tc('logout')}
                                     </motion.button>
                                 </div>
