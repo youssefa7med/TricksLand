@@ -36,20 +36,36 @@ export default async function CoachMyCoursesPage() {
 
         courses = courseData || [];
 
-        // Step 3: fetch students for those courses
-        const { data: studentData } = await supabase
+        // Step 3: fetch students for those courses — use two-step approach for RLS compatibility
+        const { data: enrollmentData } = await supabase
             .from('course_students')
-            .select('id, course_id, student_id, students(id, full_name)')
-            .in('course_id', courseIds)
-            .order('student_id');
+            .select('id, course_id, student_id')
+            .in('course_id', courseIds);
+
+        const studentIds = (enrollmentData || [])
+            .map((e: any) => e.student_id)
+            .filter(Boolean);
+
+        let studentMap: Record<string, any> = {};
+        if (studentIds.length > 0) {
+            const { data: studentDetails } = await supabase
+                .from('students')
+                .select('id, full_name')
+                .in('id', studentIds);
+
+            (studentDetails || []).forEach((s: any) => {
+                studentMap[s.id] = s;
+            });
+        }
 
         // Attach students to courses
         const studentsByCourse: Record<string, any[]> = {};
-        (studentData || []).forEach((s: any) => {
-            if (!studentsByCourse[s.course_id]) studentsByCourse[s.course_id] = [];
-            studentsByCourse[s.course_id].push({
-                id: s.students?.id || s.student_id || s.id,
-                student_name: s.students?.full_name || 'Unknown student',
+        (enrollmentData || []).forEach((e: any) => {
+            if (!studentsByCourse[e.course_id]) studentsByCourse[e.course_id] = [];
+            const student = studentMap[e.student_id] || {};
+            studentsByCourse[e.course_id].push({
+                id: e.student_id,
+                student_name: student.full_name || 'Unknown student',
             });
         });
         courses = courses.map((c: any) => ({

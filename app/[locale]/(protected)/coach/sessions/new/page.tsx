@@ -227,21 +227,21 @@ export default function CoachNewSessionPage() {
         if (error) {
             toast.error(error.message);
         } else {
-            if (insertedSession?.course_id) {
+            if (insertedSession && (insertedSession as any)?.course_id) {
                 const { data: scheduleRow } = await supabase
                     .from('course_schedules')
                     .select('id, sessions_completed')
-                    .eq('course_id', insertedSession.course_id)
+                    .eq('course_id', (insertedSession as any).course_id)
                     .neq('status', 'archived')
                     .order('updated_at', { ascending: false })
                     .limit(1)
                     .maybeSingle();
 
-                if (scheduleRow?.id) {
+                if ((scheduleRow as any)?.id) {
                     await (supabase as any)
                         .from('course_schedules')
-                        .update({ sessions_completed: Number(scheduleRow.sessions_completed || 0) + 1 })
-                        .eq('id', scheduleRow.id);
+                        .update({ sessions_completed: Number((scheduleRow as any).sessions_completed || 0) + 1 })
+                        .eq('id', (scheduleRow as any).id);
                 }
             }
             toast.success('Session logged successfully');

@@ -500,12 +500,17 @@ function AdminSystemSettings() {
 
     const handleSave = async (key: string, value: string) => {
         setSaving(true);
+        const valueType = key === 'geolocation_radius_meters' ? 'integer' : 'string';
         const { error } = await (supabase as any)
             .from('admin_settings')
-            .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+            .upsert({ key, value, value_type: valueType, updated_at: new Date().toISOString() }, { onConflict: 'key' });
         setSaving(false);
         if (error) toast.error(error.message);
-        else toast.success(t('settingSaved'));
+        else {
+            // Clear cache when settings are updated
+            await fetch('/api/settings/clear-cache', { method: 'POST' });
+            toast.success(t('settingSaved'));
+        }
     };
 
     if (loading) return null;
