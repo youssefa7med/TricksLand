@@ -176,11 +176,11 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
 
                     {/* Right Controls */}
                     <div className="flex items-center gap-0.5 xs:gap-1 sm:gap-1.5 md:gap-2 ml-auto">
-                        {/* Theme Toggle */}
+                        {/* Theme Toggle - Desktop Only */}
                         {mounted && (
                             <motion.button
                                 onClick={toggleTheme}
-                                className="p-2 xs:p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition-all duration-200 min-w-[40px] min-h-[40px] flex items-center justify-center"
+                                className="hidden sm:flex p-2 xs:p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition-all duration-200 min-w-[40px] min-h-[40px] items-center justify-center"
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
