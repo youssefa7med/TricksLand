@@ -6,7 +6,6 @@ import { Toaster } from 'sonner';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/next';
 import { RecoveryRedirect } from '@/components/auth/RecoveryRedirect';
-import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import "../globals.css";
 
 const inter = Inter({
@@ -58,9 +57,6 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <NextIntlClientProvider messages={messages} locale={locale}>
           <RecoveryRedirect />
-          <div className="fixed right-4 top-4 z-[70] md:right-6 md:top-6">
-            <ThemeToggle />
-          </div>
           {children}
         </NextIntlClientProvider>
         <Toaster richColors position="top-right" />
