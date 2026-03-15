@@ -3,6 +3,8 @@ import { Cairo, Inter } from "next/font/google";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { Toaster } from 'sonner';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from '@vercel/analytics/next';
 import { RecoveryRedirect } from '@/components/auth/RecoveryRedirect';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import "../globals.css";
@@ -62,6 +64,8 @@ export default async function RootLayout({
           {children}
         </NextIntlClientProvider>
         <Toaster richColors position="top-right" />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
