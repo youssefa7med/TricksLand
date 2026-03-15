@@ -1,3 +1,5 @@
+'use client';
+
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
 import { motion } from "motion/react";
