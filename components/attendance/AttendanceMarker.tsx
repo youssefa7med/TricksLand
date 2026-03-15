@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import {
     getUserLocation,
-    isWithinAcademy,
     isSecureContext,
     getAcademyLocation,
 } from '@/lib/geolocation';
@@ -74,25 +73,7 @@ export function AttendanceMarker({
             const location = await getUserLocation();
             setGpsLocation(location);
 
-            // 2. Check if within academy
-            const { isWithin, distance: calculatedDistance } = isWithinAcademy(
-                location.latitude,
-                location.longitude
-            );
-
-            setDistance(calculatedDistance);
-
-            if (!isWithin) {
-                const academy = getAcademyLocation();
-                setLocationError(
-                    `You are ${calculatedDistance}m away from the academy. ` +
-                    `Maximum allowed distance is ${academy.radius}m.`
-                );
-                setLoading(false);
-                return;
-            }
-
-            // 3. Submit to backend API
+            // 2. Submit to backend API; the server is the source of truth for radius.
             const response = await fetch('/api/coach/attendance/mark', {
                 method: 'POST',
                 headers: {
@@ -108,6 +89,9 @@ export function AttendanceMarker({
             const data = await response.json();
 
             if (!response.ok) {
+                if (typeof data.distance === 'number') {
+                    setDistance(data.distance);
+                }
                 setLocationError(data.error || 'Failed to mark attendance');
                 setLoading(false);
                 return;
@@ -119,6 +103,7 @@ export function AttendanceMarker({
                 id: data.attendance.id,
                 arrival_time: data.attendance.arrival_time,
             });
+            setDistance(typeof data.attendance.distance === 'number' ? data.attendance.distance : null);
             toast.success('✓ Attendance marked successfully!');
 
             if (onSuccess) {
@@ -204,7 +189,7 @@ export function AttendanceMarker({
                         </div>
                         <div>
                             <p className="text-white/60">{t('academyRadius')}</p>
-                            <p className="text-white font-medium">{academy.radius}m</p>
+                            <p className="text-white font-medium">{academy.label}</p>
                         </div>
                     </div>
                 </div>
@@ -219,6 +204,11 @@ export function AttendanceMarker({
                         {distance !== null && (
                             <p className="text-red-300 text-xs mt-2">
                                 {t('distanceAway', { distance })}
+                            </p>
+                        )}
+                        {gpsLocation && (
+                            <p className="text-red-300 text-xs mt-2">
+                                GPS: {gpsLocation.latitude.toFixed(6)}, {gpsLocation.longitude.toFixed(6)}
                             </p>
                         )}
                     </div>
@@ -236,6 +226,11 @@ export function AttendanceMarker({
                         {distance !== null && (
                             <p className="text-green-300 text-xs mt-2">
                                 {t('distanceVerified', { distance })}
+                            </p>
+                        )}
+                        {gpsLocation && (
+                            <p className="text-green-300 text-xs mt-2">
+                                GPS: {gpsLocation.latitude.toFixed(6)}, {gpsLocation.longitude.toFixed(6)}
                             </p>
                         )}
                     </div>

@@ -3,83 +3,56 @@
 
 @layer base {
   :root {
-    /* Brand background — warm sand */
-    --background: 33 79% 91%;
-    /* #F4E1C1 */
-    --foreground: 20 20% 15%;
-    /* dark brown-gray for readability */
-    --card: 33 79% 91%;
-    /* #F4E1C1 */
-    --card-foreground: 20 20% 15%;
-    --popover: 33 79% 91%;
-    --popover-foreground: 20 20% 15%;
-
-    /* Primary Colors — Teal #2F9E9A */
-    --primary: 176 55% 40%;
-    /* #2F9E9A */
+    --background: 210 43% 98%;
+    --foreground: 216 38% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 216 38% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 216 38% 15%;
+    --primary: 198 72% 49%;
     --primary-foreground: 0 0% 98%;
-    --primary-light: 176 55% 55%;
-    /* #4DB3AF */
-    --primary-dark: 176 55% 30%;
-    /* #1F7A77 */
-
-    /* Secondary Colors — Orange #E67E22 */
-    --secondary: 30 83% 52%;
-    /* #E67E22 */
+    --primary-light: 198 80% 60%;
+    --primary-dark: 207 73% 38%;
+    --secondary: 23 95% 55%;
     --secondary-foreground: 0 0% 98%;
-    --secondary-light: 30 83% 65%;
-    /* #EE9C4D */
-    --secondary-dark: 30 83% 38%;
-    /* #C85C0F */
-
-    /* Accent — Golden #E8C27D */
-    --accent: 44 77% 67%;
-    /* #E8C27D */
-    --accent-foreground: 20 20% 15%;
-
-    /* Muted / UI */
-    --muted: 33 40% 82%;
-    --muted-foreground: 20 15% 40%;
+    --secondary-light: 24 100% 66%;
+    --secondary-dark: 18 92% 47%;
+    --accent: 47 92% 63%;
+    --accent-foreground: 216 38% 15%;
+    --muted: 210 35% 94%;
+    --muted-foreground: 215 18% 38%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 33 30% 78%;
-    --input: 33 30% 78%;
-    --ring: 176 55% 40%;
-    /* primary teal */
+    --border: 214 32% 88%;
+    --input: 214 32% 88%;
+    --ring: 198 72% 49%;
     --radius: 0.5rem;
   }
 
-  /* No separate dark mode — the brand uses a warm light palette throughout.
-     Dark-mode class is kept for compatibility but mirrors the light theme. */
   .dark {
-    --background: 33 79% 91%;
-    /* #F4E1C1 */
-    --foreground: 20 20% 15%;
-    --card: 33 79% 91%;
-    --card-foreground: 20 20% 15%;
-    --popover: 33 79% 91%;
-    --popover-foreground: 20 20% 15%;
-
-    --primary: 176 55% 40%;
+    --background: 222 47% 8%;
+    --foreground: 210 40% 96%;
+    --card: 222 40% 12%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 40% 12%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 198 80% 60%;
     --primary-foreground: 0 0% 98%;
-    --primary-light: 176 55% 55%;
-    --primary-dark: 176 55% 30%;
-
-    --secondary: 30 83% 52%;
+    --primary-light: 196 85% 72%;
+    --primary-dark: 206 84% 46%;
+    --secondary: 25 96% 61%;
     --secondary-foreground: 0 0% 98%;
-    --secondary-light: 30 83% 65%;
-    --secondary-dark: 30 83% 38%;
-
-    --muted: 33 40% 82%;
-    --muted-foreground: 20 15% 40%;
-    --accent: 44 77% 67%;
-    /* #E8C27D */
-    --accent-foreground: 20 20% 15%;
+    --secondary-light: 24 100% 69%;
+    --secondary-dark: 18 92% 47%;
+    --muted: 218 28% 17%;
+    --muted-foreground: 214 16% 72%;
+    --accent: 47 92% 63%;
+    --accent-foreground: 216 38% 15%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 33 30% 78%;
-    --input: 33 30% 78%;
-    --ring: 176 55% 40%;
+    --border: 216 27% 22%;
+    --input: 216 27% 22%;
+    --ring: 198 80% 60%;
   }
 }
 
@@ -89,12 +62,48 @@
   }
 
   body {
-    background-color: #F4E1C1;
     color: hsl(var(--foreground));
-    /* Warm brand gradient: sand → teal-tinted → warm orange-tinted */
-    background: linear-gradient(135deg, #F4E1C1, #d6ede9, #f8dfc3);
+    background:
+      radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.78) 34%, rgba(241, 245, 249, 0.9) 62%),
+      linear-gradient(135deg, #ffffff 0%, #f8fbff 30%, #eef8ff 58%, #fff5ee 100%);
     min-height: 100vh;
     font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background 0.35s ease, color 0.35s ease;
+  }
+
+  .dark body {
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 24%),
+      radial-gradient(circle at top right, rgba(249, 115, 22, 0.16), transparent 28%),
+      linear-gradient(140deg, #07111f 0%, #0b1727 44%, #101e31 100%);
+  }
+
+  body::before,
+  body::after {
+    content: '';
+    position: fixed;
+    inset: auto;
+    pointer-events: none;
+    z-index: -1;
+    border-radius: 9999px;
+    filter: blur(70px);
+    opacity: 0.7;
+  }
+
+  body::before {
+    width: 22rem;
+    height: 22rem;
+    top: 6rem;
+    left: -4rem;
+    background: rgba(56, 189, 248, 0.18);
+  }
+
+  body::after {
+    width: 18rem;
+    height: 18rem;
+    right: -2rem;
+    bottom: 8rem;
+    background: rgba(249, 115, 22, 0.14);
   }
 }
 
@@ -102,17 +111,30 @@
 
   /* Glassmorphism Card — warm-tinted glass */
   .glass-card {
-    background-color: rgba(244, 225, 193, 0.45);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(232, 194, 125, 0.35);
-    box-shadow: 0 8px 32px 0 rgba(47, 158, 154, 0.15);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.7));
+    backdrop-filter: blur(22px);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow: 0 28px 60px rgba(15, 23, 42, 0.12);
+  }
+
+  .dark .glass-card {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.62));
+    border-color: rgba(148, 163, 184, 0.18);
+    box-shadow: 0 28px 60px rgba(2, 6, 23, 0.45);
   }
 
   /* Glassmorphism Navbar — warm teal tint */
   .glass-nav {
-    background-color: rgba(47, 158, 154, 0.12);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(47, 158, 154, 0.2);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.6));
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+  }
+
+  .dark .glass-nav {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.72));
+    border-bottom-color: rgba(148, 163, 184, 0.18);
+    box-shadow: 0 18px 40px rgba(2, 6, 23, 0.35);
   }
 
   /* Glossy Button Base Styles */
@@ -125,7 +147,7 @@
     padding: 0.75rem 1.5rem;
     border-radius: var(--radius);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
   }
 
   .btn-glossy {
@@ -139,8 +161,9 @@
 
   .btn-glossy:hover,
   .btn-glossy-secondary:hover {
-    transform: scale(1.05);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 20px 35px -8px rgba(15, 23, 42, 0.24);
+    filter: saturate(1.06);
   }
 
   .btn-glossy::before,
@@ -207,6 +230,37 @@
     transition: all 0.3s ease-in-out;
   }
 
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.68));
+    color: #0f172a;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.12);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+  }
+
+  .theme-toggle:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.18);
+  }
+
+  .dark .theme-toggle {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.78));
+    border-color: rgba(148, 163, 184, 0.22);
+    color: #f8fafc;
+    box-shadow: 0 18px 36px rgba(2, 6, 23, 0.28);
+  }
+
+  .theme-toggle-icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
   /* Responsive page wrapper — replaces min-h-screen p-8 */
   .page-container {
     min-height: 100vh;
@@ -263,82 +317,82 @@
    * ================================================================ */
 
   /* h1/h2 that carry text-white */
-  h1.text-white,
-  h2.text-white,
-  h3.text-white,
-  h4.text-white,
-  p.text-white,
-  span.text-white,
-  div.text-white,
-  td.text-white,
-  th.text-white,
-  a.text-white,
-  label.text-white {
+  html:not(.dark) h1.text-white,
+  html:not(.dark) h2.text-white,
+  html:not(.dark) h3.text-white,
+  html:not(.dark) h4.text-white,
+  html:not(.dark) p.text-white,
+  html:not(.dark) span.text-white,
+  html:not(.dark) div.text-white,
+  html:not(.dark) td.text-white,
+  html:not(.dark) th.text-white,
+  html:not(.dark) a.text-white,
+  html:not(.dark) label.text-white {
     color: #1a3b39 !important;
     /* very dark teal */
   }
 
   /* Muted / secondary white text */
-  .text-white\/70,
-  .text-white\/60,
-  .text-white\/50,
-  .text-white\/40,
-  .text-white\/30 {
+  html:not(.dark) .text-white\/70,
+  html:not(.dark) .text-white\/60,
+  html:not(.dark) .text-white\/50,
+  html:not(.dark) .text-white\/40,
+  html:not(.dark) .text-white\/30 {
     color: #5a7a79 !important;
     /* muted teal-gray */
   }
 
   /* White/opaque backgrounds used as pill buttons / chips */
-  .bg-white\/10 {
+  html:not(.dark) .bg-white\/10 {
     background-color: rgba(47, 158, 154, 0.12) !important;
   }
 
-  .bg-white\/15 {
+  html:not(.dark) .bg-white\/15 {
     background-color: rgba(47, 158, 154, 0.18) !important;
   }
 
-  .bg-white\/20 {
+  html:not(.dark) .bg-white\/20 {
     background-color: rgba(47, 158, 154, 0.22) !important;
   }
 
-  .hover\:bg-white\/10:hover {
+  html:not(.dark) .hover\:bg-white\/10:hover {
     background-color: rgba(47, 158, 154, 0.12) !important;
   }
 
-  .hover\:bg-white\/20:hover {
+  html:not(.dark) .hover\:bg-white\/20:hover {
     background-color: rgba(47, 158, 154, 0.22) !important;
   }
 
   /* White/opaque borders */
-  .border-white\/10 {
+  html:not(.dark) .border-white\/10 {
     border-color: rgba(47, 158, 154, 0.18) !important;
   }
 
-  .border-white\/20 {
+  html:not(.dark) .border-white\/20 {
     border-color: rgba(47, 158, 154, 0.28) !important;
   }
 
-  .border-white\/5 {
+  html:not(.dark) .border-white\/5 {
     border-color: rgba(47, 158, 154, 0.10) !important;
   }
 
   /* Input fields designed for dark background */
-  input.bg-white\/10,
-  select.bg-white\/10,
-  textarea.bg-white\/10 {
+  html:not(.dark) input.bg-white\/10,
+  html:not(.dark) select.bg-white\/10,
+  html:not(.dark) textarea.bg-white\/10 {
     background-color: rgba(255, 255, 255, 0.7) !important;
     border-color: rgba(47, 158, 154, 0.35) !important;
     color: #1a3b39 !important;
   }
 
-  input.bg-white\/10::placeholder,
-  select.bg-white\/10::placeholder,
-  textarea.bg-white\/10::placeholder {
+  html:not(.dark) input.bg-white\/10::placeholder,
+  html:not(.dark) select.bg-white\/10::placeholder,
+  html:not(.dark) textarea.bg-white\/10::placeholder {
     color: #8aadac !important;
   }
 
   /* Table hover rows */
-  .hover\:bg-white\/5:hover {
+  html:not(.dark) .hover\:bg-white\/5:hover {
     background-color: rgba(47, 158, 154, 0.06) !important;
   }
 }

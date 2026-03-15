@@ -1,6 +1,8 @@
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import type { Profile, Session, CoachAttendance } from '@/types/database';
+import { ACADEMY_LOCATION, DEFAULT_GEO_RADIUS_METERS } from '@/lib/academy';
+import { getGeolocationRadius } from '@/lib/utils/settings';
 
 // ─── Egypt timezone helper ─────────────────────────────────────────────────
 // Vercel runs on UTC. Egypt is always UTC+2 (no DST since 2011).
@@ -30,13 +32,6 @@ function getCairoNow() {
     };
 }
 // ─────────────────────────────────────────────────────────────────────────────
-
-// Academy location constants (backend source of truth)
-const ACADEMY_LOCATION = {
-    latitude: 29.073694,
-    longitude: 31.112250,
-    radius: 50, // meters
-};
 
 /**
  * Haversine distance calculation (backend validation)
@@ -132,6 +127,7 @@ export async function POST(request: NextRequest) {
         }
 
         // ============ Location Validation (Backend) ============
+        const allowedRadius = await getGeolocationRadius().catch(() => DEFAULT_GEO_RADIUS_METERS);
         const distance = haversineDistance(
             ACADEMY_LOCATION.latitude,
             ACADEMY_LOCATION.longitude,
@@ -139,12 +135,12 @@ export async function POST(request: NextRequest) {
             longitude
         );
 
-        if (distance > ACADEMY_LOCATION.radius) {
+        if (distance > allowedRadius) {
             return NextResponse.json(
                 {
                     error: 'You are too far from the academy',
                     distance,
-                    maxDistance: ACADEMY_LOCATION.radius,
+                    maxDistance: allowedRadius,
                 },
                 { status: 403 }
             );
@@ -232,6 +228,7 @@ export async function POST(request: NextRequest) {
                 attendance: {
                     id: attendance?.id,
                     distance,
+                    maxDistance: allowedRadius,
                     timestamp: attendance?.attendance_timestamp,
                     arrival_time: arrivalTime,
                     checkout_url: `/api/coach/attendance/mark`,

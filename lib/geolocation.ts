@@ -1,10 +1,13 @@
 // Geolocation and distance calculation utilities
 // Haversine formula for accurate distance calculation
 
-const ACADEMY_LOCATION = {
-    latitude: 29.073694,
-    longitude: 31.112250,
-    radius: 60, // meters — increased from 50 to 60
+import { ACADEMY_LOCATION, ACADEMY_LOCATION_LABEL, ACADEMY_MAP_URL, DEFAULT_GEO_RADIUS_METERS } from '@/lib/academy';
+
+const academyConfig = {
+    ...ACADEMY_LOCATION,
+    radius: DEFAULT_GEO_RADIUS_METERS,
+    label: ACADEMY_LOCATION_LABEL,
+    mapUrl: ACADEMY_MAP_URL,
 };
 
 /**
@@ -52,11 +55,11 @@ export function haversineDistance(
 export function isWithinAcademy(
     latitude: number,
     longitude: number,
-    radius: number = ACADEMY_LOCATION.radius
+    radius: number = academyConfig.radius
 ): { isWithin: boolean; distance: number } {
     const distance = haversineDistance(
-        ACADEMY_LOCATION.latitude,
-        ACADEMY_LOCATION.longitude,
+        academyConfig.latitude,
+        academyConfig.longitude,
         latitude,
         longitude
     );
@@ -124,5 +127,5 @@ export function isSecureContext(): boolean {
  * Get Academy location constant
  */
 export function getAcademyLocation() {
-    return ACADEMY_LOCATION;
+    return academyConfig;
 }

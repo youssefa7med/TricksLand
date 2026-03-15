@@ -1,5 +1,6 @@
 import { createClient as createServerClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { ACADEMY_LOCATION } from '@/lib/academy';
 
 async function verifyAdmin(supabase: any): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
@@ -62,8 +63,8 @@ export async function POST(request: NextRequest) {
             .insert({
                 coach_id: coachId,
                 session_id: sessionId,
-                latitude: 0,
-                longitude: 0,
+                latitude: ACADEMY_LOCATION.latitude,
+                longitude: ACADEMY_LOCATION.longitude,
                 distance_from_academy: 0,
                 attendance_timestamp: new Date().toISOString(),
                 status,

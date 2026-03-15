@@ -105,9 +105,9 @@ export default function LoginPage() {
                 {/* Header */}
                 <div className="mb-8 text-center">
                     <img
-                        src="/images/logo.jpg"
+                        src="/images/tricksland-lux-logo.svg"
                         alt="TricksLand Steam Academy"
-                        style={{ height: 'auto', width: 'auto', maxWidth: '280px', objectFit: 'contain', margin: '0 auto 16px' }}
+                        style={{ height: 'auto', width: 'auto', maxWidth: '320px', objectFit: 'contain', margin: '0 auto 18px' }}
                         suppressHydrationWarning
                     />
                     <p className="text-white/60 text-sm">{t('subtitle')}</p>

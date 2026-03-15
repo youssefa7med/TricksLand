@@ -74,16 +74,16 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                 <div className="flex justify-between items-center h-14 md:h-16">
 
                     {/* Logo + Brand Name */}
-                    <Link href={`/${locale}`} className="shrink-0 flex items-center gap-2">
+                    <Link href={`/${locale}`} className="shrink-0 flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-3 py-2 shadow-[0_10px_35px_rgba(15,23,42,0.08)] transition-all hover:-translate-y-0.5 hover:bg-white/15">
                         <img
-                            src="/images/logo.jpg"
+                            src="/images/tricksland-lux-logo.svg"
                             alt="TricksLand Steam Academy"
-                            style={{ height: '40px', width: 'auto', objectFit: 'contain' }}
+                            style={{ height: '52px', width: 'auto', objectFit: 'contain' }}
                             suppressHydrationWarning
                         />
-                        <span className="text-white font-bold text-sm leading-tight hidden sm:block">
-                            TricksLand
-                            <span className="block text-white/60 font-normal text-xs">Steam Academy</span>
+                        <span className="hidden sm:block">
+                            <span className="block text-sm font-extrabold tracking-[0.24em] text-primary">TRICKSLAND</span>
+                            <span className="block text-[11px] font-medium uppercase tracking-[0.32em] text-white/60">Steam Nursery</span>
                         </span>
                     </Link>
 

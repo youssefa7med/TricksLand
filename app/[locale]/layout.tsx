@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { Toaster } from 'sonner';
 import { RecoveryRedirect } from '@/components/auth/RecoveryRedirect';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import "../globals.css";
 
 const inter = Inter({
@@ -23,6 +24,18 @@ export const metadata: Metadata = {
   description: "Session tracking and invoicing system for TricksLand Steam Academy coaches",
 };
 
+const themeInitScript = `
+(() => {
+  try {
+    const saved = window.localStorage.getItem('theme');
+    const theme = saved === 'dark' || saved === 'light'
+      ? saved
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    document.documentElement.dataset.theme = theme;
+  } catch {}
+})();`;
+
 export default async function RootLayout({
   children,
   params
@@ -38,10 +51,14 @@ export default async function RootLayout({
   const fontClass = locale === 'ar' ? cairo.variable : inter.variable;
 
   return (
-    <html lang={locale} dir={dir} className={fontClass}>
+    <html lang={locale} dir={dir} className={fontClass} suppressHydrationWarning>
       <body className="bg-animated-gradient min-h-screen">
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <NextIntlClientProvider messages={messages} locale={locale}>
           <RecoveryRedirect />
+          <div className="fixed right-4 top-4 z-[70] md:right-6 md:top-6">
+            <ThemeToggle />
+          </div>
           {children}
         </NextIntlClientProvider>
         <Toaster richColors position="top-right" />

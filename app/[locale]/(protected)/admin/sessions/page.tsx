@@ -7,6 +7,7 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
+import { ACADEMY_LOCATION } from '@/lib/academy';
 
 export default function AdminSessionsPage() {
     const [sessions, setSessions] = useState<any[]>([]);
@@ -98,8 +99,8 @@ export default function AdminSessionsPage() {
             .insert({
                 coach_id: coachId,
                 session_id: sessionId,
-                latitude: 29.073694, // Academy location
-                longitude: 31.112250,
+                latitude: ACADEMY_LOCATION.latitude,
+                longitude: ACADEMY_LOCATION.longitude,
                 distance_from_academy: 0,
                 status: 'present',
                 attendance_timestamp: new Date().toISOString(),

@@ -16,6 +16,7 @@ import {
 } from '@/types/database';
 import { calculateDurationMinutes, calculateBillableHours } from '@/lib/utils/billing';
 import { getGeolocationRadius } from '@/lib/utils/settings';
+import { ACADEMY_LOCATION } from '@/lib/academy';
 
 /**
  * Calculate distance between two GPS coordinates (in meters)
@@ -76,11 +77,7 @@ export async function markStudentAttendance(
 
     // If geolocation is provided, validate radius
     if (latitude !== undefined && longitude !== undefined) {
-      // Academy coordinates (would be stored in settings in real system)
-      const academyLat = 30.0444; // Example: Cairo
-      const academyLon = 31.2357;
-
-      const distance = calculateDistance(latitude, longitude, academyLat, academyLon);
+      const distance = calculateDistance(latitude, longitude, ACADEMY_LOCATION.latitude, ACADEMY_LOCATION.longitude);
       const allowedRadius = await getGeolocationRadius();
 
       if (distance > allowedRadius) {
