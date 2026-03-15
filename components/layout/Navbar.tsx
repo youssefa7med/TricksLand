@@ -104,16 +104,17 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
     const langLabel = locale === 'en' ? 'العربية' : 'English';
 
     return (
-        <motion.nav 
-            className={`sticky top-0 z-50 glass-nav border-b border-white/5 ${locale === 'ar' ? 'rtl' : 'ltr'}`}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            dir={locale === 'ar' ? 'rtl' : 'ltr'}
-        >
-            <div className="max-w-full px-3 xs:px-4 sm:px-6 lg:px-8">
-                {/* Top Navigation Bar */}
-                <div className="flex justify-between items-center h-14 sm:h-16 lg:h-20">
+        <>
+            <motion.nav 
+                className={`fixed top-0 left-0 right-0 z-50 glass-nav border-b border-white/5 ${locale === 'ar' ? 'rtl' : 'ltr'}`}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                dir={locale === 'ar' ? 'rtl' : 'ltr'}
+            >
+                <div className="max-w-full px-3 xs:px-4 sm:px-6 lg:px-8">
+                    {/* Top Navigation Bar */}
+                    <div className="flex justify-between items-center h-14 sm:h-16 lg:h-20">
                     {/* Logo Section */}
                     <motion.div 
                         className="shrink-0 flex items-center gap-1 xs:gap-2 sm:gap-3"
@@ -394,6 +395,10 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                     )}
                 </AnimatePresence>
             </div>
-        </motion.nav>
+            </motion.nav>
+
+            {/* Spacer to prevent content from being hidden under fixed navbar */}
+            <div className="h-14 sm:h-16 lg:h-20" />
+        </>
     );
 }
