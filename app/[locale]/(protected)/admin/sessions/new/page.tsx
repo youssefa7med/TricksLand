@@ -103,9 +103,29 @@ export default function AdminNewSessionPage() {
                 subtotal,
                 attendance_required: form.attendance_required,
             };
-            const { error } = await supabase.from('sessions').insert(payload);
+            const { data: insertedSession, error } = await supabase.from('sessions').insert(payload).select('id, course_id').single();
             if (error) toast.error(error.message);
-            else { toast.success('Competition session logged (75 EGP/hr)'); router.push(`/${locale}/admin/sessions`); }
+            else {
+                if (insertedSession?.course_id) {
+                    const { data: scheduleRow } = await supabase
+                        .from('course_schedules')
+                        .select('id, sessions_completed')
+                        .eq('course_id', insertedSession.course_id)
+                        .neq('status', 'archived')
+                        .order('updated_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+
+                    if (scheduleRow?.id) {
+                        await (supabase as any)
+                            .from('course_schedules')
+                            .update({ sessions_completed: Number(scheduleRow.sessions_completed || 0) + 1 })
+                            .eq('id', scheduleRow.id);
+                    }
+                }
+                toast.success('Competition session logged (75 EGP/hr)');
+                router.push(`/${locale}/admin/sessions`);
+            }
             setLoading(false);
             return;
         }
@@ -204,10 +224,27 @@ export default function AdminNewSessionPage() {
             attendance_required: form.attendance_required,
         };
 
-        const { error } = await supabase.from('sessions').insert(payload);
+        const { data: insertedSession, error } = await supabase.from('sessions').insert(payload).select('id, course_id').single();
         if (error) {
             toast.error(error.message);
         } else {
+            if (insertedSession?.course_id) {
+                const { data: scheduleRow } = await supabase
+                    .from('course_schedules')
+                    .select('id, sessions_completed')
+                    .eq('course_id', insertedSession.course_id)
+                    .neq('status', 'archived')
+                    .order('updated_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                if (scheduleRow?.id) {
+                    await (supabase as any)
+                        .from('course_schedules')
+                        .update({ sessions_completed: Number(scheduleRow.sessions_completed || 0) + 1 })
+                        .eq('id', scheduleRow.id);
+                }
+            }
             toast.success('Session logged successfully');
             router.push(`/${locale}/admin/sessions`);
         }

@@ -39,15 +39,18 @@ export default async function CoachMyCoursesPage() {
         // Step 3: fetch students for those courses
         const { data: studentData } = await supabase
             .from('course_students')
-            .select('id, course_id, student_name')
+            .select('id, course_id, student_id, students(id, full_name)')
             .in('course_id', courseIds)
-            .order('student_name');
+            .order('student_id');
 
         // Attach students to courses
         const studentsByCourse: Record<string, any[]> = {};
         (studentData || []).forEach((s: any) => {
             if (!studentsByCourse[s.course_id]) studentsByCourse[s.course_id] = [];
-            studentsByCourse[s.course_id].push(s);
+            studentsByCourse[s.course_id].push({
+                id: s.students?.id || s.student_id || s.id,
+                student_name: s.students?.full_name || 'Unknown student',
+            });
         });
         courses = courses.map((c: any) => ({
             ...c,

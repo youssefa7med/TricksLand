@@ -269,6 +269,7 @@
             "subtitle": "إنشاء وإدارة كورسات الأكاديمية",
             "createNew": "+ إنشاء كورس جديد",
             "loadingCourses": "جاري تحميل الكورسات...",
+            "logSession": "+ تسجيل جلسة",
             "coachesLabel": "المدربون:",
             "noCoachesAssigned": "لا يوجد مدربون معيّنون",
             "studentsLabel": "الطلاب:",
@@ -481,6 +482,7 @@
         "invoices": {
             "title": "إدارة الفواتير",
             "last6Months": "آخر 6 أشهر",
+            "grossSessions": "إجمالي أرباح الجلسات",
             "coaches": "مدربين",
             "totalPayout": "إجمالي المستحقات",
             "coachCol": "المدرب",

@@ -40,6 +40,7 @@ export function AttendanceMarker({
     const [marked, setMarked] = useState(false);
     const [checkedOut, setCheckedOut] = useState(false);
     const [distance, setDistance] = useState<number | null>(null);
+    const [radiusMeters, setRadiusMeters] = useState<number | null>(null);
     const [locationError, setLocationError] = useState<string | null>(null);
     const [gpsLocation, setGpsLocation] = useState<{
         latitude: number;
@@ -62,6 +63,22 @@ export function AttendanceMarker({
             setLocationError(t('httpsRequired'));
         }
     }, [t]);
+
+    useEffect(() => {
+        const loadAttendanceConfig = async () => {
+            try {
+                const res = await fetch('/api/coach/attendance/config', { cache: 'no-store' });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (typeof data.radius === 'number') {
+                    setRadiusMeters(data.radius);
+                }
+            } catch {
+                // Keep fallback radius from static academy config
+            }
+        };
+        loadAttendanceConfig();
+    }, []);
 
     const handleMarkAttendance = async () => {
         setLoading(true);
@@ -190,6 +207,7 @@ export function AttendanceMarker({
                         <div>
                             <p className="text-white/60">{t('academyRadius')}</p>
                             <p className="text-white font-medium">{academy.label}</p>
+                            <p className="text-white/50 text-xs mt-0.5">Allowed radius: {radiusMeters ?? academy.radius}m</p>
                         </div>
                     </div>
                 </div>
@@ -335,7 +353,7 @@ export function AttendanceMarker({
                 <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                     {!alreadyCheckedIn ? (
                         <p className="text-blue-200 text-xs">
-                            ℹ️ {t('infoPreCheckin', { radius: academy.radius })}
+                            ℹ️ {t('infoPreCheckin', { radius: radiusMeters ?? academy.radius })}
                         </p>
                     ) : !checkedOut ? (
                         <p className="text-blue-200 text-xs">

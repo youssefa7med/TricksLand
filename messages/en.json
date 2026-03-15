@@ -269,6 +269,7 @@
             "subtitle": "Create and manage academy courses",
             "createNew": "+ Create New Course",
             "loadingCourses": "Loading courses...",
+            "logSession": "+ Log Session",
             "coachesLabel": "Coaches:",
             "noCoachesAssigned": "No coaches assigned",
             "studentsLabel": "Students:",
@@ -481,6 +482,7 @@
         "invoices": {
             "title": "Invoice Management",
             "last6Months": "Last 6 months",
+            "grossSessions": "Gross Session Earnings",
             "coaches": "coaches",
             "totalPayout": "Total Payout",
             "coachCol": "Coach",

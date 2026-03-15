@@ -96,7 +96,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                                 className={`text-sm transition-colors relative whitespace-nowrap ${
                                     isActive(item.href)
                                         ? 'text-primary font-semibold'
-                                        : 'text-gray-600 hover:text-primary'
+                                        : 'text-white/70 hover:text-white'
                                 }`}
                             >
                                 {item.name}
@@ -120,7 +120,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
 
                         {/* Desktop: role badge + settings + logout */}
                         <div className="hidden md:flex items-center gap-2">
-                            <span className="text-gray-400 text-xs capitalize px-1">{role}</span>
+                            <span className="text-white/50 text-xs capitalize px-1">{role}</span>
                             <Link
                                 href={`/${locale}/settings`}
                                 className="bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg text-primary transition-colors text-sm"
@@ -166,7 +166,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                                     className={`flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
                                         isActive(item.href)
                                             ? 'bg-primary/20 text-primary'
-                                            : 'text-gray-600 hover:bg-primary/10 hover:text-primary'
+                                            : 'text-white/75 hover:bg-primary/10 hover:text-white'
                                     }`}
                                 >
                                     {item.name}
@@ -184,7 +184,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                             </div>
                             <Link
                                 href={`/${locale}/settings`}
-                                className="flex items-center px-4 py-3 rounded-xl text-sm text-gray-600 hover:bg-primary/10 hover:text-primary transition-colors"
+                                className="flex items-center px-4 py-3 rounded-xl text-sm text-white/75 hover:bg-primary/10 hover:text-white transition-colors"
                             >
                                 {t('settings')}
                             </Link>

@@ -208,7 +208,7 @@ export default function CoachNewSessionPage() {
         const subtotal = Math.round(computedHours * appliedRate * 100) / 100;
         // ──────────────────────────────────────────────────────────────────
 
-        const { error } = await supabase.from('sessions').insert({
+        const { data: insertedSession, error } = await supabase.from('sessions').insert({
             course_id: form.course_id,
             paid_coach_id: user.id,
             session_date: form.session_date,
@@ -222,11 +222,28 @@ export default function CoachNewSessionPage() {
             computed_hours: computedHours,
             subtotal: subtotal,
             attendance_required: form.attendance_required,
-        } as any);
+        } as any).select('id, course_id').single();
 
         if (error) {
             toast.error(error.message);
         } else {
+            if (insertedSession?.course_id) {
+                const { data: scheduleRow } = await supabase
+                    .from('course_schedules')
+                    .select('id, sessions_completed')
+                    .eq('course_id', insertedSession.course_id)
+                    .neq('status', 'archived')
+                    .order('updated_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                if (scheduleRow?.id) {
+                    await (supabase as any)
+                        .from('course_schedules')
+                        .update({ sessions_completed: Number(scheduleRow.sessions_completed || 0) + 1 })
+                        .eq('id', scheduleRow.id);
+                }
+            }
             toast.success('Session logged successfully');
             router.push(`/${locale}/coach/sessions`);
         }

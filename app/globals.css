@@ -73,9 +73,9 @@
 
   .dark body {
     background:
-      radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 24%),
-      radial-gradient(circle at top right, rgba(249, 115, 22, 0.16), transparent 28%),
-      linear-gradient(140deg, #07111f 0%, #0b1727 44%, #101e31 100%);
+      radial-gradient(circle at top left, rgba(56, 189, 248, 0.14), transparent 30%),
+      radial-gradient(circle at top right, rgba(251, 146, 60, 0.12), transparent 34%),
+      linear-gradient(145deg, #060d19 0%, #0a1424 46%, #0f1f34 100%);
   }
 
   body::before,
@@ -261,6 +261,74 @@
     line-height: 1;
   }
 
+  .luxury-loader {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .luxury-loader-dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+    animation: luxury-bounce 0.9s ease-in-out infinite;
+  }
+
+  .luxury-loader-dot:nth-child(2) {
+    animation-delay: 0.12s;
+  }
+
+  .luxury-loader-dot:nth-child(3) {
+    animation-delay: 0.24s;
+  }
+
+  @keyframes luxury-bounce {
+    0%,
+    80%,
+    100% {
+      transform: translateY(0) scale(0.85);
+      opacity: 0.6;
+    }
+    40% {
+      transform: translateY(-5px) scale(1);
+      opacity: 1;
+    }
+  }
+
+  .loading-wave {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .loading-wave::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      115deg,
+      transparent 18%,
+      rgba(255, 255, 255, 0.24) 35%,
+      transparent 52%
+    );
+    transform: translateX(-120%);
+    animation: loading-sweep 1.6s ease-in-out infinite;
+  }
+
+  @keyframes loading-sweep {
+    to {
+      transform: translateX(120%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .luxury-loader-dot,
+    .loading-wave::after {
+      animation: none;
+    }
+  }
+
   /* Responsive page wrapper — replaces min-h-screen p-8 */
   .page-container {
     min-height: 100vh;
@@ -394,5 +462,13 @@
   /* Table hover rows */
   html:not(.dark) .hover\:bg-white\/5:hover {
     background-color: rgba(47, 158, 154, 0.06) !important;
+  }
+
+  .dark .text-gray-600 {
+    color: rgba(226, 232, 240, 0.75) !important;
+  }
+
+  .dark .text-gray-400 {
+    color: rgba(203, 213, 225, 0.65) !important;
   }
 }
