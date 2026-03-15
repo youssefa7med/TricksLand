@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useLocale, useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, LogOut, Menu, X } from 'lucide-react';
+import { Settings, LogOut, Menu, X, Sun, Moon } from 'lucide-react';
 
 export function Navbar({ role }: { role: 'admin' | 'coach' }) {
     const pathname = usePathname();
@@ -17,6 +17,8 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
     const supabase = createClient();
     const [isOpen, setIsOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [theme, setTheme] = useState<'light' | 'dark'>('light');
+    const [mounted, setMounted] = useState(false);
 
     // Close mobile menu on route change
     useEffect(() => { setIsOpen(false); }, [pathname]);
@@ -28,6 +30,29 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    // Initialize and manage theme
+    useEffect(() => {
+        const saved = window.localStorage.getItem('theme') as 'light' | 'dark' | null;
+        const initialTheme: 'light' | 'dark' = saved === 'dark' || saved === 'light'
+            ? saved
+            : window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light';
+        
+        document.documentElement.classList.toggle('dark', initialTheme === 'dark');
+        document.documentElement.dataset.theme = initialTheme;
+        setTheme(initialTheme);
+        setMounted(true);
+    }, []);
+
+    const toggleTheme = () => {
+        const nextTheme: 'light' | 'dark' = theme === 'light' ? 'dark' : 'light';
+        document.documentElement.classList.toggle('dark', nextTheme === 'dark');
+        document.documentElement.dataset.theme = nextTheme;
+        window.localStorage.setItem('theme', nextTheme);
+        setTheme(nextTheme);
+    };
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -111,7 +136,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                     </motion.div>
 
                     {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center gap-1 flex-1 mx-6 max-w-2xl">
+                    <div className="hidden lg:flex items-center gap-0.5 flex-1 mx-6 max-w-4xl">
                         {navItems.map((item, idx) => (
                             <motion.div
                                 key={item.href}
@@ -121,7 +146,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                             >
                                 <Link
                                     href={item.href}
-                                    className={`relative px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap ${
+                                    className={`relative px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap text-nowrap ${
                                         isActive(item.href)
                                             ? 'text-primary bg-primary/10'
                                             : 'text-white/70 hover:text-white hover:bg-white/5'
@@ -145,6 +170,20 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
 
                     {/* Right Controls */}
                     <div className="flex items-center gap-1 sm:gap-2 ml-auto">
+                        {/* Theme Toggle */}
+                        {mounted && (
+                            <motion.button
+                                onClick={toggleTheme}
+                                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition-all duration-200"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                title={theme === 'light' ? 'Dark mode' : 'Light mode'}
+                                aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+                            >
+                                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                            </motion.button>
+                        )}
+
                         {/* Language Toggle */}
                         <motion.button
                             onClick={handleToggleLanguage}
@@ -157,7 +196,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                         </motion.button>
 
                         {/* Desktop: User Menu */}
-                        <div className="hidden md:flex items-center gap-2 ml-2 pl-2 border-l border-white/10">
+                        <div className="hidden lg:flex items-center gap-2 ml-2 pl-2 border-l border-white/10">
                             <span className="text-xs font-medium text-white/50 capitalize px-2">
                                 {role}
                             </span>
@@ -168,7 +207,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                                     title={t('settings')}
                                 >
                                     <Settings size={16} />
-                                    <span className="hidden lg:inline">{t('settings')}</span>
+                                    <span className="hidden xl:inline">{t('settings')}</span>
                                 </Link>
                             </motion.div>
                             <motion.button
@@ -179,12 +218,23 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                                 title={tc('logout')}
                             >
                                 <LogOut size={16} />
-                                <span className="hidden lg:inline">{tc('logout')}</span>
+                                <span className="hidden xl:inline">{tc('logout')}</span>
                             </motion.button>
                         </div>
 
-                        {/* Mobile Language + Menu Toggle */}
-                        <div className="flex md:hidden items-center gap-2">
+                        {/* Mobile Language + Theme + Menu Toggle */}
+                        <div className="flex md:hidden items-center gap-1.5">
+                            {mounted && (
+                                <motion.button
+                                    onClick={toggleTheme}
+                                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-all"
+                                    whileTap={{ scale: 0.95 }}
+                                    title={theme === 'light' ? 'Dark mode' : 'Light mode'}
+                                >
+                                    {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                                </motion.button>
+                            )}
+
                             <motion.button
                                 onClick={handleToggleLanguage}
                                 className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-all"
@@ -206,11 +256,11 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                     </div>
                 </div>
 
-                {/* Mobile Dropdown Menu */}
+                {/* Mobile + Tablet Navigation */}
                 <AnimatePresence>
                     {isOpen && (
                         <motion.div 
-                            className="md:hidden border-t border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent"
+                            className="lg:hidden border-t border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent max-h-[calc(100vh-80px)] overflow-y-auto"
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
@@ -246,7 +296,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                                 ))}
 
                                 {/* Mobile User Actions */}
-                                <div className="border-t border-white/5 pt-3 mt-3 space-y-1">
+                                <div className="border-t border-white/5 pt-3 mt-3 space-y-2">
                                     <div className="px-4 py-1 text-xs font-bold uppercase tracking-wider text-white/40">
                                         {role}
                                     </div>
