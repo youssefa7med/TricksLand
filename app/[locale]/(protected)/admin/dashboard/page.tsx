@@ -1,8 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency } from '@/lib/utils';
 import { getLocale, getTranslations } from 'next-intl/server';
+import { motion } from 'motion/react';
+import { DashboardStats } from '@/components/dashboards/dashboard-stats';
+import { RecentSessionsTable } from '@/components/dashboards/recent-sessions-table';
+import { AnimatedSection } from '@/components/ui/animated-section';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -71,88 +74,71 @@ export default async function AdminDashboard() {
     return (
         <div className="page-container">
             <div className="max-w-7xl mx-auto">
-                <div className="mb-6 md:mb-8">
-                    <h1 className="text-2xl md:text-4xl font-bold text-white">{t('title')}</h1>
-                    <p className="text-white/50 text-sm mt-1">{t('monthlyStats')} <span className="text-white/80 font-medium">{monthLabel}</span></p>
-                </div>
+                <AnimatedSection
+                    title={t('title')}
+                    subtitle={`${t('monthlyStats')} ${monthLabel}`}
+                    delay={0}
+                >
+                    <DashboardStats
+                        stats={{
+                            courses: coursesCount,
+                            coaches: coachesCount,
+                            students: studentsCount,
+                            sessions: sessionsCount,
+                            payout: totalPayout,
+                        }}
+                        labels={{
+                            activeCourses: t('activeCourses'),
+                            totalCoaches: t('totalCoaches'),
+                            totalStudents: t('totalStudents'),
+                            sessionsThisMonth: t('sessionsThisMonth'),
+                            totalPayout: t('totalPayout'),
+                            monthLabel,
+                        }}
+                    />
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                    <GlassCard hover>
-                        <div className="text-center">
-                            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">{coursesCount || 0}</div>
-                            <div className="text-white/70">{t('activeCourses')}</div>
-                        </div>
-                    </GlassCard>
-
-                    <GlassCard hover>
-                        <div className="text-center">
-                            <div className="text-3xl md:text-4xl font-bold text-secondary mb-2">{coachesCount || 0}</div>
-                            <div className="text-white/70">{t('totalCoaches')}</div>
-                        </div>
-                    </GlassCard>
-
-                    <GlassCard hover>
-                        <div className="text-center">
-                            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">{studentsCount || 0}</div>
-                            <div className="text-white/70">{t('totalStudents')}</div>
-                        </div>
-                    </GlassCard>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <GlassCard hover>
-                        <div className="text-center">
-                            <div className="text-3xl md:text-4xl font-bold text-primary mb-2">{sessionsCount || 0}</div>
-                            <div className="text-white/70">{t('sessionsThisMonth')}</div>
-                            <div className="text-white/40 text-xs mt-1">{monthLabel}</div>
-                        </div>
-                    </GlassCard>
-
-                    <GlassCard hover>
-                        <div className="text-center">
-                            <div className="text-3xl md:text-4xl font-bold text-secondary mb-2">{formatCurrency(totalPayout)}</div>
-                            <div className="text-white/70">{t('totalPayout')}</div>
-                            <div className="text-white/40 text-xs mt-1">{monthLabel}</div>
-                        </div>
-                    </GlassCard>
-                </div>
-
-                {/* Recent Sessions */}
-                <GlassCard>
-                    <h2 className="text-2xl font-semibold text-white mb-4">{t('recentSessions')}</h2>
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-white/10">
-                                    <th className="text-left py-3 px-4 text-white/70">{t('date')}</th>
-                                    <th className="text-left py-3 px-4 text-white/70">{t('coach')}</th>
-                                    <th className="text-left py-3 px-4 text-white/70">{t('course')}</th>
-                                    <th className="text-left py-3 px-4 text-white/70">{t('hours')}</th>
-                                    <th className="text-right py-3 px-4 text-white/70">{t('amount')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recentSessions?.map((session: any) => (
-                                    <tr key={session.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                        <td className="py-3 px-4 text-white">{new Date(session.session_date).toLocaleDateString()}</td>
-                                        <td className="py-3 px-4 text-white">{session.profiles?.full_name}</td>
-                                        <td className="py-3 px-4 text-white">{session.courses?.name}</td>
-                                        <td className="py-3 px-4 text-white">{session.computed_hours}h</td>
-                                        <td className="py-3 px-4 text-white text-right">{formatCurrency(session.subtotal)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="mt-8">
+                        <RecentSessionsTable
+                            sessions={recentSessions as any}
+                            labels={{
+                                recentSessions: t('recentSessions'),
+                                date: t('date'),
+                                coach: t('coach'),
+                                course: t('course'),
+                                hours: t('hours'),
+                                amount: t('amount'),
+                            }}
+                        />
                     </div>
-                </GlassCard>
 
-                {/* Quick Actions */}
-                <div className="mt-8 flex flex-wrap gap-3">
-                    <a href={`/${locale}/admin/courses`} className="btn-glossy">{t('manageCourses')}</a>
-                    <a href={`/${locale}/admin/coaches`} className="btn-glossy-secondary">{t('manageCoaches')}</a>
-                    <a href={`/${locale}/admin/invoices`} className="btn-glossy">{t('generateInvoices')}</a>
-                </div>
+                    {/* Quick Actions */}
+                    <div className="mt-8 flex flex-wrap gap-3">
+                        <motion.a 
+                            href={`/${locale}/admin/courses`} 
+                            className="btn-glossy"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            {t('manageCourses')}
+                        </motion.a>
+                        <motion.a 
+                            href={`/${locale}/admin/coaches`} 
+                            className="btn-glossy-secondary"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            {t('manageCoaches')}
+                        </motion.a>
+                        <motion.a 
+                            href={`/${locale}/admin/invoices`} 
+                            className="btn-glossy"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            {t('generateInvoices')}
+                        </motion.a>
+                    </div>
+                </AnimatedSection>
             </div>
         </div>
     );
