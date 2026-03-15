@@ -16,12 +16,16 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
     const tc = useTranslations('common');
     const supabase = createClient();
     const [isOpen, setIsOpen] = useState(false);
+    const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
     const [mounted, setMounted] = useState(false);
 
     // Close mobile menu on route change
-    useEffect(() => { setIsOpen(false); }, [pathname]);
+    useEffect(() => { 
+        setIsOpen(false);
+        setIsUserDropdownOpen(false);
+    }, [pathname]);
 
     // Detect mobile
     useEffect(() => {
@@ -195,31 +199,76 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                             {langLabel}
                         </motion.button>
 
-                        {/* Desktop: User Menu */}
-                        <div className="hidden lg:flex items-center gap-2 ml-2 pl-2 border-l border-white/10">
-                            <span className="text-xs font-medium text-white/50 capitalize px-2">
-                                {role}
-                            </span>
-                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                <Link
-                                    href={`/${locale}/settings`}
-                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-all"
-                                    title={t('settings')}
+                        {/* Desktop: User Menu with Dropdown */}
+                        <div className="hidden lg:block ml-2 pl-2 border-l border-white/10">
+                            <div className="relative">
+                                <motion.button
+                                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium transition-all"
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    title={role.charAt(0).toUpperCase() + role.slice(1)}
                                 >
-                                    <Settings size={16} />
-                                    <span className="hidden xl:inline">{t('settings')}</span>
-                                </Link>
-                            </motion.div>
-                            <motion.button
-                                onClick={handleLogout}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 text-sm font-medium transition-all"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                title={tc('logout')}
-                            >
-                                <LogOut size={16} />
-                                <span className="hidden xl:inline">{tc('logout')}</span>
-                            </motion.button>
+                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-xs font-bold text-white">
+                                        {role.charAt(0).toUpperCase()}
+                                    </div>
+                                    <span className="hidden xl:inline capitalize">{role}</span>
+                                </motion.button>
+
+                                {/* User Dropdown Menu */}
+                                <AnimatePresence>
+                                    {isUserDropdownOpen && (
+                                        <motion.div
+                                            className="absolute right-0 mt-2 w-56 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 shadow-lg overflow-hidden"
+                                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                            transition={{ duration: 0.2 }}
+                                        >
+                                            {/* User Header */}
+                                            <div className="px-4 py-3 border-b border-white/10 bg-white/5">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-sm font-bold text-white">
+                                                        {role.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-white capitalize">{role}</p>
+                                                        <p className="text-xs text-white/60">Administrator</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Dropdown Actions */}
+                                            <div className="py-2 px-2 space-y-1">
+                                                <motion.div whileHover={{ x: 2 }}>
+                                                    <Link
+                                                        href={`/${locale}/settings`}
+                                                        onClick={() => setIsUserDropdownOpen(false)}
+                                                        className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm font-medium text-white/80 hover:bg-white/10 hover:text-primary transition-all"
+                                                    >
+                                                        <Settings size={16} />
+                                                        {t('settings')}
+                                                    </Link>
+                                                </motion.div>
+
+                                                <div className="border-t border-white/10 my-1" />
+
+                                                <motion.button
+                                                    onClick={() => {
+                                                        setIsUserDropdownOpen(false);
+                                                        handleLogout();
+                                                    }}
+                                                    whileHover={{ x: 2 }}
+                                                    className="flex items-center gap-2 w-full px-3 py-2 rounded-md text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all"
+                                                >
+                                                    <LogOut size={16} />
+                                                    {tc('logout')}
+                                                </motion.button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                         </div>
 
                         {/* Mobile Language + Theme + Menu Toggle */}
@@ -298,8 +347,22 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                                 {/* Mobile User Actions */}
                                 <div className="border-t border-white/5 pt-3 mt-3 space-y-2">
                                     <div className="px-4 py-1 text-xs font-bold uppercase tracking-wider text-white/40">
-                                        {role}
+                                        {role} Profile
                                     </div>
+                                    <motion.div
+                                        className="flex items-center gap-3 px-4 py-2.5"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.08 }}
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-xs font-bold text-white">
+                                            {role.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-white capitalize">{role}</p>
+                                            <p className="text-xs text-white/60">Administrator</p>
+                                        </div>
+                                    </motion.div>
                                     <motion.div
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
