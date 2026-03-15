@@ -175,25 +175,25 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                     </div>
 
                     {/* Right Controls */}
-                    <div className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 ml-auto">
+                    <div className="flex items-center gap-0.5 xs:gap-1 sm:gap-1.5 md:gap-2 ml-auto">
                         {/* Theme Toggle */}
                         {mounted && (
                             <motion.button
                                 onClick={toggleTheme}
-                                className="p-1.5 xs:p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition-all duration-200"
+                                className="p-2 xs:p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 hover:text-white transition-all duration-200 min-w-[40px] min-h-[40px] flex items-center justify-center"
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                title={theme === 'light' ? 'Dark mode' : 'Light mode'}
+                                title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
                                 aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
                             >
-                                {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+                                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                             </motion.button>
                         )}
 
                         {/* Language Toggle - Only on Desktop */}
                         <motion.button
                             onClick={handleToggleLanguage}
-                            className="hidden lg:block px-2.5 xs:px-3 py-1 xs:py-1.5 text-xs font-medium rounded-lg border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:border-white/20 transition-all duration-200 whitespace-nowrap"
+                            className="hidden lg:flex px-3 py-2 text-xs font-medium rounded-lg border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:border-white/20 transition-all duration-200 whitespace-nowrap min-h-[40px] items-center justify-center"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             title={locale === 'en' ? 'العربية' : 'English'}
@@ -206,12 +206,13 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                             <div className="relative">
                                 <motion.button
                                     onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                                    className="flex items-center gap-1.5 xs:gap-2 px-2 xs:px-2.5 py-1 xs:py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs xs:text-sm font-medium transition-all"
+                                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs xs:text-sm font-medium transition-all min-h-[40px]"
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                     title={role.charAt(0).toUpperCase() + role.slice(1)}
+                                    aria-expanded={isUserDropdownOpen}
                                 >
-                                    <div className="w-5 xs:w-6 h-5 xs:h-6 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-xs font-bold text-white">
+                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-xs font-bold text-white">
                                         {role.charAt(0).toUpperCase()}
                                     </div>
                                     <span className="hidden 2xl:inline capitalize">{role}</span>
@@ -274,32 +275,35 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                         </div>
 
                         {/* Mobile Language + Theme + Menu Toggle */}
-                        <div className="flex lg:hidden items-center gap-1">
+                        <div className="flex lg:hidden items-center gap-0.5">
                             {mounted && (
                                 <motion.button
                                     onClick={toggleTheme}
-                                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-all"
+                                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-all min-w-[40px] min-h-[40px] flex items-center justify-center"
                                     whileTap={{ scale: 0.95 }}
-                                    title={theme === 'light' ? 'Dark mode' : 'Light mode'}
+                                    title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+                                    aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
                                 >
-                                    {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+                                    {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                                 </motion.button>
                             )}
 
                             <motion.button
                                 onClick={handleToggleLanguage}
-                                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-all"
+                                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/80 transition-all min-w-[40px] min-h-[40px] flex items-center justify-center"
                                 whileTap={{ scale: 0.95 }}
                                 title={locale === 'en' ? 'العربية' : 'English'}
+                                aria-label={locale === 'en' ? 'Switch to Arabic' : 'Switch to English'}
                             >
                                 <span className="text-xs font-bold">{locale === 'en' ? 'ع' : 'EN'}</span>
                             </motion.button>
 
                             <motion.button
                                 onClick={() => setIsOpen(!isOpen)}
-                                className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-all"
+                                className="p-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary transition-all min-w-[40px] min-h-[40px] flex items-center justify-center"
                                 whileTap={{ scale: 0.95 }}
-                                aria-label="Toggle menu"
+                                aria-label={isOpen ? 'Close menu' : 'Open menu'}
+                                aria-expanded={isOpen}
                             >
                                 {isOpen ? <X size={18} /> : <Menu size={18} />}
                             </motion.button>
