@@ -6,11 +6,13 @@ import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useParams } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import Link from 'next/link';
 
 export default function AdminCourseCoachesPage() {
     const params = useParams();
     const courseId = params.id as string;
+    const locale = useLocale();
     const supabase = createClient();
 
     const [course, setCourse] = useState<any>(null);
@@ -173,7 +175,7 @@ export default function AdminCourseCoachesPage() {
     return (
         <div className="page-container">
             <div className="max-w-5xl mx-auto">
-                <Link href="/admin/courses" className="text-white/60 hover:text-white transition-colors text-sm mb-8 block">← Back to Courses</Link>
+                <Link href={`/${locale}/admin/courses`} className="text-white/60 hover:text-white transition-colors text-sm mb-8 block">← Back to Courses</Link>
 
                 <div className="mb-8">
                     <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">Coaches — {course?.name}</h1>
