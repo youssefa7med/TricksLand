@@ -101,7 +101,6 @@ export default async function AdminDashboard() {
                         manageCoaches: t('manageCoaches'),
                         generateInvoices: t('generateInvoices'),
                     }}
-                    formatCurrency={(amount: number) => amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                 />
             </div>
         </div>

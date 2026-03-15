@@ -35,7 +35,10 @@ interface CoachDashboardClientProps {
     locale: string;
     t: (key: string) => string;
     tc: (key: string) => string;
-    formatCurrency: (amount: number) => string;
+}
+
+function formatCurrency(amount: number): string {
+    return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export function CoachDashboardClient({
@@ -46,7 +49,6 @@ export function CoachDashboardClient({
     locale,
     t,
     tc,
-    formatCurrency,
 }: CoachDashboardClientProps) {
     return (
         <AnimatedSection delay={0}>

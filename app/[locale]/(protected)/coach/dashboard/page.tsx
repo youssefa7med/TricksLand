@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { formatCurrency } from '@/lib/utils';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { CoachDashboardClient } from '@/components/dashboards/coach-dashboard-client';
 
@@ -99,7 +98,6 @@ export default async function CoachDashboard() {
                     locale={locale}
                     t={t}
                     tc={tc}
-                    formatCurrency={formatCurrency}
                 />
             </div>
         </div>

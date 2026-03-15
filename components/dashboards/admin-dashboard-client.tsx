@@ -31,7 +31,10 @@ interface AdminDashboardClientProps {
         manageCoaches: string;
         generateInvoices: string;
     };
-    formatCurrency: (amount: number) => string;
+}
+
+function formatCurrency(amount: number): string {
+    return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export function AdminDashboardClient({
@@ -39,7 +42,6 @@ export function AdminDashboardClient({
     sessions,
     locale,
     labels,
-    formatCurrency,
 }: AdminDashboardClientProps) {
     return (
         <AnimatedSection delay={0}>
