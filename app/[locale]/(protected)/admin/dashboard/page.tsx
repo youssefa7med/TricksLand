@@ -1,11 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { formatCurrency } from '@/lib/utils';
 import { getLocale, getTranslations } from 'next-intl/server';
-import { motion } from 'motion/react';
-import { DashboardStats } from '@/components/dashboards/dashboard-stats';
-import { RecentSessionsTable } from '@/components/dashboards/recent-sessions-table';
-import { AnimatedSection } from '@/components/ui/animated-section';
+import { AdminDashboardClient } from '@/components/dashboards/admin-dashboard-client';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -74,71 +70,39 @@ export default async function AdminDashboard() {
     return (
         <div className="page-container">
             <div className="max-w-7xl mx-auto">
-                <AnimatedSection
-                    title={t('title')}
-                    subtitle={`${t('monthlyStats')} ${monthLabel}`}
-                    delay={0}
-                >
-                    <DashboardStats
-                        stats={{
-                            courses: coursesCount,
-                            coaches: coachesCount,
-                            students: studentsCount,
-                            sessions: sessionsCount,
-                            payout: totalPayout,
-                        }}
-                        labels={{
-                            activeCourses: t('activeCourses'),
-                            totalCoaches: t('totalCoaches'),
-                            totalStudents: t('totalStudents'),
-                            sessionsThisMonth: t('sessionsThisMonth'),
-                            totalPayout: t('totalPayout'),
-                            monthLabel,
-                        }}
-                    />
+                <div className="mb-6 md:mb-8">
+                    <h1 className="text-2xl md:text-4xl font-bold text-white">{t('title')}</h1>
+                    <p className="text-white/50 text-sm mt-1">{t('monthlyStats')} <span className="text-white/80 font-medium">{monthLabel}</span></p>
+                </div>
 
-                    <div className="mt-8">
-                        <RecentSessionsTable
-                            sessions={recentSessions as any}
-                            labels={{
-                                recentSessions: t('recentSessions'),
-                                date: t('date'),
-                                coach: t('coach'),
-                                course: t('course'),
-                                hours: t('hours'),
-                                amount: t('amount'),
-                            }}
-                        />
-                    </div>
-
-                    {/* Quick Actions */}
-                    <div className="mt-8 flex flex-wrap gap-3">
-                        <motion.a 
-                            href={`/${locale}/admin/courses`} 
-                            className="btn-glossy"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            {t('manageCourses')}
-                        </motion.a>
-                        <motion.a 
-                            href={`/${locale}/admin/coaches`} 
-                            className="btn-glossy-secondary"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            {t('manageCoaches')}
-                        </motion.a>
-                        <motion.a 
-                            href={`/${locale}/admin/invoices`} 
-                            className="btn-glossy"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            {t('generateInvoices')}
-                        </motion.a>
-                    </div>
-                </AnimatedSection>
+                <AdminDashboardClient
+                    stats={{
+                        courses: coursesCount,
+                        coaches: coachesCount,
+                        students: studentsCount,
+                        sessions: sessionsCount,
+                        payout: totalPayout,
+                    }}
+                    sessions={recentSessions as any}
+                    locale={locale}
+                    labels={{
+                        activeCourses: t('activeCourses'),
+                        totalCoaches: t('totalCoaches'),
+                        totalStudents: t('totalStudents'),
+                        sessionsThisMonth: t('sessionsThisMonth'),
+                        totalPayout: t('totalPayout'),
+                        recentSessions: t('recentSessions'),
+                        date: t('date'),
+                        coach: t('coach'),
+                        course: t('course'),
+                        hours: t('hours'),
+                        amount: t('amount'),
+                        manageCourses: t('manageCourses'),
+                        manageCoaches: t('manageCoaches'),
+                        generateInvoices: t('generateInvoices'),
+                    }}
+                    formatCurrency={(amount: number) => amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                />
             </div>
         </div>
     );
