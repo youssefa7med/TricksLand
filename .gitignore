@@ -30,3 +30,4 @@ tmpclaude-*/
 # Misc
 .cache/
 .env.*.backuplocal
+.vercel
