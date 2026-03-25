@@ -33,8 +33,6 @@ interface CoachDashboardClientProps {
         offline: string;
     };
     locale: string;
-    t: (key: string) => string;
-    tc: (key: string) => string;
 }
 
 function formatCurrency(amount: number): string {
@@ -47,8 +45,6 @@ export function CoachDashboardClient({
     sessions,
     labels,
     locale,
-    t,
-    tc,
 }: CoachDashboardClientProps) {
     return (
         <AnimatedSection delay={0}>
@@ -91,26 +87,32 @@ export function CoachDashboardClient({
                     {labels.yourCourses}
                 </motion.h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {courses?.map((assignment: any, idx: number) => (
-                        <motion.div
-                            key={assignment?.courses?.id || `assignment-${idx}`}
-                            className="bg-white/5 rounded-lg p-4 border border-white/10"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4, delay: 0.1 + idx * 0.05 }}
-                            whileHover={{ y: -2, borderColor: "rgba(56, 189, 248, 0.5)" }}
-                        >
-                            <h3 className="font-semibold text-white mb-1">{assignment?.courses?.name || '-'}</h3>
-                            <motion.span 
-                                className={`inline-block text-sm px-2 py-1 rounded ${assignment?.courses?.status === 'active' ? 'bg-green-500/20 text-green-300' : 'bg-gray-500/20 text-gray-300'}`}
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.2 + idx * 0.05 }}
+                    {courses && courses.length > 0 ? (
+                        courses.map((assignment: any, idx: number) => (
+                            <motion.div
+                                key={assignment?.courses?.id || `assignment-${idx}`}
+                                className="bg-white/5 rounded-lg p-4 border border-white/10"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.4, delay: 0.1 + idx * 0.05 }}
+                                whileHover={{ y: -2, borderColor: "rgba(56, 189, 248, 0.5)" }}
                             >
-                                {assignment?.courses?.status || 'unknown'}
+                                <h3 className="font-semibold text-white mb-1">{assignment?.courses?.name || '-'}</h3>
+                                <motion.span 
+                                    className={`inline-block text-sm px-2 py-1 rounded ${assignment?.courses?.status === 'active' ? 'bg-green-500/20 text-green-300' : 'bg-gray-500/20 text-gray-300'}`}
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.2 + idx * 0.05 }}
+                                >
+                                    {assignment?.courses?.status || 'unknown'}
                             </motion.span>
                         </motion.div>
-                    ))}
+                        ))
+                    ) : (
+                        <div className="col-span-full text-center py-8 text-white/50">
+                            No courses assigned yet
+                        </div>
+                    )}
                 </div>
             </GlassCard>
 
@@ -197,26 +199,34 @@ export function CoachDashboardClient({
                             </tr>
                         </thead>
                         <tbody>
-                            {sessions?.map((session: any, idx: number) => (
-                                <motion.tr
-                                    key={session.id}
-                                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.2 + (idx % 10) * 0.03 }}
-                                    whileHover={{ backgroundColor: "rgba(56, 189, 248, 0.05)", x: 4 }}
-                                >
-                                    <td className="py-3 px-4 text-white">{new Date(session.session_date).toLocaleDateString()}</td>
-                                    <td className="py-3 px-4 text-white">{session.courses?.name}</td>
-                                    <td className="py-3 px-4 text-white text-sm">{session.start_time} - {session.end_time}</td>
-                                    <td className="py-3 px-4 text-white text-sm">
-                                        {session.session_type === 'online_session' ? `🌐 ${tc('online')}` : `🏢 ${tc('offline')}`}
+                            {sessions && sessions.length > 0 ? (
+                                sessions.map((session: any, idx: number) => (
+                                    <motion.tr
+                                        key={session.id}
+                                        className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.2 + (idx % 10) * 0.03 }}
+                                        whileHover={{ backgroundColor: "rgba(56, 189, 248, 0.05)", x: 4 }}
+                                    >
+                                        <td className="py-3 px-4 text-white">{new Date(session.session_date).toLocaleDateString()}</td>
+                                        <td className="py-3 px-4 text-white">{session.courses?.name || '-'}</td>
+                                        <td className="py-3 px-4 text-white text-sm">{session.start_time} - {session.end_time}</td>
+                                        <td className="py-3 px-4 text-white text-sm">
+                                            {session.session_type === 'online_session' ? `🌐 ${labels.online}` : `🏢 ${labels.offline}`}
+                                        </td>
+                                        <td className="py-3 px-4 text-white">{session.computed_hours}h</td>
+                                        <td className="py-3 px-4 text-white">{formatCurrency(session.applied_rate)}/h</td>
+                                        <td className="py-3 px-4 text-white text-right font-semibold">{formatCurrency(session.subtotal)}</td>
+                                    </motion.tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={7} className="py-8 px-4 text-center text-white/50">
+                                        No sessions found
                                     </td>
-                                    <td className="py-3 px-4 text-white">{session.computed_hours}h</td>
-                                    <td className="py-3 px-4 text-white">{formatCurrency(session.applied_rate)}/h</td>
-                                    <td className="py-3 px-4 text-white text-right font-semibold">{formatCurrency(session.subtotal)}</td>
-                                </motion.tr>
-                            ))}
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
