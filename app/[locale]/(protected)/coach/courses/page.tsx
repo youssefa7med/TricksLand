@@ -162,11 +162,19 @@ export default async function CoachMyCoursesPage() {
                                         {students.length === 0 ? (
                                             <p className="text-white/40 text-sm italic">No students enrolled yet</p>
                                         ) : (
-                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                                                 {students.map((s: any, idx: number) => (
-                                                    <div key={s.id} className="bg-white/5 rounded-lg px-3 py-2 text-sm text-white/80">
-                                                        <span className="text-white/40 mr-2">{idx + 1}.</span>
-                                                        {s.student_name}
+                                                    <div
+                                                        key={s.id}
+                                                        className="bg-white/[0.07] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white/90 flex items-center gap-2"
+                                                        title={s.student_name}
+                                                    >
+                                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-white/10 text-white/50 text-xs font-semibold flex-shrink-0">
+                                                            {idx + 1}
+                                                        </span>
+                                                        <span className="leading-5 break-words">
+                                                            {s.student_name}
+                                                        </span>
                                                     </div>
                                                 ))}
                                             </div>
