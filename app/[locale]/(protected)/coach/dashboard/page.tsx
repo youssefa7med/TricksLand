@@ -13,25 +13,31 @@ export default async function CoachDashboard() {
     if (!user) redirect('/login');
 
     // Get coach profile
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('full_name')
         .eq('id', user.id)
-        .single() as { data: { full_name: string } | null; error: unknown };
+        .maybeSingle() as { data: { full_name: string } | null; error: unknown };
+    if (profileError) {
+        console.error('Coach dashboard profile query failed:', profileError);
+    }
 
     // Get current month
     const currentMonth = new Date().toISOString().substring(0, 7);
 
     // Get this month's summary
-    const { data: monthlySummary } = await supabase
+    const { data: monthlySummary, error: monthlySummaryError } = await supabase
         .from('coach_monthly_totals')
         .select('*')
         .eq('coach_id', user.id)
         .eq('month', currentMonth)
-        .single() as { data: { session_count: number; total_hours: number; gross_total: number; net_total: number } | null; error: unknown };
+        .maybeSingle() as { data: { session_count: number; total_hours: number; gross_total: number; net_total: number } | null; error: unknown };
+    if (monthlySummaryError) {
+        console.error('Coach dashboard monthly summary query failed:', monthlySummaryError);
+    }
 
     // Get assigned courses
-    const { data: assignedCourses } = await supabase
+    const { data: assignedCourses, error: assignedCoursesError } = await supabase
         .from('course_coaches')
         .select(`
       courses (
@@ -41,9 +47,23 @@ export default async function CoachDashboard() {
       )
     `)
         .eq('coach_id', user.id);
+    if (assignedCoursesError) {
+        console.error('Coach dashboard assigned courses query failed:', assignedCoursesError);
+    }
+
+    // Guard against nullable relations to prevent runtime crashes
+    const safeAssignedCourses = (assignedCourses || [])
+        .filter((row: any) => row?.courses)
+        .map((row: any) => ({
+            courses: {
+                id: row.courses.id,
+                name: row.courses.name,
+                status: row.courses.status,
+            },
+        }));
 
     // Get recent sessions
-    const { data: recentSessions } = await supabase
+        const { data: recentSessions, error: recentSessionsError } = await supabase
         .from('sessions')
         .select(`
       id,
@@ -59,6 +79,9 @@ export default async function CoachDashboard() {
         .eq('paid_coach_id', user.id)
         .order('session_date', { ascending: false })
         .limit(10);
+    if (recentSessionsError) {
+        console.error('Coach dashboard recent sessions query failed:', recentSessionsError);
+    }
 
     return (
         <div className="page-container">
@@ -75,8 +98,8 @@ export default async function CoachDashboard() {
                         gross: Number(monthlySummary?.gross_total || 0),
                         net: Number(monthlySummary?.net_total || 0),
                     }}
-                    courses={assignedCourses as any}
-                    sessions={recentSessions as any}
+                    courses={safeAssignedCourses as any}
+                    sessions={(recentSessions || []) as any}
                     labels={{
                         yourCourses: t('yourCourses'),
                         recentSessions: t('recentSessions'),

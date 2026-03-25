@@ -93,21 +93,21 @@ export function CoachDashboardClient({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {courses?.map((assignment: any, idx: number) => (
                         <motion.div
-                            key={assignment.courses.id}
+                            key={assignment?.courses?.id || `assignment-${idx}`}
                             className="bg-white/5 rounded-lg p-4 border border-white/10"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.4, delay: 0.1 + idx * 0.05 }}
                             whileHover={{ y: -2, borderColor: "rgba(56, 189, 248, 0.5)" }}
                         >
-                            <h3 className="font-semibold text-white mb-1">{assignment.courses.name}</h3>
+                            <h3 className="font-semibold text-white mb-1">{assignment?.courses?.name || '-'}</h3>
                             <motion.span 
-                                className={`inline-block text-sm px-2 py-1 rounded ${assignment.courses.status === 'active' ? 'bg-green-500/20 text-green-300' : 'bg-gray-500/20 text-gray-300'}`}
+                                className={`inline-block text-sm px-2 py-1 rounded ${assignment?.courses?.status === 'active' ? 'bg-green-500/20 text-green-300' : 'bg-gray-500/20 text-gray-300'}`}
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.2 + idx * 0.05 }}
                             >
-                                {assignment.courses.status}
+                                {assignment?.courses?.status || 'unknown'}
                             </motion.span>
                         </motion.div>
                     ))}

@@ -107,6 +107,17 @@
     bottom: 8rem;
     background: rgba(249, 115, 22, 0.14);
   }
+
+  /* Global dropdown contrast: black background + white text */
+  select {
+    color: #ffffff;
+  }
+
+  select option,
+  select optgroup {
+    background-color: #000000;
+    color: #ffffff;
+  }
 }
 
 @layer components {
