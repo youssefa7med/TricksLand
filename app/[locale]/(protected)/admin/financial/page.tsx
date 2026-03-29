@@ -100,6 +100,10 @@ export default function AdminFinancialPage() {
     const [recordForm, setRecordForm] = useState({ paymentId: '', amount: '', method: 'cash', notes: '' });
     const [showRecordForm, setShowRecordForm] = useState(false);
 
+    // Edit payment record form
+    const [editForm, setEditForm] = useState({ id: '', courseFee: '', dueDate: '', notes: '' });
+    const [showEditForm, setShowEditForm] = useState(false);
+
     // Expense form
     const [expForm, setExpForm] = useState({ title: '', amount: '', date: new Date().toISOString().split('T')[0], category: 'other', description: '' });
     const [showExpForm, setShowExpForm] = useState(false);
@@ -337,6 +341,64 @@ export default function AdminFinancialPage() {
         await loadSummaries();
     };
 
+    const handleEditPaymentRecord = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editForm.id) return;
+        setSaving(true);
+
+        const { error } = await (supabase as any)
+            .from('student_payments')
+            .update({
+                course_fee: parseFloat(editForm.courseFee),
+                due_date: editForm.dueDate || null,
+                notes: editForm.notes || null,
+            })
+            .eq('id', editForm.id);
+
+        setSaving(false);
+        if (error) { toast.error(error.message); return; }
+        toast.success(t('paymentRecordUpdated'));
+        setShowEditForm(false);
+        setEditForm({ id: '', courseFee: '', dueDate: '', notes: '' });
+        await loadCourseData(selectedCourse);
+        await loadSummaries();
+    };
+
+    const handleDeletePaymentRecord = async (paymentId: string) => {
+        if (!confirm(t('deletePaymentConfirm'))) return;
+        setSaving(true);
+
+        // First delete all transactions for this payment
+        const { error: txError } = await (supabase as any)
+            .from('payment_transactions')
+            .delete()
+            .eq('payment_record_id', paymentId);
+
+        if (txError) { setSaving(false); toast.error(txError.message); return; }
+
+        // Then delete the payment record
+        const { error } = await (supabase as any)
+            .from('student_payments')
+            .delete()
+            .eq('id', paymentId);
+
+        setSaving(false);
+        if (error) { toast.error(error.message); return; }
+        toast.success(t('paymentRecordDeleted'));
+        await loadCourseData(selectedCourse);
+        await loadSummaries();
+    };
+
+    const openEditForm = (payment: StudentPayment) => {
+        setEditForm({
+            id: payment.id,
+            courseFee: String(payment.course_fee),
+            dueDate: payment.due_date || '',
+            notes: payment.notes || '',
+        });
+        setShowEditForm(true);
+    };
+
     const selectedSummary = summaries.find(s => s.course_id === selectedCourse);
 
     // Compute course-level stats from already-loaded local state (always up-to-date)
@@ -566,6 +628,41 @@ export default function AdminFinancialPage() {
                                 </form>
                             )}
 
+                            {/* Edit payment record form */}
+                            {showEditForm && (
+                                <form onSubmit={handleEditPaymentRecord} className="bg-white/5 rounded-xl p-4 space-y-3">
+                                    <h4 className="text-white text-sm font-semibold">{t('editPaymentRecord') || 'تعديل سجل الدفع'}</h4>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className={labelClass}>{t('courseFeeLabel')}</label>
+                                            <input type="number" min="1" step="0.01" required value={editForm.courseFee}
+                                                onChange={e => setEditForm(p => ({ ...p, courseFee: e.target.value }))}
+                                                className={inputClass} placeholder="0.00" />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>{t('dueDateLabel')}</label>
+                                            <input type="date" value={editForm.dueDate}
+                                                onChange={e => setEditForm(p => ({ ...p, dueDate: e.target.value }))}
+                                                className={inputClass} />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <label className={labelClass}>{tc('notes')}</label>
+                                            <input value={editForm.notes}
+                                                onChange={e => setEditForm(p => ({ ...p, notes: e.target.value }))}
+                                                className={inputClass} placeholder={t('optionalPlaceholder')} />
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 justify-end">
+                                        <button type="button" onClick={() => setShowEditForm(false)}
+                                            className="px-4 py-2 rounded-lg bg-white/10 text-white/70 text-sm">{tc('cancel')}</button>
+                                        <button type="submit" disabled={saving}
+                                            className="px-4 py-2 rounded-lg bg-blue-500 text-white text-sm disabled:opacity-50">
+                                            {saving ? tc('saving') : tc('save')}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+
                             {/* Record payment form */}
                             {showRecordForm && (() => {
                                 const activePayment = payments.find(p => p.id === recordForm.paymentId);
@@ -673,6 +770,21 @@ export default function AdminFinancialPage() {
                                                         >
                                                             {expandedPayment === p.id ? t('hideTransactions') : t('transactions')}
                                                         </button>
+                                                        <div className="flex gap-1">
+                                                            <button
+                                                                onClick={() => openEditForm(p)}
+                                                                className="text-xs bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 px-2 py-1 rounded transition-colors"
+                                                            >
+                                                                {t('editBtn') || 'تعديل'}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeletePaymentRecord(p.id)}
+                                                                disabled={saving}
+                                                                className="text-xs bg-red-500/20 hover:bg-red-500/40 text-red-400 px-2 py-1 rounded transition-colors disabled:opacity-50"
+                                                            >
+                                                                {t('deleteBtn') || 'حذف'}
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                     </td>
                                                 </tr>

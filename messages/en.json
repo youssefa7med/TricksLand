@@ -477,7 +477,13 @@
             "feeItemOptional": "(optional)",
             "feeItemGeneral": "General",
             "feeItemGeneralOther": "General / Other",
-            "feeItemCollectedOf": "collected"
+            "feeItemCollectedOf": "collected",
+            "editBtn": "Edit",
+            "deleteBtn": "Delete",
+            "editPaymentRecord": "Edit Payment Record",
+            "paymentRecordUpdated": "Payment record updated successfully",
+            "deletePaymentConfirm": "Delete this payment record? This will also delete all associated transactions.",
+            "paymentRecordDeleted": "Payment record deleted successfully"
         },
         "invoices": {
             "title": "Invoice Management",

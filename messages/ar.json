@@ -477,7 +477,13 @@
             "feeItemOptional": "(اختياري)",
             "feeItemGeneral": "عام",
             "feeItemGeneralOther": "عام / أخرى",
-            "feeItemCollectedOf": "محصّل"
+            "feeItemCollectedOf": "محصّل",
+            "editBtn": "تعديل",
+            "deleteBtn": "حذف",
+            "editPaymentRecord": "تعديل سجل الدفع",
+            "paymentRecordUpdated": "تم تحديث سجل الدفع بنجاح",
+            "deletePaymentConfirm": "هل تريد حذف هذا السجل؟ سيؤدي ذلك أيضاً إلى حذف جميع المعاملات المرتبطة.",
+            "paymentRecordDeleted": "تم حذف سجل الدفع بنجاح"
         },
         "invoices": {
             "title": "إدارة الفواتير",
