@@ -53,7 +53,13 @@ export default function AdminInvoicesPage() {
                     return { month, totals: totals || [], totalPayout, totalSessions };
                 })
             );
-            setMonthlyData(results);
+            
+            // Deduplicate by month and sort in descending order (newest first)
+            const deduped = Array.from(
+                new Map(results.map(item => [item.month, item])).values()
+            ).sort((a, b) => b.month.localeCompare(a.month));
+            
+            setMonthlyData(deduped);
         } catch (err) {
             toast.error('Failed to load invoice data');
         } finally {
@@ -107,9 +113,7 @@ export default function AdminInvoicesPage() {
                 </div>
 
                 <div className="space-y-6">
-                    {monthlyData
-                        .filter((item, index, self) => self.findIndex(m => m.month === item.month) === index)
-                        .map(({ month, totals, totalPayout, totalSessions }) => {
+                    {monthlyData.map(({ month, totals, totalPayout, totalSessions }) => {
                             const monthName = new Date(month + '-01').toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-US', {
                             year: 'numeric',
                             month: 'long',
