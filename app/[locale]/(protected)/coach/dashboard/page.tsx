@@ -30,8 +30,10 @@ export default async function CoachDashboard() {
         console.error('Coach dashboard profile query exception:', err);
     }
 
-    // Get current month
-    const currentMonth = new Date().toISOString().substring(0, 7);
+    // Get current month (using Egypt timezone - UTC+2)
+    const now = new Date();
+    const egyptTime = new Date(now.getTime() + (2 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
+    const currentMonth = egyptTime.toISOString().substring(0, 7);
 
     // Get this month's summary
     let monthlySummary: { session_count: number; total_hours: number; gross_total: number; net_total: number } | null = null;

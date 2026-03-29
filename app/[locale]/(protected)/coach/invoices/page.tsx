@@ -19,11 +19,23 @@ export default function CoachInvoicesPage() {
     const [adjustmentsByMonth, setAdjustmentsByMonth] = useState<Record<string, any[]>>({});
     const supabase = createClient();
 
-    // Last 12 months
+    // Last 12 months - calculated in Egypt timezone (UTC+2)
     const months = Array.from({ length: 12 }, (_, i) => {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        return date.toISOString().substring(0, 7);
+        // Convert to Egypt timezone (UTC+2)
+        const now = new Date();
+        const egyptTime = new Date(now.getTime() + (2 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
+        
+        const year = egyptTime.getUTCFullYear();
+        let month = egyptTime.getUTCMonth() - i;
+        let actualYear = year;
+        
+        // Handle year rollover
+        if (month < 0) {
+            actualYear = year - 1;
+            month = 12 + month;
+        }
+        
+        return `${actualYear}-${String(month + 1).padStart(2, '0')}`;
     });
 
     useEffect(() => {

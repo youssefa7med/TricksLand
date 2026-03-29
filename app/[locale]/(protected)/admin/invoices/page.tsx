@@ -26,14 +26,23 @@ export default function AdminInvoicesPage() {
     const t = useTranslations('pages.invoices');
     const supabase = createClient();
 
-    // Last 6 months - calculated correctly to avoid Date.setMonth() overflow
+    // Last 6 months - calculated in Egypt timezone (UTC+2)
     const months = Array.from({ length: 6 }, (_, i) => {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = today.getMonth() - i;
-        const actualYear = year + Math.floor(month / 12);
-        const actualMonth = ((month % 12) + 12) % 12;
-        return `${actualYear}-${String(actualMonth + 1).padStart(2, '0')}`;
+        // Convert to Egypt timezone (UTC+2)
+        const now = new Date();
+        const egyptTime = new Date(now.getTime() + (2 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
+        
+        const year = egyptTime.getUTCFullYear();
+        let month = egyptTime.getUTCMonth() - i;
+        let actualYear = year;
+        
+        // Handle year rollover
+        if (month < 0) {
+            actualYear = year - 1;
+            month = 12 + month;
+        }
+        
+        return `${actualYear}-${String(month + 1).padStart(2, '0')}`;
     });
 
     useEffect(() => {

@@ -14,9 +14,11 @@ export default async function AdminDashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) redirect('/login');
 
+    // Use Egypt timezone (UTC+2) for current date calculations
     const now = new Date();
-    const currentMonth = now.toISOString().substring(0, 7);
-    const monthLabel = now.toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-US', { month: 'long', year: 'numeric' });
+    const egyptTime = new Date(now.getTime() + (2 * 60 * 60 * 1000) - (now.getTimezoneOffset() * 60 * 1000));
+    const currentMonth = egyptTime.toISOString().substring(0, 7);
+    const monthLabel = egyptTime.toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-US', { month: 'long', year: 'numeric' });
 
     // Get total courses count
     const { count: coursesCount } = await supabase
@@ -36,7 +38,8 @@ export default async function AdminDashboard() {
         .select('*', { count: 'exact', head: true });
 
     // Get this month's sessions count
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().substring(0, 10);
+    const nextMonthDate = new Date(egyptTime.getUTCFullYear(), egyptTime.getUTCMonth() + 1, 1);
+    const nextMonth = nextMonthDate.toISOString().substring(0, 10);
     const { count: sessionsCount } = await supabase
         .from('sessions')
         .select('*', { count: 'exact', head: true })
