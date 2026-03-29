@@ -26,11 +26,14 @@ export default function AdminInvoicesPage() {
     const t = useTranslations('pages.invoices');
     const supabase = createClient();
 
-    // Last 6 months
+    // Last 6 months - calculated correctly to avoid Date.setMonth() overflow
     const months = Array.from({ length: 6 }, (_, i) => {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        return date.toISOString().substring(0, 7);
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth() - i;
+        const actualYear = year + Math.floor(month / 12);
+        const actualMonth = ((month % 12) + 12) % 12;
+        return `${actualYear}-${String(actualMonth + 1).padStart(2, '0')}`;
     });
 
     useEffect(() => {
