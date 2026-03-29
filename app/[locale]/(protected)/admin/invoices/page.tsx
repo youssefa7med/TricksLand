@@ -107,7 +107,9 @@ export default function AdminInvoicesPage() {
                 </div>
 
                 <div className="space-y-6">
-                    {monthlyData.map(({ month, totals, totalPayout, totalSessions }) => {
+                    {monthlyData
+                        .filter((item, index, self) => self.findIndex(m => m.month === item.month) === index)
+                        .map(({ month, totals, totalPayout, totalSessions }) => {
                             const monthName = new Date(month + '-01').toLocaleDateString(locale === 'ar' ? 'ar-EG' : 'en-US', {
                             year: 'numeric',
                             month: 'long',
