@@ -130,7 +130,11 @@ export async function incrementSessionCompleted(courseId: string): Promise<{ suc
       return { success: false, error: updateError.message };
     }
 
-    revalidatePath('/admin/scheduling');
+    // Revalidate for both locales
+    revalidatePath('/en/admin/scheduling');
+    revalidatePath('/ar/admin/scheduling');
+    revalidatePath('/en/coach/scheduling');
+    revalidatePath('/ar/coach/scheduling');
 
     return { success: true };
   } catch (err) {
@@ -182,7 +186,11 @@ export async function decrementSessionCompleted(courseId: string): Promise<{ suc
       return { success: false, error: updateError.message };
     }
 
-    revalidatePath('/admin/scheduling');
+    // Revalidate for both locales
+    revalidatePath('/en/admin/scheduling');
+    revalidatePath('/ar/admin/scheduling');
+    revalidatePath('/en/coach/scheduling');
+    revalidatePath('/ar/coach/scheduling');
 
     return { success: true };
   } catch (err) {

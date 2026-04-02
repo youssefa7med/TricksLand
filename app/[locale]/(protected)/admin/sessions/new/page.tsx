@@ -105,11 +105,21 @@ export default function AdminNewSessionPage() {
                 attendance_required: form.attendance_required,
             };
             const { data: insertedSession, error } = await supabase.from('sessions').insert(payload).select('id, course_id').single();
-            if (error) toast.error(error.message);
-            else {
+            if (error) {
+                toast.error(error.message);
+            } else {
                 if (insertedSession && (insertedSession as any)?.course_id) {
-                    // Call server action to increment session count
-                    await incrementSessionCompleted((insertedSession as any).course_id);
+                    try {
+                        // Call server action to increment session count
+                        const result = await incrementSessionCompleted((insertedSession as any).course_id);
+                        if (!result.success) {
+                            console.error('Failed to increment session count:', result.error);
+                            toast.error('Session logged but scheduling counter failed to update');
+                        }
+                    } catch (err) {
+                        console.error('Error calling incrementSessionCompleted:', err);
+                        toast.error('Session logged but scheduling counter update failed');
+                    }
                 }
                 toast.success('Competition session logged (75 EGP/hr)');
                 router.push(`/${locale}/admin/sessions`);
@@ -217,8 +227,17 @@ export default function AdminNewSessionPage() {
             toast.error(error.message);
         } else {
             if (insertedSession && (insertedSession as any)?.course_id) {
-                // Call server action to increment session count
-                await incrementSessionCompleted((insertedSession as any).course_id);
+                try {
+                    // Call server action to increment session count
+                    const result = await incrementSessionCompleted((insertedSession as any).course_id);
+                    if (!result.success) {
+                        console.error('Failed to increment session count:', result.error);
+                        toast.error('Session logged but scheduling counter failed to update');
+                    }
+                } catch (err) {
+                    console.error('Error calling incrementSessionCompleted:', err);
+                    toast.error('Session logged but scheduling counter update failed');
+                }
             }
             toast.success('Session logged successfully');
             router.push(`/${locale}/admin/sessions`);

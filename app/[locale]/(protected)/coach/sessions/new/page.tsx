@@ -229,8 +229,17 @@ export default function CoachNewSessionPage() {
             toast.error(error.message);
         } else {
             if (insertedSession && (insertedSession as any)?.course_id) {
-                // Call server action to increment session count
-                await incrementSessionCompleted((insertedSession as any).course_id);
+                try {
+                    // Call server action to increment session count
+                    const result = await incrementSessionCompleted((insertedSession as any).course_id);
+                    if (!result.success) {
+                        console.error('Failed to increment session count:', result.error);
+                        toast.error('Session logged but scheduling counter failed to update');
+                    }
+                } catch (err) {
+                    console.error('Error calling incrementSessionCompleted:', err);
+                    toast.error('Session logged but scheduling counter update failed');
+                }
             }
             toast.success('Session logged successfully');
             router.push(`/${locale}/coach/sessions`);
