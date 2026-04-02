@@ -92,6 +92,109 @@ export async function getCourseSchedule(courseId: string): Promise<CourseSchedul
 }
 
 /**
+ * Update course schedule - increment sessions_completed when session is logged
+ */
+export async function incrementSessionCompleted(courseId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient();
+
+    // Find the active schedule for this course
+    const { data: schedule, error: fetchError } = await supabase
+      .from('course_schedules')
+      .select('id, sessions_completed')
+      .eq('course_id', courseId)
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('Error fetching schedule:', fetchError);
+      return { success: false, error: fetchError.message };
+    }
+
+    if (!schedule) {
+      // No active schedule found, but don't fail - just skip
+      return { success: true };
+    }
+
+    // Increment sessions_completed
+    const { error: updateError } = await supabase
+      .from('course_schedules')
+      .update({
+        sessions_completed: (schedule.sessions_completed || 0) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', schedule.id);
+
+    if (updateError) {
+      console.error('Error incrementing sessions_completed:', updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    revalidatePath('/admin/scheduling');
+
+    return { success: true };
+  } catch (err) {
+    console.error('Error in incrementSessionCompleted:', err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Decrement sessions_completed when session is deleted/cancelled
+ */
+export async function decrementSessionCompleted(courseId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient();
+
+    // Find the active schedule for this course
+    const { data: schedule, error: fetchError } = await supabase
+      .from('course_schedules')
+      .select('id, sessions_completed')
+      .eq('course_id', courseId)
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('Error fetching schedule:', fetchError);
+      return { success: false, error: fetchError.message };
+    }
+
+    if (!schedule) {
+      // No active schedule found, but don't fail - just skip
+      return { success: true };
+    }
+
+    // Decrement sessions_completed (don't go below 0)
+    const newCount = Math.max(0, (schedule.sessions_completed || 1) - 1);
+    const { error: updateError } = await supabase
+      .from('course_schedules')
+      .update({
+        sessions_completed: newCount,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', schedule.id);
+
+    if (updateError) {
+      console.error('Error decrementing sessions_completed:', updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    revalidatePath('/admin/scheduling');
+
+    return { success: true };
+  } catch (err) {
+    console.error('Error in decrementSessionCompleted:', err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
+  }
+}
+
+/**
  * Update course schedule
  */
 export async function updateCourseSchedule(
@@ -330,53 +433,5 @@ export async function getScheduleStats(scheduleId: string): Promise<{
   };
 }
 
-/**
- * Calculate expected end date based on total sessions and sessions per week
- */
-export function calculateExpectedEndDate(
-  startDate: string,
-  totalSessions: number,
-  sessionsPerWeek: number
-): string {
-  const start = new Date(startDate);
-  
-  // Calculate number of weeks needed
-  const weeksNeeded = Math.ceil(totalSessions / sessionsPerWeek);
-  
-  // Add weeks to start date
-  const end = new Date(start);
-  end.setDate(end.getDate() + weeksNeeded * 7);
-  
-  return end.toISOString().split('T')[0];
-}
-
-/**
- * Validate schedule dates
- */
-export function validateScheduleDates(
-  startDate: string,
-  endDate: string,
-  totalSessions: number,
-  sessionsPerWeek: number
-): { valid: boolean; message?: string } {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-
-  if (start >= end) {
-    return { valid: false, message: 'Start date must be before end date' };
-  }
-
-  // Calculate minimum days needed
-  const weeksNeeded = Math.ceil(totalSessions / sessionsPerWeek);
-  const minDays = weeksNeeded * 7;
-  const actualDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-
-  if (actualDays < minDays) {
-    return {
-      valid: false,
-      message: `Insufficient time: need at least ${minDays} days for ${totalSessions} sessions at ${sessionsPerWeek} per week`,
-    };
-  }
-
-  return { valid: true };
-}
+// These utility functions don't need to be server actions - they're just calculations
+// Removed from this file and can be imported from lib/utils or called from client as regular functions
