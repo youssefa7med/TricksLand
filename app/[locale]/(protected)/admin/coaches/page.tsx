@@ -4,7 +4,10 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { GlassCard } from '@/components/layout/GlassCard';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 import { toast } from 'sonner';
+import { Pagination, usePagination } from '@/components/ui/Pagination';
 
 interface CourseInfo { id: string; name: string; status: string; }
 interface Coach {
@@ -29,6 +32,7 @@ export default function AdminCoachesPage() {
     const [editName, setEditName] = useState('');
     const [saving, setSaving] = useState(false);
     const [filter, setFilter] = useState<'all' | 'self' | 'admin'>('all');
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
 
     const fetchCoaches = async () => {
         try {
@@ -89,7 +93,8 @@ export default function AdminCoachesPage() {
     };
 
     const handleDelete = async (id: string, name: string) => {
-        if (!confirm(t('deleteConfirm').replace('%name%', name))) return;
+        const confirmed = await confirm(t('deleteConfirm').replace('%name%', name), `This will permanently delete "${name}" and all their data.`, true);
+        if (!confirmed) return;
         try {
             const res = await fetch(`/api/admin/coaches/${id}`, { method: 'DELETE' });
             const json = await res.json();
@@ -105,6 +110,7 @@ export default function AdminCoachesPage() {
 
     const selfRegistered = coaches.filter((c) => !c.created_by_admin);
     const filteredCoaches = filter === 'all' ? coaches : filter === 'self' ? selfRegistered : coaches.filter((c) => c.created_by_admin);
+    const { page, totalPages, paginated, goToPage } = usePagination(filteredCoaches, 20);
 
     if (loading) {
         return <div className="page-container flex items-center justify-center"><p className="text-white/70 text-lg">{t('loadingCoaches')}</p></div>;
@@ -112,6 +118,7 @@ export default function AdminCoachesPage() {
 
     return (
         <div className="page-container">
+            <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="flex justify-between items-start flex-wrap gap-3 mb-6">
@@ -209,7 +216,7 @@ export default function AdminCoachesPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredCoaches.map((coach) => {
+                                    {paginated.map((coach) => {
                                         const courses = coach.course_coaches.map((cc) => cc.courses).filter(Boolean) as CourseInfo[];
                                         const isEditing = editingId === coach.id;
                                         const isSelfRegistered = !coach.created_by_admin;
@@ -295,7 +302,7 @@ export default function AdminCoachesPage() {
                                             </tr>
                                         );
                                     })}
-                                    {filteredCoaches.length === 0 && (
+                                    {paginated.length === 0 && (
                                         <tr>
                                             <td colSpan={4} className="py-12 text-center text-white/40 text-sm">
                                                 {t('noFilterMatch')}
@@ -304,6 +311,10 @@ export default function AdminCoachesPage() {
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                        <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
+                        <div className="mt-4 text-white/50 text-sm text-right">
+                            {(page - 1) * 20 + 1}–{Math.min(page * 20, filteredCoaches.length)} of {filteredCoaches.length}
                         </div>
                     </GlassCard>
                 )}

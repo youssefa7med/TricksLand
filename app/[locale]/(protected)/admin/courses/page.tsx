@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
+import { CourseReviews } from '@/components/CourseReviews';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { useParams } from 'next/navigation';
@@ -14,8 +17,12 @@ export default function AdminCoursesPage() {
     const supabase = createClient();
     const t = useTranslations('pages.courses');
     const tc = useTranslations('common');
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
     const [courses, setCourses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [statusTab, setStatusTab] = useState<'active' | 'archived'>('active');
+    const [viewTab, setViewTab] = useState<'courses' | 'reviews'>('courses');
+    const visibleCourses = courses.filter((course) => course.status === statusTab);
 
     const fetchCourses = async () => {
         const { data, error } = await supabase
@@ -38,7 +45,8 @@ export default function AdminCoursesPage() {
     useEffect(() => { fetchCourses(); }, []);
 
     const handleDelete = async (id: string, name: string) => {
-        if (!confirm(t('deleteConfirm').replace('%name%', name))) return;
+        const confirmed = await confirm(t('deleteConfirm').replace('%name%', name), 'This will remove all associated data including sessions and student records.', true);
+        if (!confirmed) return;
         const { error } = await supabase.from('courses').delete().eq('id', id);
         if (error) {
             toast.error(error.message);
@@ -58,6 +66,7 @@ export default function AdminCoursesPage() {
 
     return (
         <div className="page-container">
+            <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
             <div className="max-w-7xl mx-auto">
                 <div className="flex justify-between items-start flex-wrap gap-3 mb-6 md:mb-8">
                     <div>
@@ -69,8 +78,28 @@ export default function AdminCoursesPage() {
                     </Link>
                 </div>
 
+                {/* View Tabs: Courses | Reviews */}
+                <div className="mb-6 inline-flex rounded-xl border border-white/15 bg-white/5 p-1" role="tablist" aria-label="View mode">
+                    {(['courses', 'reviews'] as const).map((tab) => (
+                        <button key={tab} type="button" role="tab" aria-selected={viewTab === tab} onClick={() => setViewTab(tab)} className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${viewTab === tab ? 'bg-primary text-white shadow' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}>
+                            {tab === 'courses' ? tc('courses') : (t('reviews') || 'Reviews')}
+                        </button>
+                    ))}
+                </div>
+
+                {viewTab === 'reviews' ? (
+                    <CourseReviews showAll />
+                ) : (
+                <>
+                <div className="mb-6 inline-flex rounded-xl border border-white/15 bg-white/5 p-1" role="tablist" aria-label="Course status">
+                    {(['active', 'archived'] as const).map((status) => (
+                        <button key={status} type="button" role="tab" aria-selected={statusTab === status} onClick={() => setStatusTab(status)} className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${statusTab === status ? 'bg-primary text-white shadow' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}>
+                            {status === 'active' ? tc('active') : tc('archived')} ({courses.filter((course) => course.status === status).length})
+                        </button>
+                    ))}
+                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {courses.map((course: any) => (
+                    {visibleCourses.map((course: any) => (
                         <GlassCard key={course.id} hover>
                             <div className="flex justify-between items-start mb-4 gap-3">
                                 <div className="flex-1 min-w-0">
@@ -130,6 +159,12 @@ export default function AdminCoursesPage() {
                                 >
                                     {tc('students')}
                                 </Link>
+                                <Link
+                                    href={`/${locale}/admin/courses/${course.id}/reviews`}
+                                    className="text-yellow-400 hover:text-white transition-colors text-sm font-medium"
+                                >
+                                    {t('reviews') || 'Reviews'}
+                                </Link>
                                 <button
                                     onClick={() => handleDelete(course.id, course.name)}
                                     className="text-red-400 hover:text-red-300 transition-colors text-sm font-medium ml-auto"
@@ -141,15 +176,15 @@ export default function AdminCoursesPage() {
                     ))}
                 </div>
 
-                {courses.length === 0 && (
+                {visibleCourses.length === 0 && (
                     <GlassCard>
                         <div className="text-center py-12">
-                            <p className="text-white/70 mb-4">{t('noCourses')}</p>
-                            <Link href={`/${locale}/admin/courses/new`} className="btn-glossy inline-block">
-                                {t('createFirst')}
-                            </Link>
+                            <p className="text-white/70 mb-4">{statusTab === 'active' ? t('noCourses') : 'No archived courses.'}</p>
+                            {statusTab === 'active' && <Link href={`/${locale}/admin/courses/new`} className="btn-glossy inline-block">{t('createFirst')}</Link>}
                         </div>
                     </GlassCard>
+                )}
+                </>
                 )}
             </div>
         </div>

@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
+import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
 
 export default function AdminInvoicePreviewPage() {
     const searchParams = useSearchParams();
@@ -91,7 +92,7 @@ export default function AdminInvoicePreviewPage() {
         );
     }
 
-    if (loading) return <div className="page-container flex items-center justify-center"><p className="text-white/70 text-lg">Loading...</p></div>;
+    if (loading) return <div className="page-container flex items-center justify-center"><LuxuryLoader /></div>;
 
     return (
         <div className="page-container">

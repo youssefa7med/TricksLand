@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
+import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
 
 function computeHours(start: string, end: string): number {
     const [sh, sm] = start.split(':').map(Number);
@@ -164,7 +165,7 @@ export default function CoachEditSessionPage() {
     const selectClass = "w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary";
     const labelClass = "block text-white/80 text-sm font-medium mb-2";
 
-    if (loading) return <div className="page-container flex items-center justify-center"><p className="text-white/70 text-lg">Loading...</p></div>;
+    if (loading) return <div className="page-container flex items-center justify-center"><LuxuryLoader /></div>;
 
     return (
         <div className="page-container">

@@ -3,15 +3,20 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
+import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
+import { Pagination, usePagination } from '@/components/ui/Pagination';
 
 export default function AdminStudentsPage() {
     const locale = useLocale();
     const t = useTranslations('pages.students');
     const tc = useTranslations('common');
     const supabase = createClient();
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
     const [allStudents, setAllStudents] = useState<any[]>([]);
     const [courses, setCourses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -90,6 +95,8 @@ export default function AdminStudentsPage() {
         });
     }, [allStudents, search, courseFilter, courseSearch, ageMin, ageMax]);
 
+    const { page, totalPages, paginated, goToPage } = usePagination(filtered, 20);
+
     const hasFilters = search || courseFilter || courseSearch || ageMin || ageMax;
 
     const clearFilters = () => {
@@ -101,7 +108,8 @@ export default function AdminStudentsPage() {
     };
 
     const handleDelete = async (id: string, name: string) => {
-        if (!confirm(t('deleteConfirm').replace('%name%', name))) return;
+        const confirmed = await confirm(t('deleteConfirm').replace('%name%', name), `This will permanently delete "${name}" from all courses.`, true);
+        if (!confirmed) return;
         const { error } = await (supabase as any).from('students').delete().eq('id', id);
         if (error) toast.error(error.message);
         else { toast.success(t('studentDeleted')); fetchData(); }
@@ -111,12 +119,13 @@ export default function AdminStudentsPage() {
 
     return (
         <div className="page-container">
+            <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
             <div className="max-w-7xl mx-auto">
                 <div className="flex justify-between items-start flex-wrap gap-3 mb-6 md:mb-8">
                     <div>
                         <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">{t('title')}</h1>
                         <p className="text-white/70">
-                            {loading ? '…' : `${filtered.length} / ${allStudents.length}`}
+                            {loading ? '…' : `${(page - 1) * 20 + 1}–${Math.min(page * 20, filtered.length)} of ${filtered.length} / ${allStudents.length}`}
                         </p>
                     </div>
                     <Link href={`/${locale}/admin/students/new`} className="btn-glossy">
@@ -203,7 +212,7 @@ export default function AdminStudentsPage() {
                 </GlassCard>
 
                 {loading ? (
-                    <GlassCard><p className="text-white/70 text-center py-12">Loading...</p></GlassCard>
+                    <GlassCard><LuxuryLoader label="Loading..." /></GlassCard>
                 ) : filtered.length === 0 ? (
                     <GlassCard>
                         <div className="text-center py-12">
@@ -231,13 +240,13 @@ export default function AdminStudentsPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filtered.map((s, idx) => {
+                                    {paginated.map((s, idx) => {
                                         const enrolledCourses: string[] = (s.course_students || [])
                                             .map((cs: any) => cs.courses?.name)
                                             .filter(Boolean);
                                         return (
                                             <tr key={s.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                                <td className="py-3 px-4 text-white/40 text-sm">{idx + 1}</td>
+                                                <td className="py-3 px-4 text-white/40 text-sm">{(page - 1) * 20 + idx + 1}</td>
                                                 <td className="py-3 px-4 text-white font-medium">{s.full_name}</td>
                                                 <td className="py-3 px-4 text-white/70 text-sm">{formatDob(s.date_of_birth)}</td>
                                                 <td className="py-3 px-4 text-white/70 text-sm">{s.phone || '—'}</td>
@@ -277,6 +286,7 @@ export default function AdminStudentsPage() {
                                 </tbody>
                             </table>
                         </div>
+                        <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
                     </GlassCard>
                 )}
             </div>

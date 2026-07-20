@@ -25,6 +25,7 @@ export default async function CoachMyCoursesPage() {
 
     let courses: any[] = [];
     let ratesByCourse: Record<string, number | null> = {};
+    let reviewsByCourse: Record<string, any[]> = {};
 
     if (courseIds.length > 0) {
         // Step 2: fetch full course details — separate query avoids nested RLS issues
@@ -86,6 +87,18 @@ export default async function CoachMyCoursesPage() {
                 ratesByCourse[r.course_id] = r.rate;
             }
         });
+
+        const { data: reviewData } = await supabase
+            .from('course_reviews')
+            .select('id, course_id, rating, review_text, created_at')
+            .eq('coach_id', user.id)
+            .in('course_id', courseIds)
+            .order('created_at', { ascending: false })
+            .limit(20);
+        (reviewData || []).forEach((review: any) => {
+            if (!reviewsByCourse[review.course_id]) reviewsByCourse[review.course_id] = [];
+            reviewsByCourse[review.course_id].push(review);
+        });
     }
 
     return (
@@ -109,6 +122,8 @@ export default async function CoachMyCoursesPage() {
                             const students = course.course_students || [];
                             const currentRate = ratesByCourse[course.id] ?? null;
                             const canLog = course.status === 'active';
+                            const reviews = reviewsByCourse[course.id] || [];
+                            const averageRating = reviews.length ? (reviews.reduce((total, review) => total + review.rating, 0) / reviews.length).toFixed(1) : null;
 
                             return (
                                 <GlassCard key={course.id}>
@@ -152,6 +167,19 @@ export default async function CoachMyCoursesPage() {
                                                 <span className="text-white/30 text-xs">{tc('archived')}</span>
                                             )}
                                         </div>
+                                    </div>
+
+                                    <div className="border-t border-white/10 pt-4 mt-4">
+                                        <div className="flex items-center justify-between gap-3 mb-3">
+                                            <p className="text-white/50 text-xs uppercase font-semibold tracking-wider">Parent feedback</p>
+                                            {averageRating ? <span className="text-amber-300 text-sm font-semibold">★ {averageRating}/5 · {reviews.length}</span> : <span className="text-white/40 text-sm">No feedback yet</span>}
+                                        </div>
+                                        {reviews.length > 0 && <div className="space-y-2">{reviews.slice(0, 3).map((review) => (
+                                            <div key={review.id} className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5">
+                                                <p className="text-amber-300 text-xs mb-1">★ {review.rating}/5</p>
+                                                {review.review_text && <p className="text-white/75 text-sm whitespace-pre-line line-clamp-3">{review.review_text}</p>}
+                                            </div>
+                                        ))}</div>}
                                     </div>
 
                                     {/* Students */}

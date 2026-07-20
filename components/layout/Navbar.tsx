@@ -100,7 +100,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
     ];
 
     const navItems = role === 'admin' ? adminNav : coachNav;
-    const isActive = (href: string) => pathname === href;
+    const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
     const langLabel = locale === 'en' ? 'العربية' : 'English';
 
     return (
@@ -236,7 +236,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                                                     </div>
                                                     <div>
                                                         <p className="text-xs xs:text-sm font-semibold text-white capitalize">{role}</p>
-                                                        <p className="text-[10px] xs:text-xs text-white/60">Administrator</p>
+                                                        <p className="text-[10px] xs:text-xs text-white/60 capitalize">{role === 'admin' ? 'Administrator' : 'Coach'}</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -366,7 +366,7 @@ export function Navbar({ role }: { role: 'admin' | 'coach' }) {
                                         </div>
                                         <div className="min-w-0">
                                             <p className="text-xs xs:text-sm font-semibold text-white capitalize truncate">{role}</p>
-                                            <p className="text-[10px] xs:text-xs text-white/60">Administrator</p>
+                                            <p className="text-[10px] xs:text-xs text-white/60 capitalize">{role === 'admin' ? 'Administrator' : 'Coach'}</p>
                                         </div>
                                     </motion.div>
                                     <motion.div

@@ -6,6 +6,9 @@ import { GlassCard } from '@/components/layout/GlassCard';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
+import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 
 interface ManagedUser {
     id: string;
@@ -80,7 +83,7 @@ export default function SettingsPage() {
     if (loading) {
         return (
             <div className="page-container flex items-center justify-center">
-                <p className="text-white/70 text-lg">Loading...</p>
+                <LuxuryLoader />
             </div>
         );
     }
@@ -195,6 +198,8 @@ function UserManagement({ selfId }: { selfId: string }) {
     const [editPassword, setEditPassword] = useState('');
     const [editSaving, setEditSaving] = useState(false);
 
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
+
     const fetchUsers = useCallback(async () => {
         setLoadingUsers(true);
         try {
@@ -266,7 +271,8 @@ function UserManagement({ selfId }: { selfId: string }) {
     };
 
     const handleDelete = async (id: string, name: string) => {
-        if (!confirm(t('deleteConfirm').replace('%name%', name) + ' This action cannot be undone.')) return;
+        const confirmed = await confirm(t('deleteConfirm').replace('%name%', name), 'This action cannot be undone.', true);
+        if (!confirmed) return;
         try {
             const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
             const json = await res.json();
@@ -280,6 +286,7 @@ function UserManagement({ selfId }: { selfId: string }) {
 
     return (
         <GlassCard>
+            <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                 <div>
                     <h2 className="text-lg font-semibold text-white">{t('userManagement')}</h2>

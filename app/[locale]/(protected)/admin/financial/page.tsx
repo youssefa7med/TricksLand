@@ -4,6 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 
@@ -75,6 +77,7 @@ export default function AdminFinancialPage() {
     const supabase = createClient();
     const t = useTranslations('pages.financial');
     const tc = useTranslations('common');
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
 
     const [courses, setCourses] = useState<Course[]>([]);
     const [summaries, setSummaries] = useState<CourseSummary[]>([]);
@@ -255,7 +258,7 @@ export default function AdminFinancialPage() {
 
         // Guard: cannot pay more than what is remaining
         if (payment && amount > Number(payment.remaining_balance)) {
-            toast.error(`Amount exceeds remaining balance of ${formatCurrency(payment.remaining_balance)}`);
+            toast.error(t('exceedsBalance', { amount: formatCurrency(payment.remaining_balance) }));
             return;
         }
 
@@ -312,7 +315,8 @@ export default function AdminFinancialPage() {
     };
 
     const handleDeleteExpense = async (id: string) => {
-        if (!confirm(t('deleteExpenseConfirm'))) return;
+        const confirmed = await confirm(t('deleteExpenseConfirm'), t('deleteExpenseConfirmDetail'), true);
+        if (!confirmed) return;
         await (supabase as any).from('course_expenses').delete().eq('id', id);
         toast.success(t('expenseDeleted'));
         await loadCourseData(selectedCourse);
@@ -320,7 +324,8 @@ export default function AdminFinancialPage() {
     };
 
     const handleDeleteTransaction = async (tx: PaymentTransaction) => {
-        if (!confirm(t('deleteTransactionConfirm'))) return;
+        const confirmed = await confirm(t('deleteTransactionConfirm'), t('deleteTransactionConfirmDetail'), true);
+        if (!confirmed) return;
         setSaving(true);
         // Delete transaction
         const { error } = await (supabase as any).from('payment_transactions').delete().eq('id', tx.id);
@@ -365,7 +370,8 @@ export default function AdminFinancialPage() {
     };
 
     const handleDeletePaymentRecord = async (paymentId: string) => {
-        if (!confirm(t('deletePaymentConfirm'))) return;
+        const confirmed = await confirm(t('deletePaymentConfirm'), t('deletePaymentConfirmDetail'), true);
+        if (!confirmed) return;
         setSaving(true);
 
         // First delete all transactions for this payment
@@ -412,6 +418,7 @@ export default function AdminFinancialPage() {
 
     return (
         <div className="min-h-screen p-4 md:p-6 space-y-6">
+            <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
             <div>
                 <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
                 <p className="text-white/60 text-sm mt-1">{t('subtitle')}</p>

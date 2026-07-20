@@ -4,10 +4,14 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { ACADEMY_LOCATION } from '@/lib/academy';
+import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
+import { Pagination, usePagination } from '@/components/ui/Pagination';
 
 export default function AdminSessionsPage() {
     const [sessions, setSessions] = useState<any[]>([]);
@@ -22,6 +26,7 @@ export default function AdminSessionsPage() {
     const t = useTranslations('pages.sessions');
     const tc = useTranslations('common');
     const supabase = createClient();
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
 
     const fetchData = async () => {
         setLoading(true);
@@ -70,15 +75,19 @@ export default function AdminSessionsPage() {
 
     useEffect(() => { fetchData(); }, [filterCoach, filterCourse, filterMonth, filterType]);
 
+    const { page, totalPages, paginated, goToPage } = usePagination(sessions, 20);
+
     const handleDelete = async (id: string) => {
-        if (!confirm(t('deleteConfirm'))) return;
+        const confirmed = await confirm(t('deleteConfirm'), 'This will permanently delete this session.', true);
+        if (!confirmed) return;
         const { error } = await supabase.from('sessions').delete().eq('id', id);
         if (error) toast.error(error.message);
         else { toast.success(t('sessionDeleted')); fetchData(); }
     };
 
     const handleMarkAttendance = async (sessionId: string, coachId: string) => {
-        if (!confirm('Mark this session as attended by admin?')) return;
+        const confirmed = await confirm('Mark attendance', 'Mark this session as attended by admin?');
+        if (!confirmed) return;
         
         // Check if attendance already exists
         const { data: existing } = await supabase
@@ -129,6 +138,7 @@ export default function AdminSessionsPage() {
 
     return (
         <div className="page-container">
+            <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
             <div className="max-w-7xl mx-auto">
                 <div className="flex justify-between items-start flex-wrap gap-3 mb-6 md:mb-8">
                     <div>
@@ -186,7 +196,7 @@ export default function AdminSessionsPage() {
                 </GlassCard>
 
                 {loading ? (
-                    <GlassCard><p className="text-white/70 text-center py-12">Loading sessions...</p></GlassCard>
+                    <GlassCard><LuxuryLoader label="Loading sessions..." /></GlassCard>
                 ) : sessions.length === 0 ? (
                     <GlassCard>
                         <div className="text-center py-12">
@@ -213,7 +223,7 @@ export default function AdminSessionsPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {sessions.map((s: any) => (
+                                    {paginated.map((s: any) => (
                                         <tr key={s.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                                             <td className="py-3 px-3 text-white text-sm">{formatDate(s.session_date)}</td>
                                             <td className="py-3 px-3 text-white text-sm">
@@ -285,8 +295,9 @@ export default function AdminSessionsPage() {
                                 </tbody>
                             </table>
                         </div>
+                        <Pagination page={page} totalPages={totalPages} onPageChange={goToPage} />
                         <div className="mt-4 text-white/50 text-sm text-right">
-                            {sessions.length} {sessions.length !== 1 ? t('sessionsFound') : t('sessionFound')}
+                            {(page - 1) * 20 + 1}–{Math.min(page * 20, sessions.length)} of {sessions.length} {sessions.length !== 1 ? t('sessionsFound') : t('sessionFound')}
                         </div>
                     </GlassCard>
                 )}

@@ -61,7 +61,7 @@ export function DashboardStats({ stats, labels }: DashboardStatsProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <StatCard
                     label={labels.totalPayout}
-                    value={`$${stats.payout.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    value={`${stats.payout.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`}
                     icon="💰"
                     delay={0.1}
                 />

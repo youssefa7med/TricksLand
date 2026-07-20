@@ -8,6 +8,9 @@ import { toast } from 'sonner';
 import { useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
+import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 
 export default function AdminCourseCoachesPage() {
     const params = useParams();
@@ -39,6 +42,8 @@ export default function AdminCourseCoachesPage() {
 
     const [coachBaseRates, setCoachBaseRates] = useState<Record<string, any>>({});
     const [useBaseRate, setUseBaseRate] = useState(false);
+
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
 
     const fetchData = async () => {
         const [{ data: courseData }, { data: assignedData }, { data: allCoachData }] = await Promise.all([
@@ -138,7 +143,8 @@ export default function AdminCourseCoachesPage() {
     };
 
     const handleRemove = async (coachId: string, coachName: string) => {
-        if (!confirm(`Remove ${coachName} from this course?`)) return;
+        const confirmed = await confirm('Remove Coach', `Remove ${coachName} from this course?`, false);
+        if (!confirmed) return;
         const { error } = await supabase.from('course_coaches').delete().eq('course_id', courseId).eq('coach_id', coachId);
         if (error) toast.error(error.message);
         else { toast.success('Coach removed'); fetchData(); }
@@ -167,7 +173,7 @@ export default function AdminCourseCoachesPage() {
         setAddingRate(false);
     };
 
-    if (loading) return <div className="page-container flex items-center justify-center"><p className="text-white/70 text-lg">Loading...</p></div>;
+    if (loading) return <div className="page-container flex items-center justify-center"><LuxuryLoader /></div>;
 
     const selectClass = "bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-primary";
     const inputClass = "bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary";
@@ -175,6 +181,7 @@ export default function AdminCourseCoachesPage() {
     return (
         <div className="page-container">
             <div className="max-w-5xl mx-auto">
+                <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
                 <Link href={`/${locale}/admin/courses`} className="text-white/60 hover:text-white transition-colors text-sm mb-8 block">← Back to Courses</Link>
 
                 <div className="mb-8">

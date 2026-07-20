@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { GlassCard } from '@/components/layout/GlassCard';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 import { toast } from 'sonner';
 
 interface AttendanceRecord {
@@ -36,6 +38,7 @@ export default function AdminAttendanceViewPage() {
     const t = useTranslations('pages.attendance');
     const tc = useTranslations('common');
     const supabase = createClient();
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
 
     const [tab, setTab] = useState<'records' | 'pending'>('pending');
     const [loading, setLoading] = useState(true);
@@ -115,7 +118,8 @@ export default function AdminAttendanceViewPage() {
     };
 
     const handleRemoveAttendance = async (attendanceId: string) => {
-        if (!confirm('Remove this attendance record?')) return;
+        const confirmed = await confirm('Remove Record', 'Remove this attendance record? This cannot be undone.', true);
+        if (!confirmed) return;
         const res = await fetch('/api/admin/attendance/mark', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
@@ -141,6 +145,7 @@ export default function AdminAttendanceViewPage() {
 
     return (
         <div className="page-container">
+            <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
             <div className="max-w-6xl mx-auto">
                 <Link href={`/${locale}/admin/dashboard`} className="text-white/60 hover:text-white transition-colors text-sm mb-8 block">
                     {tc('backToDashboard')}

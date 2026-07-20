@@ -6,6 +6,8 @@ import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useLocale, useTranslations } from 'next-intl';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 
 interface CoachMonthlyTotal {
     coach_id: string;
@@ -25,6 +27,8 @@ export default function AdminInvoicesPage() {
     const locale = useLocale();
     const t = useTranslations('pages.invoices');
     const supabase = createClient();
+
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
 
     // Last 6 months - calculated in Egypt timezone (UTC+2)
     const months = Array.from({ length: 6 }, (_, i) => {
@@ -80,7 +84,8 @@ export default function AdminInvoicesPage() {
     }
 
     async function handleSendInvoices(month: string) {
-        if (!confirm(`Send invoice emails to all coaches for ${month}?`)) return;
+        const confirmed = await confirm('Send Invoices', `Send invoice emails to all coaches for ${month}?`, false);
+        if (!confirmed) return;
         const sendingToast = toast.loading(`Sending invoices for ${month}...`);
         try {
             const res = await fetch('/api/admin/invoices/send', {
@@ -119,6 +124,7 @@ export default function AdminInvoicesPage() {
     return (
         <div className="page-container">
             <div className="max-w-7xl mx-auto">
+                <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
                 <div className="flex justify-between items-start flex-wrap gap-3 mb-6 md:mb-8">
                     <h1 className="text-2xl md:text-4xl font-bold text-white">{t('title')}</h1>
                     <div className="text-white/70 text-sm">{t('last6Months')}</div>

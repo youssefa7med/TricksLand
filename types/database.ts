@@ -35,6 +35,18 @@ export interface CourseCoach {
     assigned_at: string;
 }
 
+export interface CourseReview {
+    id: string;
+    course_id: string;
+    coach_id: string;
+    rating: number;
+    title: string;
+    review_text: string | null;
+    responses: Record<string, unknown>;
+    reviewer_name: string | null;
+    created_at: string;
+}
+
 export interface CourseStudent {
     id: string;
     course_id: string;
@@ -335,6 +347,12 @@ export interface Database {
                 Row: CourseCoach;
                 Insert: Omit<CourseCoach, 'assigned_at'>;
                 Update: Partial<CourseCoach>;
+                Relationships: [];
+            };
+            course_reviews: {
+                Row: CourseReview;
+                Insert: Omit<CourseReview, 'id' | 'created_at'>;
+                Update: Partial<Omit<CourseReview, 'id' | 'created_at'>>;
                 Relationships: [];
             };
             course_students: {

@@ -99,7 +99,7 @@ export function RecentSessionsTable({ sessions, labels }: RecentSessionsTablePro
                                     <td className="py-3 px-4 text-white">{session.courses?.name}</td>
                                     <td className="py-3 px-4 text-white">{session.computed_hours}h</td>
                                     <td className="py-3 px-4 text-white text-right">
-                                        {`$${Number(session.subtotal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                                        {`${Number(session.subtotal).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`}
                                     </td>
                                 </AnimatedTableRow>
                             ))}

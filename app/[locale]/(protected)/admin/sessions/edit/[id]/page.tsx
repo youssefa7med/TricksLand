@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
+import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
 
 export default function AdminEditSessionPage() {
     const params = useParams();
@@ -205,7 +206,7 @@ export default function AdminEditSessionPage() {
 
     if (loading) return (
         <div className="page-container flex items-center justify-center">
-            <p className="text-white/70 text-lg">Loading...</p>
+            <LuxuryLoader />
         </div>
     );
 

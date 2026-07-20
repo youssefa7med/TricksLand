@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 
 interface Course { id: string; name: string; }
 interface Schedule {
@@ -52,6 +54,8 @@ export default function AdminSchedulingPage() {
     const [sessionsPerWeek, setSessionsPerWeek] = useState('3');
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
     const [overrideEndDate, setOverrideEndDate] = useState('');
+
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
 
     const calculatedEnd = calcEndDate(startDate, Number(totalSessions), Number(sessionsPerWeek));
     const finalEndDate = overrideEndDate || calculatedEnd;
@@ -124,12 +128,10 @@ export default function AdminSchedulingPage() {
         setShowForm(true);
     };
 
-    const confirmIfCompleted = (schedule: Schedule, action: () => void) => {
+    const confirmIfCompleted = async (schedule: Schedule, action: () => void) => {
         if (schedule.status === 'completed') {
-            const ok = window.confirm(
-                'This schedule is marked as completed.\nAre you sure you want to edit it?'
-            );
-            if (!ok) return;
+            const confirmed = await confirm('Edit Schedule', 'This schedule is marked as completed. Are you sure you want to edit it?', false);
+            if (!confirmed) return;
         }
         action();
     };
@@ -161,6 +163,7 @@ export default function AdminSchedulingPage() {
 
     return (
         <div className="min-h-screen p-4 md:p-6 space-y-6">
+            <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
             <div className="flex justify-between items-center flex-wrap gap-3">
                 <div>
                     <h1 className="text-2xl font-bold text-white">{t('title')}</h1>

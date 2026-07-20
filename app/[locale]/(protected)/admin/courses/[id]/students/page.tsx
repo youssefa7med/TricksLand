@@ -7,6 +7,9 @@ import { toast } from 'sonner';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
+import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 
 export default function AdminCourseStudentsPage() {
     const params = useParams();
@@ -21,6 +24,8 @@ export default function AdminCourseStudentsPage() {
     const [adding, setAdding] = useState(false);
     const [selectedStudentId, setSelectedStudentId] = useState('');
     const [search, setSearch] = useState('');
+
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -70,7 +75,8 @@ export default function AdminCourseStudentsPage() {
     };
 
     const handleRemove = async (enrollmentId: string, studentName: string) => {
-        if (!confirm(`Remove "${studentName}" from this course?`)) return;
+        const confirmed = await confirm('Remove Student', `Remove "${studentName}" from this course?`, false);
+        if (!confirmed) return;
         const { error } = await (supabase as any).from('course_students').delete().eq('id', enrollmentId);
         if (error) toast.error(error.message);
         else { toast.success('Student removed'); fetchData(); }
@@ -83,13 +89,14 @@ export default function AdminCourseStudentsPage() {
         return `${age} yrs`;
     };
 
-    if (loading) return <div className="page-container flex items-center justify-center"><p className="text-white/70 text-lg">Loading...</p></div>;
+    if (loading) return <div className="page-container flex items-center justify-center"><LuxuryLoader /></div>;
 
     const inputClass = "bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary";
 
     return (
         <div className="page-container">
             <div className="max-w-3xl mx-auto">
+                <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
                 <Link href={`/${locale}/admin/courses`} className="text-white/60 hover:text-white transition-colors text-sm mb-8 block">← Back to Courses</Link>
 
                 <div className="mb-8">

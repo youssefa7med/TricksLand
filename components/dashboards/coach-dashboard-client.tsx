@@ -31,12 +31,14 @@ interface CoachDashboardClientProps {
         netPayout: string;
         online: string;
         offline: string;
+        noCoursesAssigned: string;
+        noSessionsFound: string;
     };
     locale: string;
 }
 
 function formatCurrency(amount: number): string {
-    return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`;
 }
 
 export function CoachDashboardClient({
@@ -64,13 +66,13 @@ export function CoachDashboardClient({
                 />
                 <StatCard
                     label={labels.grossTotal}
-                    value={`$${stats.gross.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    value={`${stats.gross.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`}
                     icon="💵"
                     delay={0.2}
                 />
                 <StatCard
                     label={labels.netPayout}
-                    value={`$${stats.net.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    value={`${stats.net.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`}
                     icon="💰"
                     delay={0.3}
                 />
@@ -110,7 +112,7 @@ export function CoachDashboardClient({
                         ))
                     ) : (
                         <div className="col-span-full text-center py-8 text-white/50">
-                            No courses assigned yet
+                            {labels.noCoursesAssigned || 'No courses assigned yet'}
                         </div>
                     )}
                 </div>
@@ -223,7 +225,7 @@ export function CoachDashboardClient({
                             ) : (
                                 <tr>
                                     <td colSpan={7} className="py-8 px-4 text-center text-white/50">
-                                        No sessions found
+                                        {labels.noSessionsFound || 'No sessions found'}
                                     </td>
                                 </tr>
                             )}

@@ -34,7 +34,7 @@ interface AdminDashboardClientProps {
 }
 
 function formatCurrency(amount: number): string {
-    return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`;
 }
 
 export function AdminDashboardClient({

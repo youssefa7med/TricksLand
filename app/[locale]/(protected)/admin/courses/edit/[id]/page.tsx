@@ -6,6 +6,9 @@ import { GlassCard } from '@/components/layout/GlassCard';
 import { toast } from 'sonner';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 
 interface Coach { id: string; full_name: string; email: string; }
 interface AssignedCoach {
@@ -57,6 +60,8 @@ export default function AdminEditCoursePage() {
     };
     const [rateDate, setRateDate] = useState(getDefaultRateDate());
     const [addingRate, setAddingRate] = useState(false);
+
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
 
     const inputClass = "w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary";
 
@@ -142,7 +147,8 @@ export default function AdminEditCoursePage() {
     };
 
     const handleDeleteFeeItem = async (id: string) => {
-        if (!confirm('Delete this fee item? Any student payment records for this item will also be removed.')) return;
+        const confirmed = await confirm('Delete Fee Item', 'Delete this fee item? Any student payment records for this item will also be removed.', true);
+        if (!confirmed) return;
         const { error } = await (supabase as any).from('course_fee_items').delete().eq('id', id);
         if (error) { toast.error(error.message); return; }
         toast.success('Fee item deleted');
@@ -191,7 +197,8 @@ export default function AdminEditCoursePage() {
     };
 
     const handleRemove = async (coachId: string, coachName: string) => {
-        if (!confirm(`Remove ${coachName} from this course?`)) return;
+        const confirmed = await confirm('Remove Coach', `Remove ${coachName} from this course?`, false);
+        if (!confirmed) return;
         const { error } = await (supabase as any)
             .from('course_coaches')
             .delete()
@@ -229,13 +236,14 @@ export default function AdminEditCoursePage() {
 
     if (loading) return (
         <div className="page-container flex items-center justify-center">
-            <p className="text-white/70 text-lg">Loading...</p>
+            <LuxuryLoader />
         </div>
     );
 
     return (
         <div className="page-container">
             <div className="max-w-3xl mx-auto">
+                <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
                 <Link href={`/${locale}/admin/courses`} className="text-white/60 hover:text-white transition-colors text-sm mb-8 block">
                     ← Back to Courses
                 </Link>

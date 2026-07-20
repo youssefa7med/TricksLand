@@ -6,12 +6,15 @@ import { GlassCard } from '@/components/layout/GlassCard';
 import { toast } from 'sonner';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
 
 export default function AdminCoachProfilePage() {
     const params = useParams();
     const locale = useLocale();
+    const t = useTranslations('pages.coaches.profile');
+    const tc = useTranslations('common');
     const coachId = params.id as string;
     const supabase = createClient();
 
@@ -68,7 +71,7 @@ export default function AdminCoachProfilePage() {
                 });
             }
         } catch (error: any) {
-            toast.error(error.message || 'Failed to load coach data');
+            toast.error(error.message || t('failedToLoad'));
         } finally {
             setLoading(false);
         }
@@ -76,7 +79,7 @@ export default function AdminCoachProfilePage() {
 
     const handleUpdateRate = async () => {
         const baseRate = parseFloat(rateForm.base_hourly_rate);
-        if (isNaN(baseRate) || baseRate <= 0) { toast.error('Please enter a valid base rate'); return; }
+        if (isNaN(baseRate) || baseRate <= 0) { toast.error(t('invalidBaseRate')); return; }
 
         const effectiveFrom = rateForm.rate_effective_from || new Date().toISOString().split('T')[0];
         // Auto-derive: if admin didn't set a next increase date, schedule it 1 year after effective_from
@@ -94,11 +97,11 @@ export default function AdminCoachProfilePage() {
             const increaseDate = new Date(nextIncreaseDate);
             const effectiveDateObj = new Date(effectiveFrom);
             if (increaseDate <= today) {
-                toast.error('Next increase date must be a future date');
+                toast.error(t('increaseDateMustBeFuture'));
                 return;
             }
             if (increaseDate <= effectiveDateObj) {
-                toast.error('Next increase date must be after the effective date');
+                toast.error(t('increaseDateMustBeAfterEffective'));
                 return;
             }
         }
@@ -113,14 +116,14 @@ export default function AdminCoachProfilePage() {
             }),
         });
         const json = await res.json();
-        if (!res.ok) { toast.error(json.error || 'Failed to update rate'); }
-        else { toast.success('Rate updated'); setEditingRate(false); loadCoachData(); }
+        if (!res.ok) { toast.error(json.error || t('failedToUpdateRate')); }
+        else { toast.success(t('rateUpdated')); setEditingRate(false); loadCoachData(); }
     };
 
     const handleUpdateBio = async () => {
         const { error } = await (supabase as any).from('profiles').update({ bio: bioValue }).eq('id', coachId);
         if (error) { toast.error(error.message); }
-        else { toast.success('Bio updated'); setEditingBio(false); loadCoachData(); }
+        else { toast.success(t('bioUpdated')); setEditingBio(false); loadCoachData(); }
     };
 
     const calculateCurrentRate = () => {
@@ -150,14 +153,14 @@ export default function AdminCoachProfilePage() {
 
     const inputClass = 'w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-primary';
 
-    if (loading) return <div className="page-container flex items-center justify-center"><p className="text-white/70 text-lg">Loading...</p></div>;
-    if (!coach) return <div className="page-container"><p className="text-white/70">Coach not found</p><Link href={`/${locale}/admin/coaches`} className="text-primary">Back to Coaches</Link></div>;
+    if (loading) return <div className="page-container flex items-center justify-center"><LuxuryLoader /></div>;
+    if (!coach) return <div className="page-container"><p className="text-white/70">{t('coachNotFound')}</p><Link href={`/${locale}/admin/coaches`} className="text-primary">{t('backToCoaches')}</Link></div>;
 
     return (
         <div className="page-container">
             <div className="max-w-6xl mx-auto">
                 <Link href={`/${locale}/admin/coaches`} className="text-white/60 hover:text-white transition-colors text-sm mb-8 block">
-                    ← Back to Coaches
+                    {t('backToCoaches')}
                 </Link>
 
                 {/* Profile Header */}
@@ -170,17 +173,17 @@ export default function AdminCoachProfilePage() {
                         <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-3 mb-1">
                                 <h1 className="text-2xl md:text-3xl font-bold text-white">{coach.full_name}</h1>
-                                <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs font-medium border border-primary/30">Coach</span>
+                                <span className="px-2 py-0.5 rounded bg-primary/20 text-primary text-xs font-medium border border-primary/30">{tc('coach')}</span>
                             </div>
                             <p className="text-white/60 text-sm mb-2">{coach.email}</p>
                             {coach.created_at && (
-                                <p className="text-white/40 text-xs">Member since {formatDate(coach.created_at)}</p>
+                                <p className="text-white/40 text-xs">{t('memberSince')} {formatDate(coach.created_at)}</p>
                             )}
                             {/* Bio */}
                             {!editingBio ? (
                                 <div className="mt-3">
-                                    <p className="text-white/70 text-sm leading-relaxed">{coach.bio || <span className="italic text-white/40">No bio yet.</span>}</p>
-                                    <button onClick={() => setEditingBio(true)} className="text-primary text-xs mt-2 hover:underline">Edit bio</button>
+                                    <p className="text-white/70 text-sm leading-relaxed">{coach.bio || <span className="italic text-white/40">{t('noBioYet')}</span>}</p>
+                                    <button onClick={() => setEditingBio(true)} className="text-primary text-xs mt-2 hover:underline">{t('editBio')}</button>
                                 </div>
                             ) : (
                                 <div className="mt-3 space-y-2">
@@ -188,12 +191,12 @@ export default function AdminCoachProfilePage() {
                                         value={bioValue}
                                         onChange={(e) => setBioValue(e.target.value)}
                                         rows={3}
-                                        placeholder="Brief bio or description..."
+                                        placeholder={t('bioPlaceholder')}
                                         className={`${inputClass} resize-none`}
                                     />
                                     <div className="flex gap-2">
-                                        <button onClick={handleUpdateBio} className="btn-glossy text-sm">Save Bio</button>
-                                        <button onClick={() => setEditingBio(false)} className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-white text-sm transition-colors">Cancel</button>
+                                        <button onClick={handleUpdateBio} className="btn-glossy text-sm">{t('saveBio')}</button>
+                                        <button onClick={() => setEditingBio(false)} className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-white text-sm transition-colors">{tc('cancel')}</button>
                                     </div>
                                 </div>
                             )}
@@ -204,30 +207,30 @@ export default function AdminCoachProfilePage() {
                 {/* All-Time Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                     <GlassCard>
-                        <p className="text-white/50 text-xs uppercase tracking-wide mb-1">All-Time Sessions</p>
+                        <p className="text-white/50 text-xs uppercase tracking-wide mb-1">{t('allTimeSessions')}</p>
                         <p className="text-3xl font-bold text-white">{allTimeStats.totalSessions}</p>
                     </GlassCard>
                     <GlassCard>
-                        <p className="text-white/50 text-xs uppercase tracking-wide mb-1">All-Time Hours</p>
+                        <p className="text-white/50 text-xs uppercase tracking-wide mb-1">{t('allTimeHours')}</p>
                         <p className="text-3xl font-bold text-white">{allTimeStats.totalHours.toFixed(1)}h</p>
                     </GlassCard>
                     <GlassCard>
-                        <p className="text-white/50 text-xs uppercase tracking-wide mb-1">All-Time Earnings</p>
+                        <p className="text-white/50 text-xs uppercase tracking-wide mb-1">{t('allTimeEarnings')}</p>
                         <p className="text-3xl font-bold text-green-400">{formatCurrency(allTimeStats.totalEarnings)}</p>
                     </GlassCard>
                 </div>
                 {/* Last 30 Days Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <GlassCard>
-                        <p className="text-white/50 text-xs uppercase tracking-wide mb-1">Sessions (30d)</p>
+                        <p className="text-white/50 text-xs uppercase tracking-wide mb-1">{t('sessions30d')}</p>
                         <p className="text-2xl font-bold text-white">{recentStats.totalSessions}</p>
                     </GlassCard>
                     <GlassCard>
-                        <p className="text-white/50 text-xs uppercase tracking-wide mb-1">Hours (30d)</p>
+                        <p className="text-white/50 text-xs uppercase tracking-wide mb-1">{t('hours30d')}</p>
                         <p className="text-2xl font-bold text-white">{recentStats.totalHours.toFixed(1)}h</p>
                     </GlassCard>
                     <GlassCard>
-                        <p className="text-white/50 text-xs uppercase tracking-wide mb-1">Earnings (30d)</p>
+                        <p className="text-white/50 text-xs uppercase tracking-wide mb-1">{t('earnings30d')}</p>
                         <p className="text-2xl font-bold text-white">{formatCurrency(recentStats.totalEarnings)}</p>
                     </GlassCard>
                 </div>
@@ -236,38 +239,38 @@ export default function AdminCoachProfilePage() {
                 <GlassCard className="mb-6">
                     <div className="flex justify-between items-start mb-4">
                         <div>
-                            <h2 className="text-xl font-semibold text-white mb-2">Base Hourly Rate</h2>
+                            <h2 className="text-xl font-semibold text-white mb-2">{t('baseHourlyRate')}</h2>
                             {coach.base_hourly_rate ? (
                                 <div className="space-y-1">
                                     <p className="text-white/80">
-                                        Base: <span className="font-bold text-white text-lg">{formatCurrency(coach.base_hourly_rate)}</span>
+                                        {t('baseLabel')} <span className="font-bold text-white text-lg">{formatCurrency(coach.base_hourly_rate)}</span>
                                         <span className="text-white/40 text-sm ml-2">/hr</span>
                                     </p>
                                     {currentRate && currentRate !== Number(coach.base_hourly_rate) && (
                                         <p className="text-green-400 font-semibold">
-                                            Current (with annual increases): {formatCurrency(currentRate)}/hr
+                                            {t('currentRateWithIncreases')} {formatCurrency(currentRate)}/hr
                                         </p>
                                     )}
                                     {coach.rate_effective_from && (
-                                        <p className="text-white/50 text-sm">Effective from: {formatDate(coach.rate_effective_from)}</p>
+                                        <p className="text-white/50 text-sm">{t('effectiveFrom')} {formatDate(coach.rate_effective_from)}</p>
                                     )}
                                     {coach.next_rate_increase_date && (() => {
                                         const isOverdue = new Date(coach.next_rate_increase_date) < new Date(new Date().toDateString());
                                         return isOverdue ? (
                                             <p className="text-red-400 text-sm font-semibold">
-                                                ⚠️ Overdue increase: {formatDate(coach.next_rate_increase_date)} — increase not yet applied. Run the cron manually or update the rate.
+                                                {t('overdueIncrease')} {formatDate(coach.next_rate_increase_date)} — {t('overdueIncreaseNote')}
                                             </p>
                                         ) : (
-                                            <p className="text-yellow-400 text-sm">Next 25% increase: {formatDate(coach.next_rate_increase_date)}</p>
+                                            <p className="text-yellow-400 text-sm">{t('nextIncrease')} {formatDate(coach.next_rate_increase_date)}</p>
                                         );
                                     })()}
                                 </div>
                             ) : (
-                                <p className="text-white/60">No base rate set</p>
+                                <p className="text-white/60">{t('noBaseRateSet')}</p>
                             )}
                         </div>
                         <button onClick={() => setEditingRate(!editingRate)} className="btn-glossy text-sm">
-                            {editingRate ? 'Cancel' : 'Edit Rate'}
+                            {editingRate ? tc('cancel') : t('editRate')}
                         </button>
                     </div>
 
@@ -275,36 +278,36 @@ export default function AdminCoachProfilePage() {
                         <div className="border-t border-white/10 pt-4 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-white/80 text-sm font-medium mb-2">Base Rate (EGP/hr) *</label>
+                                    <label className="block text-white/80 text-sm font-medium mb-2">{t('baseRateInput')}</label>
                                     <input type="number" step="0.01" min="0.01" value={rateForm.base_hourly_rate}
                                         onChange={(e) => setRateForm({ ...rateForm, base_hourly_rate: e.target.value })}
                                         className={inputClass} placeholder="80.00" />
                                 </div>
                                 <div>
-                                    <label className="block text-white/80 text-sm font-medium mb-2">Effective From</label>
+                                    <label className="block text-white/80 text-sm font-medium mb-2">{t('effectiveFromLabel')}</label>
                                     <input type="date" value={rateForm.rate_effective_from}
                                         onChange={(e) => setRateForm({ ...rateForm, rate_effective_from: e.target.value })}
                                         className={inputClass} />
                                 </div>
                                 <div>
-                                    <label className="block text-white/80 text-sm font-medium mb-2">Next Increase Date</label>
+                                    <label className="block text-white/80 text-sm font-medium mb-2">{t('nextIncreaseDateLabel')}</label>
                                     <input type="date" value={rateForm.next_rate_increase_date}
                                         min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
                                         onChange={(e) => setRateForm({ ...rateForm, next_rate_increase_date: e.target.value })}
                                         className={inputClass} />
-                                    <p className="text-white/40 text-xs mt-1">Leave blank to auto-schedule 1 year after effective date. Must be a future date.</p>
+                                    <p className="text-white/40 text-xs mt-1">{t('nextIncreaseDateHint')}</p>
                                 </div>
                             </div>
-                            <button onClick={handleUpdateRate} className="btn-glossy">Save Rate</button>
+                            <button onClick={handleUpdateRate} className="btn-glossy">{t('saveRate')}</button>
                         </div>
                     )}
                 </GlassCard>
 
                 {/* Assigned Courses */}
                 <GlassCard className="mb-6">
-                    <h2 className="text-xl font-semibold text-white mb-4">Assigned Courses</h2>
+                    <h2 className="text-xl font-semibold text-white mb-4">{t('assignedCourses')}</h2>
                     {courses.length === 0 ? (
-                        <p className="text-white/60">No courses assigned</p>
+                        <p className="text-white/60">{t('noCoursesAssigned')}</p>
                     ) : (
                         <div className="space-y-2">
                             {courses.map((course: any) => (
@@ -313,10 +316,10 @@ export default function AdminCoachProfilePage() {
                                         <p className="text-white font-medium">{course.name}</p>
                                         <p className="text-white/60 text-sm">
                                             {course.status}
-                                            {course.hourly_rate && ` · Default rate: ${formatCurrency(course.hourly_rate)}/hr`}
+                                            {course.hourly_rate && ` · ${t('defaultRate')} ${formatCurrency(course.hourly_rate)}/hr`}
                                         </p>
                                     </div>
-                                    <Link href={`/${locale}/admin/courses/${course.id}`} className="text-primary hover:text-white text-sm">View →</Link>
+                                    <Link href={`/${locale}/admin/courses/${course.id}`} className="text-primary hover:text-white text-sm">{t('viewCourse')}</Link>
                                 </div>
                             ))}
                         </div>
@@ -325,17 +328,17 @@ export default function AdminCoachProfilePage() {
 
                 {/* Rate History */}
                 <GlassCard className="mb-6">
-                    <h2 className="text-xl font-semibold text-white mb-4">Course-Specific Rates</h2>
+                    <h2 className="text-xl font-semibold text-white mb-4">{t('courseSpecificRates')}</h2>
                     {rates.length === 0 ? (
-                        <p className="text-white/60">No course-specific rates set — using base rate or course defaults</p>
+                        <p className="text-white/60">{t('noRatesSet')}</p>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-white/10">
-                                        <th className="text-left py-2 px-3 text-white/60">Course</th>
-                                        <th className="text-left py-2 px-3 text-white/60">Rate</th>
-                                        <th className="text-left py-2 px-3 text-white/60">Effective From</th>
+                                        <th className="text-left py-2 px-3 text-white/60">{t('courseCol')}</th>
+                                        <th className="text-left py-2 px-3 text-white/60">{t('rateCol')}</th>
+                                        <th className="text-left py-2 px-3 text-white/60">{t('effectiveFromCol')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -354,19 +357,19 @@ export default function AdminCoachProfilePage() {
 
                 {/* Recent Sessions */}
                 <GlassCard>
-                    <h2 className="text-xl font-semibold text-white mb-4">Recent Sessions (Last 30 Days)</h2>
+                    <h2 className="text-xl font-semibold text-white mb-4">{t('recentSessions')}</h2>
                     {sessions.length === 0 ? (
-                        <p className="text-white/60">No sessions in the last 30 days</p>
+                        <p className="text-white/60">{t('noSessionsRecent')}</p>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-white/10">
-                                        <th className="text-left py-2 px-3 text-white/60">Date</th>
-                                        <th className="text-left py-2 px-3 text-white/60">Course</th>
-                                        <th className="text-left py-2 px-3 text-white/60">Hours</th>
-                                        <th className="text-left py-2 px-3 text-white/60">Rate</th>
-                                        <th className="text-right py-2 px-3 text-white/60">Amount</th>
+                                        <th className="text-left py-2 px-3 text-white/60">{t('dateCol')}</th>
+                                        <th className="text-left py-2 px-3 text-white/60">{t('courseCol')}</th>
+                                        <th className="text-left py-2 px-3 text-white/60">{t('hoursCol')}</th>
+                                        <th className="text-left py-2 px-3 text-white/60">{t('rateCol')}</th>
+                                        <th className="text-right py-2 px-3 text-white/60">{t('amountCol')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -376,7 +379,7 @@ export default function AdminCoachProfilePage() {
                                             <td className="py-2 px-3 text-white">{(session.courses as any)?.name || '—'}</td>
                                             <td className="py-2 px-3 text-white/80">{session.computed_hours}h</td>
                                             <td className="py-2 px-3 text-white/80">
-                                                {session.applied_rate ? formatCurrency(session.applied_rate) : <span className="text-red-400 text-xs">No rate</span>}
+                                                {session.applied_rate ? formatCurrency(session.applied_rate) : <span className="text-red-400 text-xs">{t('noRate')}</span>}
                                             </td>
                                             <td className="py-2 px-3 text-right font-semibold text-white">
                                                 {session.subtotal ? formatCurrency(session.subtotal) : '—'}

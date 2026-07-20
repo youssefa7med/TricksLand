@@ -5,6 +5,9 @@ import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { toast } from 'sonner';
 import { useRouter, useParams } from 'next/navigation';
+import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 
 const STATUS_LABEL: Record<string, string> = {
     active: 'Active Courses',
@@ -36,6 +39,8 @@ export default function EditStudentPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [deleting, setDeleting] = useState(false);
+
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
 
     useEffect(() => {
         const load = async () => {
@@ -134,7 +139,8 @@ export default function EditStudentPage() {
     };
 
     const handleDelete = async () => {
-        if (!confirm(`Delete this student? They will be removed from all courses as well.`)) return;
+        const confirmed = await confirm('Delete Student', 'Delete this student? They will be removed from all courses as well.', true);
+        if (!confirmed) return;
         setDeleting(true);
         const { error } = await (supabase as any).from('students').delete().eq('id', id);
         setDeleting(false);
@@ -155,7 +161,7 @@ export default function EditStudentPage() {
     if (loading) return (
         <div className="page-container">
             <div className="max-w-2xl mx-auto">
-                <GlassCard><p className="text-white/70 text-center py-12">Loading...</p></GlassCard>
+                <GlassCard><LuxuryLoader label="Loading..." /></GlassCard>
             </div>
         </div>
     );
@@ -163,6 +169,7 @@ export default function EditStudentPage() {
     return (
         <div className="page-container">
             <div className="max-w-2xl mx-auto">
+                <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
                 <div className="mb-6 md:mb-8">
                     <button onClick={() => router.back()} className="text-white/50 hover:text-white text-sm mb-4 transition-colors">
                         â† Back

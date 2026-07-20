@@ -4,13 +4,17 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { formatCurrency } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { useConfirm } from '@/components/ui/useConfirm';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
 
 export default function AdminAdjustmentsPage() {
     const t = useTranslations('pages.adjustments');
     const tc = useTranslations('common');
+    const { confirm, confirmState, handleConfirm, handleCancel } = useConfirm();
     const [adjustments, setAdjustments] = useState<any[]>([]);
     const [coaches, setCoaches] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -96,7 +100,8 @@ export default function AdminAdjustmentsPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm(t('deleteConfirm'))) return;
+        const confirmed = await confirm(t('deleteConfirm'), 'This adjustment will be permanently removed.', true);
+        if (!confirmed) return;
         const { error } = await supabase.from('adjustments').delete().eq('id', id);
         if (error) toast.error(error.message);
         else { toast.success(t('adjustmentDeleted')); fetchAdjustments(); }
@@ -107,6 +112,7 @@ export default function AdminAdjustmentsPage() {
 
     return (
         <div className="page-container">
+            <ConfirmDialog open={confirmState.open} title={confirmState.title} message={confirmState.message} danger={confirmState.danger} onConfirm={handleConfirm} onCancel={handleCancel} />
             <div className="max-w-7xl mx-auto">
                 <div className="flex justify-between items-start flex-wrap gap-3 mb-6 md:mb-8">
                     <div>
@@ -171,7 +177,7 @@ export default function AdminAdjustmentsPage() {
                 </GlassCard>
 
                 {loading ? (
-                    <GlassCard><p className="text-white/70 text-center py-12">Loading...</p></GlassCard>
+                    <GlassCard><LuxuryLoader label="Loading..." /></GlassCard>
                 ) : adjustments.length === 0 ? (
                     <GlassCard><p className="text-white/70 text-center py-12">{t('noAdjustments')}</p></GlassCard>
                 ) : (

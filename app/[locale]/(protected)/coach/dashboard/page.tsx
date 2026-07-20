@@ -169,6 +169,8 @@ export default async function CoachDashboard() {
                         netPayout: t('netPayout'),
                         online: tc('online'),
                         offline: tc('offline'),
+                        noCoursesAssigned: tc('noCoursesAssigned'),
+                        noSessionsFound: tc('noData'),
                     }}
                     locale={locale}
                 />
