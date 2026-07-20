@@ -156,26 +156,26 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
                             <label className="text-white/50 text-xs mb-2 block font-medium">{t('title') || 'Course'}</label>
                             <AnimatedDropdown
                                 trigger={filterCourse ? courseOptions.find(c => c.id === filterCourse)?.name || t('allCourses') || 'All Courses' : t('allCourses') || 'All Courses'}
+                                selectedValue={filterCourse}
                                 items={[
                                     { label: t('allCourses') || 'All Courses', value: '' },
                                     ...courseOptions.map(c => ({ label: c.name, value: c.id })),
                                 ]}
                                 onSelect={(value) => setFilterCourse(value)}
                                 className="w-full"
-                                triggerClassName="w-full justify-between"
                             />
                         </div>
                         <div>
                             <label className="text-white/50 text-xs mb-2 block font-medium">{t('coachesLabel') || 'Coach'}</label>
                             <AnimatedDropdown
                                 trigger={filterCoach ? coachOptions.find(c => c.id === filterCoach)?.full_name || t('allCoaches') || 'All Coaches' : t('allCoaches') || 'All Coaches'}
+                                selectedValue={filterCoach}
                                 items={[
                                     { label: t('allCoaches') || 'All Coaches', value: '' },
                                     ...coachOptions.map(c => ({ label: c.full_name, value: c.id })),
                                 ]}
                                 onSelect={(value) => setFilterCoach(value)}
                                 className="w-full"
-                                triggerClassName="w-full justify-between"
                             />
                         </div>
                     </div>
