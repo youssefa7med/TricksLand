@@ -283,7 +283,11 @@
             "loadingReviews": "Loading reviews...",
             "averageRating": "Average Rating",
             "totalReviews": "Total Reviews",
-            "noReviews": "No reviews yet"
+            "noReviews": "No reviews yet",
+            "filterReviews": "Filter Reviews",
+            "clearFilters": "Clear",
+            "allCourses": "All Courses",
+            "allCoaches": "All Coaches"
         },
         "sessions": {
             "title": "Sessions",

@@ -88,7 +88,7 @@ export default function AdminCoursesPage() {
                 </div>
 
                 {viewTab === 'reviews' ? (
-                    <CourseReviews showAll />
+                    <CourseReviews showAll showFilters />
                 ) : (
                 <>
                 <div className="mb-6 inline-flex rounded-xl border border-white/15 bg-white/5 p-1" role="tablist" aria-label="Course status">

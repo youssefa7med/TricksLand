@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
-import { Star, User, Calendar, MessageSquare } from 'lucide-react';
+import { Star, User, Calendar, MessageSquare, Filter, X } from 'lucide-react';
 
 interface CourseReview {
     id: string;
@@ -17,29 +17,46 @@ interface CourseReview {
     responses: Record<string, unknown>;
     reviewer_name: string | null;
     created_at: string;
-    profiles?: {
-        full_name: string;
-    };
-    courses?: {
-        name: string;
-    };
+    profiles?: { full_name: string };
+    courses?: { name: string };
 }
+
+interface CourseOption { id: string; name: string; }
+interface CoachOption { id: string; full_name: string; }
 
 interface CourseReviewsProps {
     courseId?: string;
     showAll?: boolean;
+    showFilters?: boolean;
 }
 
-export function CourseReviews({ courseId, showAll = false }: CourseReviewsProps) {
+export function CourseReviews({ courseId, showAll = false, showFilters = false }: CourseReviewsProps) {
     const [reviews, setReviews] = useState<CourseReview[]>([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ total: 0, average: 0 });
+    const [filterCourse, setFilterCourse] = useState(courseId || '');
+    const [filterCoach, setFilterCoach] = useState('');
+    const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
+    const [coachOptions, setCoachOptions] = useState<CoachOption[]>([]);
     const supabase = createClient();
     const t = useTranslations('pages.courses');
 
     useEffect(() => {
+        if (showFilters) fetchFilterOptions();
+    }, [showFilters]);
+
+    useEffect(() => {
         fetchReviews();
-    }, [courseId]);
+    }, [courseId, filterCourse, filterCoach]);
+
+    const fetchFilterOptions = async () => {
+        const [{ data: courses }, { data: coaches }] = await Promise.all([
+            supabase.from('courses').select('id, name').order('name'),
+            supabase.from('profiles').select('id, full_name').eq('role', 'coach').order('full_name'),
+        ]);
+        setCourseOptions((courses || []) as CourseOption[]);
+        setCoachOptions((coaches || []) as CoachOption[]);
+    };
 
     const fetchReviews = async () => {
         setLoading(true);
@@ -54,6 +71,12 @@ export function CourseReviews({ courseId, showAll = false }: CourseReviewsProps)
 
         if (courseId && !showAll) {
             query = query.eq('course_id', courseId);
+        } else if (filterCourse) {
+            query = query.eq('course_id', filterCourse);
+        }
+
+        if (filterCoach) {
+            query = query.eq('coach_id', filterCoach);
         }
 
         const { data, error } = await query;
@@ -69,29 +92,34 @@ export function CourseReviews({ courseId, showAll = false }: CourseReviewsProps)
 
     const calculateStats = (reviewData: CourseReview[]) => {
         const total = reviewData.length;
-        const average = total > 0 
-            ? reviewData.reduce((sum, r) => sum + r.rating, 0) / total 
+        const average = total > 0
+            ? reviewData.reduce((sum, r) => sum + r.rating, 0) / total
             : 0;
         setStats({ total, average: Math.round(average * 10) / 10 });
     };
 
-    const renderStars = (rating: number) => {
-        return Array.from({ length: 5 }, (_, i) => (
+    const clearFilters = () => {
+        setFilterCourse('');
+        setFilterCoach('');
+    };
+
+    const hasActiveFilters = filterCourse || filterCoach;
+
+    const renderStars = (rating: number) =>
+        Array.from({ length: 5 }, (_, i) => (
             <Star
                 key={i}
                 size={16}
                 className={i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-white/30'}
             />
         ));
-    };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
+    const formatDate = (dateString: string) =>
+        new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
         });
-    };
 
     if (loading) {
         return (
@@ -105,8 +133,56 @@ export function CourseReviews({ courseId, showAll = false }: CourseReviewsProps)
 
     return (
         <div className="space-y-6">
-            {/* Stats Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {/* Filters */}
+            {showFilters && (
+                <GlassCard>
+                    <div className="flex items-center gap-2 mb-3">
+                        <Filter size={16} className="text-primary" />
+                        <p className="text-white/80 text-sm font-semibold">{t('filterReviews') || 'Filter Reviews'}</p>
+                        {hasActiveFilters && (
+                            <button
+                                type="button"
+                                onClick={clearFilters}
+                                className="mr-auto text-white/50 hover:text-white text-xs flex items-center gap-1 transition-colors"
+                            >
+                                <X size={12} />
+                                {t('clearFilters') || 'Clear'}
+                            </button>
+                        )}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-white/50 text-xs mb-1 block">{t('title') || 'Course'}</label>
+                            <select
+                                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors"
+                                value={filterCourse}
+                                onChange={(e) => setFilterCourse(e.target.value)}
+                            >
+                                <option value="" className="bg-gray-800">{t('allCourses') || 'All Courses'}</option>
+                                {courseOptions.map((c) => (
+                                    <option key={c.id} value={c.id} className="bg-gray-800">{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-white/50 text-xs mb-1 block">{t('coachesLabel') || 'Coach'}</label>
+                            <select
+                                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors"
+                                value={filterCoach}
+                                onChange={(e) => setFilterCoach(e.target.value)}
+                            >
+                                <option value="" className="bg-gray-800">{t('allCoaches') || 'All Coaches'}</option>
+                                {coachOptions.map((c) => (
+                                    <option key={c.id} value={c.id} className="bg-gray-800">{c.full_name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </GlassCard>
+            )}
+
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                 <GlassCard>
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
@@ -131,7 +207,7 @@ export function CourseReviews({ courseId, showAll = false }: CourseReviewsProps)
                 </GlassCard>
             </div>
 
-            {/* Reviews List */}
+            {/* Reviews */}
             {reviews.length === 0 ? (
                 <GlassCard>
                     <div className="text-center py-12">
@@ -142,10 +218,10 @@ export function CourseReviews({ courseId, showAll = false }: CourseReviewsProps)
             ) : (
                 <div className="space-y-4">
                     {reviews.map((review, index) => (
-                        <GlassCard key={review.id} delay={index * 0.1}>
-                            <div className="flex justify-between items-start mb-4">
+                        <GlassCard key={review.id} delay={index * 0.05}>
+                            <div className="flex justify-between items-start mb-3">
                                 <div className="flex items-center gap-2">
-                                    <div className="flex gap-1">
+                                    <div className="flex gap-0.5">
                                         {renderStars(review.rating)}
                                     </div>
                                     <span className="text-white/60 text-sm">({review.rating}/5)</span>
@@ -183,7 +259,6 @@ export function CourseReviews({ courseId, showAll = false }: CourseReviewsProps)
                                 )}
                             </div>
 
-                            {/* Display responses summary */}
                             {review.responses && Object.keys(review.responses).length > 0 && (
                                 <div className="mt-4 pt-4 border-t border-white/10">
                                     <p className="text-white/50 text-xs mb-2">Responses:</p>

@@ -283,7 +283,11 @@
             "loadingReviews": "جاري تحميل التقييمات...",
             "averageRating": "متوسط التقييم",
             "totalReviews": "إجمالي التقييمات",
-            "noReviews": "لا توجد تقييمات بعد"
+            "noReviews": "لا توجد تقييمات بعد",
+            "filterReviews": "تصفية التقييمات",
+            "clearFilters": "مسح",
+            "allCourses": "جميع الكورسات",
+            "allCoaches": "جميع الكوتشات"
         },
         "sessions": {
             "title": "الجلسات",
