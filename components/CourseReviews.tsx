@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
+import { AnimatedDropdown } from '@/components/ui/animated-dropdown';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { Star, User, Calendar, MessageSquare, Filter, X } from 'lucide-react';
@@ -136,7 +137,7 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
             {/* Filters */}
             {showFilters && (
                 <GlassCard>
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2 mb-4">
                         <Filter size={16} className="text-primary" />
                         <p className="text-white/80 text-sm font-semibold">{t('filterReviews') || 'Filter Reviews'}</p>
                         {hasActiveFilters && (
@@ -150,32 +151,32 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
                             </button>
                         )}
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-white/50 text-xs mb-1 block">{t('title') || 'Course'}</label>
-                            <select
-                                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors"
-                                value={filterCourse}
-                                onChange={(e) => setFilterCourse(e.target.value)}
-                            >
-                                <option value="" className="bg-gray-800">{t('allCourses') || 'All Courses'}</option>
-                                {courseOptions.map((c) => (
-                                    <option key={c.id} value={c.id} className="bg-gray-800">{c.name}</option>
-                                ))}
-                            </select>
+                            <label className="text-white/50 text-xs mb-2 block font-medium">{t('title') || 'Course'}</label>
+                            <AnimatedDropdown
+                                trigger={filterCourse ? courseOptions.find(c => c.id === filterCourse)?.name || t('allCourses') || 'All Courses' : t('allCourses') || 'All Courses'}
+                                items={[
+                                    { label: t('allCourses') || 'All Courses', value: '' },
+                                    ...courseOptions.map(c => ({ label: c.name, value: c.id })),
+                                ]}
+                                onSelect={(value) => setFilterCourse(value)}
+                                className="w-full"
+                                triggerClassName="w-full justify-between"
+                            />
                         </div>
                         <div>
-                            <label className="text-white/50 text-xs mb-1 block">{t('coachesLabel') || 'Coach'}</label>
-                            <select
-                                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors"
-                                value={filterCoach}
-                                onChange={(e) => setFilterCoach(e.target.value)}
-                            >
-                                <option value="" className="bg-gray-800">{t('allCoaches') || 'All Coaches'}</option>
-                                {coachOptions.map((c) => (
-                                    <option key={c.id} value={c.id} className="bg-gray-800">{c.full_name}</option>
-                                ))}
-                            </select>
+                            <label className="text-white/50 text-xs mb-2 block font-medium">{t('coachesLabel') || 'Coach'}</label>
+                            <AnimatedDropdown
+                                trigger={filterCoach ? coachOptions.find(c => c.id === filterCoach)?.full_name || t('allCoaches') || 'All Coaches' : t('allCoaches') || 'All Coaches'}
+                                items={[
+                                    { label: t('allCoaches') || 'All Coaches', value: '' },
+                                    ...coachOptions.map(c => ({ label: c.full_name, value: c.id })),
+                                ]}
+                                onSelect={(value) => setFilterCoach(value)}
+                                className="w-full"
+                                triggerClassName="w-full justify-between"
+                            />
                         </div>
                     </div>
                 </GlassCard>
