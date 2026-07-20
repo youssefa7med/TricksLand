@@ -41,7 +41,7 @@ export function AnimatedDropdown({
     }, [isOpen]);
 
     return (
-        <div ref={ref} className={`relative ${className}`}>
+        <div ref={ref} className={`relative ${className}`} style={{ zIndex: 9999 }}>
             {/* Trigger */}
             <motion.button
                 ref={triggerRef}
