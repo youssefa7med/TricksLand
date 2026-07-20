@@ -279,6 +279,7 @@
             "createFirst": "أنشئ كورسك الأول",
             "deleteConfirm": "حذف كورس \"%name%\"؟ سيؤدي ذلك إلى إزالة جميع البيانات المرتبطة به.",
             "reviews": "التقييمات",
+            "courseReviewsDetail": "عرض تفصيلي لجميع تقييمات الكورس",
             "loadingReviews": "جاري تحميل التقييمات...",
             "averageRating": "متوسط التقييم",
             "totalReviews": "إجمالي التقييمات",

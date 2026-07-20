@@ -172,7 +172,17 @@ export default async function CoachMyCoursesPage() {
                                     <div className="border-t border-white/10 pt-4 mt-4">
                                         <div className="flex items-center justify-between gap-3 mb-3">
                                             <p className="text-white/50 text-xs uppercase font-semibold tracking-wider">Parent feedback</p>
-                                            {averageRating ? <span className="text-amber-300 text-sm font-semibold">★ {averageRating}/5 · {reviews.length}</span> : <span className="text-white/40 text-sm">No feedback yet</span>}
+                                            <div className="flex items-center gap-3">
+                                                {averageRating ? <span className="text-amber-300 text-sm font-semibold">★ {averageRating}/5 · {reviews.length}</span> : <span className="text-white/40 text-sm">No feedback yet</span>}
+                                                {reviews.length > 0 && (
+                                                    <Link
+                                                        href={`/${locale}/coach/courses/${course.id}/reviews`}
+                                                        className="text-yellow-400 hover:text-white transition-colors text-xs font-medium"
+                                                    >
+                                                        {t('reviews') || 'Reviews'} →
+                                                    </Link>
+                                                )}
+                                            </div>
                                         </div>
                                         {reviews.length > 0 && <div className="space-y-2">{reviews.slice(0, 3).map((review) => (
                                             <div key={review.id} className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5">

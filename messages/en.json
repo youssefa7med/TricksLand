@@ -279,6 +279,7 @@
             "createFirst": "Create Your First Course",
             "deleteConfirm": "Delete course \"%name%\"? This will remove all associated data.",
             "reviews": "Reviews",
+            "courseReviewsDetail": "Detailed view of all course reviews",
             "loadingReviews": "Loading reviews...",
             "averageRating": "Average Rating",
             "totalReviews": "Total Reviews",
