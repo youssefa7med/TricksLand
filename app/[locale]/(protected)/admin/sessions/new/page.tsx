@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { incrementSessionCompleted } from '@/lib/actions/scheduling';
+import { COMPETITION_HOURLY_RATE } from '@/lib/constants';
 
 export default function AdminNewSessionPage() {
     const router = useRouter();
@@ -83,10 +84,10 @@ export default function AdminNewSessionPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { setLoading(false); return; }
 
-        // ── Competition sessions: flat rate 75 EGP for ALL coaches ──────────
+        // ── Competition sessions: flat rate for ALL coaches ──────────
         if (form.session_type === 'competition') {
             const hours = computeHours(form.start_time, form.end_time);
-            const subtotal = Math.round(hours * 75 * 100) / 100;
+            const subtotal = Math.round(hours * COMPETITION_HOURLY_RATE * 100) / 100;
             const payload: any = {
                 course_id: form.course_id,
                 paid_coach_id: form.paid_coach_id,
@@ -99,7 +100,7 @@ export default function AdminNewSessionPage() {
                 originally_scheduled_coach_id: hasReplacement && form.originally_scheduled_coach_id
                     ? form.originally_scheduled_coach_id
                     : null,
-                applied_rate: 75,
+                applied_rate: COMPETITION_HOURLY_RATE,
                 computed_hours: hours,
                 subtotal,
                 attendance_required: form.attendance_required,
@@ -121,7 +122,7 @@ export default function AdminNewSessionPage() {
                         toast.error('Session logged but scheduling counter update failed');
                     }
                 }
-                toast.success('Competition session logged (75 EGP/hr)');
+                toast.success(`Competition session logged (${COMPETITION_HOURLY_RATE} EGP/hr)`);
                 router.push(`/${locale}/admin/sessions`);
             }
             setLoading(false);
@@ -176,7 +177,7 @@ export default function AdminNewSessionPage() {
             }
         }
 
-        // 3rd fallback: course-level hourly_rate (competition course name → 75)
+        // 3rd fallback: course-level hourly_rate (competition course name)
         if (!appliedRate || isNaN(appliedRate) || appliedRate <= 0) {
             const { data: courseData } = await supabase
                 .from('courses')
@@ -187,7 +188,7 @@ export default function AdminNewSessionPage() {
             if (courseData) {
                 const courseName = String((courseData as any).name ?? '').toLowerCase();
                 if (courseName.includes('competition') || courseName.includes('competetion')) {
-                    appliedRate = 75;
+                    appliedRate = COMPETITION_HOURLY_RATE;
                 } else if ((courseData as any).hourly_rate != null) {
                     appliedRate = Number((courseData as any).hourly_rate);
                 }
@@ -339,7 +340,7 @@ export default function AdminNewSessionPage() {
                                 <option value="consultation" className="bg-gray-900">Consultation</option>
                                 <option value="workshop" className="bg-gray-900">Workshop</option>
                                 <option value="tutoring" className="bg-gray-900">Tutoring</option>
-                                <option value="competition" className="bg-gray-900">Competition (75 EGP/hr)</option>
+                                <option value="competition" className="bg-gray-900">Competition ({COMPETITION_HOURLY_RATE} EGP/hr)</option>
                                 <option value="other" className="bg-gray-900">Other</option>
                             </select>
                         </div>

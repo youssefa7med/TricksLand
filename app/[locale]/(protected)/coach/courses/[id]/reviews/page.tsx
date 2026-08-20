@@ -78,23 +78,23 @@ export default function CoachCourseReviewsPage() {
         ));
 
     const formatDate = (dateString: string) =>
-        new Date(dateString).toLocaleDateString('ar-EG', {
+        new Date(dateString).toLocaleDateString(locale, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
         });
 
     const formatTime = (dateString: string) =>
-        new Date(dateString).toLocaleTimeString('ar-EG', {
+        new Date(dateString).toLocaleTimeString(locale, {
             hour: '2-digit',
             minute: '2-digit',
         });
 
     const ratingLabel = (rating: number) => {
-        if (rating >= 4.5) return 'ممتاز';
-        if (rating >= 3.5) return 'جيد جداً';
-        if (rating >= 2.5) return 'جيد';
-        return 'يحتاج تحسين';
+        if (rating >= 4.5) return t('ratingExcellent');
+        if (rating >= 3.5) return t('ratingVeryGood');
+        if (rating >= 2.5) return t('ratingGood');
+        return t('ratingNeedsImprovement');
     };
 
     const ratingColor = (rating: number) => {
@@ -119,7 +119,7 @@ export default function CoachCourseReviewsPage() {
                     <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">
                         {t('reviews')} — {course?.name}
                     </h1>
-                    <p className="text-white/70">تقييمات الأهالي لهذا الكورس</p>
+                    <p className="text-white/70">{t('courseReviewsDetail')}</p>
                 </div>
 
                 {/* Stats */}
@@ -154,7 +154,7 @@ export default function CoachCourseReviewsPage() {
                                 <span className="text-2xl">{stats.average >= 4 ? '😊' : stats.average >= 3 ? '😐' : '😞'}</span>
                             </div>
                             <div>
-                                <p className="text-white/50 text-xs">التقييم العام</p>
+                                <p className="text-white/50 text-xs">{t('overallRating')}</p>
                                 <p className={`text-lg font-bold ${ratingColor(stats.average)}`}>{ratingLabel(stats.average)}</p>
                             </div>
                         </div>
@@ -167,7 +167,7 @@ export default function CoachCourseReviewsPage() {
                         <div className="text-center py-16">
                             <FileText className="mx-auto text-white/20 mb-4" size={56} />
                             <p className="text-white/60 text-lg mb-2">{t('noReviews') || 'No reviews yet'}</p>
-                            <p className="text-white/40 text-sm">لم يتم استلام أي تقييمات لك في هذا الكورس بعد</p>
+                            <p className="text-white/40 text-sm">{t('noReviewsForCourse')}</p>
                         </div>
                     </GlassCard>
                 ) : (
@@ -215,7 +215,7 @@ export default function CoachCourseReviewsPage() {
                                                 className="text-white/50 text-xs font-medium mb-2 hover:text-white/80 transition-colors"
                                                 onClick={() => setExpandedReview(isExpanded ? null : review.id)}
                                             >
-                                                {isExpanded ? 'إخفاء التفاصيل' : `عرض التفاصيل (${responseEntries.length})`}
+                                                {isExpanded ? t('hideDetails') : t('showDetails', { count: responseEntries.length })}
                                             </button>
                                             {isExpanded && (
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">

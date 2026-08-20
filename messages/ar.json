@@ -287,7 +287,17 @@
             "filterReviews": "تصفية التقييمات",
             "clearFilters": "مسح",
             "allCourses": "جميع الكورسات",
-            "allCoaches": "جميع الكوتشات"
+            "allCoaches": "جميع الكوتشات",
+            "overallRating": "التقييم العام",
+            "ratingExcellent": "ممتاز",
+            "ratingVeryGood": "جيد جداً",
+            "ratingGood": "جيد",
+            "ratingNeedsImprovement": "يحتاج تحسين",
+            "noReviewsForCourse": "لم يتم استلام أي تقييمات لهذا الكورس بعد",
+            "coachLabel": "الكوتش:",
+            "hideDetails": "إخفاء التفاصيل",
+            "showDetails": "عرض التفاصيل ({count})",
+            "responsesLabel": "الردود"
         },
         "sessions": {
             "title": "الجلسات",

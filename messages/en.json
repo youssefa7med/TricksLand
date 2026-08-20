@@ -287,7 +287,17 @@
             "filterReviews": "Filter Reviews",
             "clearFilters": "Clear",
             "allCourses": "All Courses",
-            "allCoaches": "All Coaches"
+            "allCoaches": "All Coaches",
+            "overallRating": "Overall Rating",
+            "ratingExcellent": "Excellent",
+            "ratingVeryGood": "Very Good",
+            "ratingGood": "Good",
+            "ratingNeedsImprovement": "Needs Improvement",
+            "noReviewsForCourse": "No reviews have been received for this course yet",
+            "coachLabel": "Coach:",
+            "hideDetails": "Hide Details",
+            "showDetails": "Show Details ({count})",
+            "responsesLabel": "Responses"
         },
         "sessions": {
             "title": "Sessions",

@@ -262,7 +262,7 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
 
                             {review.responses && Object.keys(review.responses).length > 0 && (
                                 <div className="mt-4 pt-4 border-t border-white/10">
-                                    <p className="text-white/50 text-xs mb-2">Responses:</p>
+                                    <p className="text-white/50 text-xs mb-2">{t('responsesLabel') || 'Responses:'}</p>
                                     <div className="flex flex-wrap gap-2">
                                         {Object.entries(review.responses).slice(0, 5).map(([key, value]) => (
                                             <span key={key} className="text-xs bg-white/10 px-2 py-1 rounded">

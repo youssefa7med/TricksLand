@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { GlassCard } from '@/components/layout/GlassCard';
 import Link from 'next/link';
+import { COMPETITION_HOURLY_RATE } from '@/lib/constants';
 
 interface Coach {
     id: string;
@@ -65,7 +66,7 @@ export default function NewCoursePage() {
     const handleCompetitionChange = (checked: boolean) => {
         setIsCompetition(checked);
         if (checked) {
-            setHourlyRate('75');
+            setHourlyRate(String(COMPETITION_HOURLY_RATE));
         } else {
             if (selectedCoaches.length > 0) {
                 const lastCoach = coaches.find((c) => c.id === selectedCoaches[selectedCoaches.length - 1]);
@@ -310,7 +311,7 @@ export default function NewCoursePage() {
                                     <span className="text-sm font-medium text-white/80">Competition</span>
                                     {isCompetition && (
                                         <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
-                                            Rate locked at 75 EGP/hr
+                                            Rate locked at {COMPETITION_HOURLY_RATE} EGP/hr
                                         </span>
                                     )}
                                 </label>

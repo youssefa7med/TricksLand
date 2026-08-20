@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { incrementSessionCompleted } from '@/lib/actions/scheduling';
+import { COMPETITION_HOURLY_RATE } from '@/lib/constants';
 
 // Compute hours between two HH:MM strings (same-day only)
 function computeHours(start: string, end: string): number {
@@ -95,11 +96,11 @@ export default function CoachNewSessionPage() {
                     console.error('Error fetching course rate:', courseError);
                 }
                 
-            // Special case: If course name contains "competition", use 75 EGP
+            // Special case: If course name contains "competition"
             if (courseData && (courseData as any).name) {
                 const courseName = String((courseData as any).name).toLowerCase();
                 if (courseName.includes('competition') || courseName.includes('competetion')) {
-                    rate = 75;
+                    rate = COMPETITION_HOURLY_RATE;
                 } else if ((courseData as any).hourly_rate !== null && (courseData as any).hourly_rate !== undefined) {
                     rate = Number((courseData as any).hourly_rate);
                 }
@@ -187,11 +188,11 @@ export default function CoachNewSessionPage() {
                 console.error('Error fetching course rate:', courseError);
             }
 
-            // Special case: If course name contains "competition", use 75 EGP
+            // Special case: If course name contains "competition"
             if (courseData && (courseData as any).name) {
                 const courseName = String((courseData as any).name).toLowerCase();
                 if (courseName.includes('competition') || courseName.includes('competetion')) {
-                    appliedRate = 75;
+                    appliedRate = COMPETITION_HOURLY_RATE;
                 } else if ((courseData as any).hourly_rate !== null && (courseData as any).hourly_rate !== undefined) {
                     appliedRate = Number((courseData as any).hourly_rate);
                 }

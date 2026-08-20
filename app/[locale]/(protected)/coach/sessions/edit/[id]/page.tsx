@@ -8,6 +8,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
+import { COMPETITION_HOURLY_RATE } from '@/lib/constants';
 
 function computeHours(start: string, end: string): number {
     const [sh, sm] = start.split(':').map(Number);
@@ -123,11 +124,11 @@ export default function CoachEditSessionPage() {
                 console.error('Error fetching course rate:', courseError);
             }
 
-            // Special case: If course name contains "competition", use 75 EGP
+            // Special case: If course name contains "competition"
             if (courseData && (courseData as any).name) {
                 const courseName = String((courseData as any).name).toLowerCase();
                 if (courseName.includes('competition') || courseName.includes('competetion')) {
-                    appliedRate = 75;
+                    appliedRate = COMPETITION_HOURLY_RATE;
                 } else if ((courseData as any).hourly_rate !== null && (courseData as any).hourly_rate !== undefined) {
                     appliedRate = Number((courseData as any).hourly_rate);
                 }

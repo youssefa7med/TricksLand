@@ -23,9 +23,12 @@ export function AnimatedDropdown({
     selectedValue = ""
 }: AnimatedDropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const [menuStyle, setMenuStyle] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 0 });
+
+    useEffect(() => { setMounted(true); }, []);
 
     const updatePosition = useCallback(() => {
         if (wrapperRef.current) {
@@ -95,7 +98,7 @@ export function AnimatedDropdown({
             </motion.button>
 
             {/* Portal menu — renders at body level, above everything */}
-            {createPortal(
+            {mounted && createPortal(
                 <AnimatePresence>
                     {isOpen && (
                         <motion.div
@@ -116,9 +119,11 @@ export function AnimatedDropdown({
                                 className="
                                     rounded-2xl overflow-hidden
                                     bg-gradient-to-b from-white/[0.96] to-white/[0.90]
+                                    dark:from-white/[0.12] dark:to-white/[0.06]
                                     backdrop-blur-2xl
-                                    border border-white/[0.35]
+                                    border border-white/[0.35] dark:border-white/[0.15]
                                     shadow-[0_20px_60px_rgba(0,0,0,0.18),0_8px_24px_rgba(0,0,0,0.1)]
+                                    dark:shadow-[0_20px_60px_rgba(0,0,0,0.4),0_8px_24px_rgba(0,0,0,0.3)]
                                 "
                             >
                                 <div className="py-1.5 px-1.5 max-h-[260px] overflow-y-auto">
@@ -139,7 +144,7 @@ export function AnimatedDropdown({
                                                     transition-all duration-150 ease-out
                                                     ${isSelected
                                                         ? 'bg-primary/10 text-primary font-semibold'
-                                                        : 'text-gray-700 hover:bg-black/[0.04] hover:text-gray-900'
+                                                        : 'text-gray-700 dark:text-white/80 hover:bg-black/[0.04] dark:hover:bg-white/[0.1] hover:text-gray-900 dark:hover:text-white'
                                                     }
                                                 `}
                                                 initial={{ opacity: 0, x: -6 }}
