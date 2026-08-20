@@ -497,12 +497,6 @@
     }
   }
 
-  /* Responsive navbar spacing */
-  .glass-nav {
-    backdrop-filter: blur(12px);
-    background-color: rgba(15, 23, 42, 0.8);
-  }
-
   /* Responsive input group */
   .input-group {
     display: flex;

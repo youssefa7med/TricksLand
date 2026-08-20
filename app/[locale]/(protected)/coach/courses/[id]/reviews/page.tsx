@@ -35,7 +35,6 @@ export default function CoachCourseReviewsPage() {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ total: 0, average: 0 });
-    const [expandedReview, setExpandedReview] = useState<string | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -173,17 +172,13 @@ export default function CoachCourseReviewsPage() {
                 ) : (
                     <div className="space-y-4">
                         {reviews.map((review, index) => {
-                            const isExpanded = expandedReview === review.id;
                             const responseEntries = review.responses
                                 ? Object.entries(review.responses).filter(([_, v]) => v && String(v).trim())
                                 : [];
 
                             return (
                                 <GlassCard key={review.id} delay={index * 0.05}>
-                                    <div
-                                        className="flex justify-between items-start mb-3 cursor-pointer"
-                                        onClick={() => setExpandedReview(isExpanded ? null : review.id)}
-                                    >
+                                    <div className="flex justify-between items-start mb-3">
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
                                                 <div className="flex gap-0.5">{renderStars(review.rating)}</div>
@@ -208,28 +203,21 @@ export default function CoachCourseReviewsPage() {
                                         </p>
                                     )}
 
+                                    {/* Responses */}
                                     {responseEntries.length > 0 && (
-                                        <div className="border-t border-white/10 pt-3">
-                                            <button
-                                                type="button"
-                                                className="text-white/50 text-xs font-medium mb-2 hover:text-white/80 transition-colors"
-                                                onClick={() => setExpandedReview(isExpanded ? null : review.id)}
-                                            >
-                                                {isExpanded ? t('hideDetails') : t('showDetails', { count: responseEntries.length })}
-                                            </button>
-                                            {isExpanded && (
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                                                    {responseEntries.map(([key, value]) => (
-                                                        <div
-                                                            key={key}
-                                                            className="bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2"
-                                                        >
-                                                            <p className="text-white/40 text-xs mb-0.5">{key}</p>
-                                                            <p className="text-white/90 text-sm font-medium">{String(value)}</p>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
+                                        <div className="border-t border-white/10 pt-3 mt-3">
+                                            <p className="text-white/50 text-xs font-medium mb-2">{t('responsesLabel') || 'Responses'}</p>
+                                            <div className="space-y-2">
+                                                {responseEntries.map(([key, value]) => (
+                                                    <div
+                                                        key={key}
+                                                        className="bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2"
+                                                    >
+                                                        <p className="text-white/40 text-xs mb-0.5">{key}</p>
+                                                        <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{String(value)}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
                                 </GlassCard>

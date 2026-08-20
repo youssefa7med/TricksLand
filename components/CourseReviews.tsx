@@ -263,11 +263,12 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
                             {review.responses && Object.keys(review.responses).length > 0 && (
                                 <div className="mt-4 pt-4 border-t border-white/10">
                                     <p className="text-white/50 text-xs mb-2">{t('responsesLabel') || 'Responses:'}</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {Object.entries(review.responses).slice(0, 5).map(([key, value]) => (
-                                            <span key={key} className="text-xs bg-white/10 px-2 py-1 rounded">
-                                                {key}: {String(value)}
-                                            </span>
+                                    <div className="space-y-2">
+                                        {Object.entries(review.responses).map(([key, value]) => (
+                                            <div key={key} className="bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2">
+                                                <p className="text-white/40 text-xs mb-0.5">{key}</p>
+                                                <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{String(value)}</p>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
