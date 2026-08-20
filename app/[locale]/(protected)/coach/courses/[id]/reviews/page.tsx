@@ -102,6 +102,13 @@ export default function CoachCourseReviewsPage() {
         return 'text-red-400';
     };
 
+    const formatQuestionKey = (key: string) => {
+        return key
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase())
+            .trim();
+    };
+
     if (loading) return <LuxuryLoader />;
 
     return (
@@ -173,7 +180,13 @@ export default function CoachCourseReviewsPage() {
                     <div className="space-y-4">
                         {reviews.map((review, index) => {
                             const responseEntries = review.responses
-                                ? Object.entries(review.responses).filter(([_, v]) => v && String(v).trim())
+                                ? Object.entries(review.responses).filter(([key, v]) => {
+                                    if (!v || !String(v).trim()) return false;
+                                    const lowerKey = key.toLowerCase();
+                                    if (lowerKey.includes('id') && String(v).includes('-')) return false;
+                                    if (lowerKey === 'coachid' || lowerKey === 'courseid') return false;
+                                    return true;
+                                })
                                 : [];
 
                             return (
@@ -213,7 +226,7 @@ export default function CoachCourseReviewsPage() {
                                                         key={key}
                                                         className="bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2"
                                                     >
-                                                        <p className="text-white/40 text-xs mb-0.5">{key}</p>
+                                                        <p className="text-primary text-xs font-medium mb-0.5">{formatQuestionKey(key)}</p>
                                                         <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{String(value)}</p>
                                                     </div>
                                                 ))}

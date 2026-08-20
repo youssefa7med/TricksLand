@@ -122,6 +122,13 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
             day: 'numeric',
         });
 
+    const formatQuestionKey = (key: string) => {
+        return key
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, str => str.toUpperCase())
+            .trim();
+    };
+
     if (loading) {
         return (
             <GlassCard>
@@ -264,9 +271,17 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
                                 <div className="mt-4 pt-4 border-t border-white/10">
                                     <p className="text-white/50 text-xs mb-2">{t('responsesLabel') || 'Responses:'}</p>
                                     <div className="space-y-2">
-                                        {Object.entries(review.responses).map(([key, value]) => (
+                                        {Object.entries(review.responses)
+                                            .filter(([key, v]) => {
+                                                if (!v || !String(v).trim()) return false;
+                                                const lowerKey = key.toLowerCase();
+                                                if (lowerKey.includes('id') && String(v).includes('-')) return false;
+                                                if (lowerKey === 'coachid' || lowerKey === 'courseid') return false;
+                                                return true;
+                                            })
+                                            .map(([key, value]) => (
                                             <div key={key} className="bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2">
-                                                <p className="text-white/40 text-xs mb-0.5">{key}</p>
+                                                <p className="text-primary text-xs font-medium mb-0.5">{formatQuestionKey(key)}</p>
                                                 <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{String(value)}</p>
                                             </div>
                                         ))}
