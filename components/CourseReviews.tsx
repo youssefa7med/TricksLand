@@ -6,7 +6,7 @@ import { GlassCard } from '@/components/layout/GlassCard';
 import { AnimatedDropdown } from '@/components/ui/animated-dropdown';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
-import { Star, User, Calendar, MessageSquare, Filter, X } from 'lucide-react';
+import { Star, User, Calendar, MessageSquare, Filter, X, ChevronDown } from 'lucide-react';
 
 interface CourseReview {
     id: string;
@@ -39,6 +39,7 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
     const [filterCoach, setFilterCoach] = useState('');
     const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
     const [coachOptions, setCoachOptions] = useState<CoachOption[]>([]);
+    const [expandedResponses, setExpandedResponses] = useState<Set<string>>(new Set());
     const supabase = createClient();
     const t = useTranslations('pages.courses');
 
@@ -127,6 +128,19 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
             .replace(/([A-Z])/g, ' $1')
             .replace(/^./, str => str.toUpperCase())
             .trim();
+    };
+
+    const toggleResponse = (reviewId: string, key: string) => {
+        const id = `${reviewId}-${key}`;
+        setExpandedResponses(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
     };
 
     if (loading) {
@@ -279,12 +293,29 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
                                                 if (lowerKey === 'coachid' || lowerKey === 'courseid') return false;
                                                 return true;
                                             })
-                                            .map(([key, value]) => (
-                                            <div key={key} className="bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2">
-                                                <p className="text-primary text-xs font-medium mb-0.5">{formatQuestionKey(key)}</p>
-                                                <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{String(value)}</p>
-                                            </div>
-                                        ))}
+                                            .map(([key, value]) => {
+                                                const isExpanded = expandedResponses.has(`${review.id}-${key}`);
+                                                return (
+                                                    <div key={key} className="bg-white/[0.05] border border-white/10 rounded-lg overflow-hidden">
+                                                        <button
+                                                            type="button"
+                                                            className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-white/[0.03] transition-colors"
+                                                            onClick={() => toggleResponse(review.id, key)}
+                                                        >
+                                                            <p className="text-primary text-xs font-medium">{formatQuestionKey(key)}</p>
+                                                            <ChevronDown
+                                                                size={14}
+                                                                className={`text-white/40 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                                            />
+                                                        </button>
+                                                        {isExpanded && (
+                                                            <div className="px-3 pb-2">
+                                                                <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{String(value)}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                     </div>
                                 </div>
                             )}

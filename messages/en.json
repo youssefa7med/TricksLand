@@ -829,6 +829,30 @@
             "settingSaved": "Setting saved",
             "saveSetting": "Save",
             "savingDots": "Saving…"
+        },
+        "reviewForm": {
+            "title": "Submit a Review",
+            "subtitle": "Share your experience with our coaches and courses",
+            "loading": "Loading form...",
+            "course": "Course",
+            "coach": "Coach",
+            "rating": "Rating",
+            "reviewTitle": "Review Title",
+            "titlePlaceholder": "e.g. Great experience!",
+            "reviewText": "Your Review",
+            "textPlaceholder": "Tell us about your experience...",
+            "optional": "optional",
+            "reviewerName": "Your Name",
+            "namePlaceholder": "e.g. Ahmed",
+            "submitReview": "Submit Review",
+            "submitting": "Submitting...",
+            "submitAnother": "Submit Another Review",
+            "thankYou": "Thank You!",
+            "reviewSubmitted": "Your review has been submitted successfully. We appreciate your feedback!",
+            "selectCourse": "— Select a course —",
+            "selectCoach": "— Select a coach —",
+            "selectRating": "Please select a rating",
+            "enterTitle": "Please enter a review title"
         }
     }
 }

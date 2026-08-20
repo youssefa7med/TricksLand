@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
-import { Star, Calendar, MessageSquare, ChevronLeft, FileText } from 'lucide-react';
+import { Star, Calendar, MessageSquare, ChevronLeft, ChevronDown, FileText } from 'lucide-react';
 
 interface Review {
     id: string;
@@ -35,6 +35,7 @@ export default function CoachCourseReviewsPage() {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ total: 0, average: 0 });
+    const [expandedResponses, setExpandedResponses] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         fetchData();
@@ -107,6 +108,19 @@ export default function CoachCourseReviewsPage() {
             .replace(/([A-Z])/g, ' $1')
             .replace(/^./, str => str.toUpperCase())
             .trim();
+    };
+
+    const toggleResponse = (reviewId: string, key: string) => {
+        const id = `${reviewId}-${key}`;
+        setExpandedResponses(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
     };
 
     if (loading) return <LuxuryLoader />;
@@ -221,15 +235,32 @@ export default function CoachCourseReviewsPage() {
                                         <div className="border-t border-white/10 pt-3 mt-3">
                                             <p className="text-white/50 text-xs font-medium mb-2">{t('responsesLabel') || 'Responses'}</p>
                                             <div className="space-y-2">
-                                                {responseEntries.map(([key, value]) => (
-                                                    <div
-                                                        key={key}
-                                                        className="bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2"
-                                                    >
-                                                        <p className="text-primary text-xs font-medium mb-0.5">{formatQuestionKey(key)}</p>
-                                                        <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{String(value)}</p>
-                                                    </div>
-                                                ))}
+                                                {responseEntries.map(([key, value]) => {
+                                                    const isExpanded = expandedResponses.has(`${review.id}-${key}`);
+                                                    return (
+                                                        <div
+                                                            key={key}
+                                                            className="bg-white/[0.05] border border-white/10 rounded-lg overflow-hidden"
+                                                        >
+                                                            <button
+                                                                type="button"
+                                                                className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-white/[0.03] transition-colors"
+                                                                onClick={() => toggleResponse(review.id, key)}
+                                                            >
+                                                                <p className="text-primary text-xs font-medium">{formatQuestionKey(key)}</p>
+                                                                <ChevronDown
+                                                                    size={14}
+                                                                    className={`text-white/40 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                                                />
+                                                            </button>
+                                                            {isExpanded && (
+                                                                <div className="px-3 pb-2">
+                                                                    <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{String(value)}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     )}

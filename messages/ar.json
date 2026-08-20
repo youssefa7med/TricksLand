@@ -829,6 +829,30 @@
             "settingSaved": "تم حفظ الإعداد",
             "saveSetting": "حفظ",
             "savingDots": "جاري الحفظ…"
+        },
+        "reviewForm": {
+            "title": "إرسال تقييم",
+            "subtitle": "شارك تجربتك مع مدربينا وكورساتنا",
+            "loading": "جاري تحميل النموذج...",
+            "course": "الكورس",
+            "coach": "المدرب",
+            "rating": "التقييم",
+            "reviewTitle": "عنوان التقييم",
+            "titlePlaceholder": "مثال: تجربة رائعة!",
+            "reviewText": "تقييمك",
+            "textPlaceholder": "أخبرنا عن تجربتك...",
+            "optional": "اختياري",
+            "reviewerName": "اسمك",
+            "namePlaceholder": "مثال: أحمد",
+            "submitReview": "إرسال التقييم",
+            "submitting": "جاري الإرسال...",
+            "submitAnother": "إرسال تقييم آخر",
+            "thankYou": "شكراً لك!",
+            "reviewSubmitted": "تم إرسال تقييمك بنجاح. نقدراً لملاحظاتك!",
+            "selectCourse": "— اختر الكورس —",
+            "selectCoach": "— اختر المدرب —",
+            "selectRating": "يرجى اختيار تقييم",
+            "enterTitle": "يرجى إدخال عنوان التقييم"
         }
     }
 }
