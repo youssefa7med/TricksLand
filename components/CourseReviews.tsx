@@ -7,6 +7,7 @@ import { AnimatedDropdown } from '@/components/ui/animated-dropdown';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { Star, User, Calendar, MessageSquare, Filter, X, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface CourseReview {
     id: string;
@@ -138,6 +139,20 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
                 next.delete(id);
             } else {
                 next.add(id);
+            }
+            return next;
+        });
+    };
+
+    const toggleAllResponses = (reviewId: string, keys: string[]) => {
+        const ids = keys.map(key => `${reviewId}-${key}`);
+        const allExpanded = ids.every(id => expandedResponses.has(id));
+        setExpandedResponses(prev => {
+            const next = new Set(prev);
+            if (allExpanded) {
+                ids.forEach(id => next.delete(id));
+            } else {
+                ids.forEach(id => next.add(id));
             }
             return next;
         });
@@ -281,19 +296,34 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
                                 )}
                             </div>
 
-                            {review.responses && Object.keys(review.responses).length > 0 && (
-                                <div className="mt-4 pt-4 border-t border-white/10">
-                                    <p className="text-white/50 text-xs mb-2">{t('responsesLabel') || 'Responses:'}</p>
-                                    <div className="space-y-2">
-                                        {Object.entries(review.responses)
-                                            .filter(([key, v]) => {
-                                                if (!v || !String(v).trim()) return false;
-                                                const lowerKey = key.toLowerCase();
-                                                if (lowerKey.includes('id') && String(v).includes('-')) return false;
-                                                if (lowerKey === 'coachid' || lowerKey === 'courseid') return false;
-                                                return true;
-                                            })
-                                            .map(([key, value]) => {
+                            {review.responses && Object.keys(review.responses).length > 0 && (() => {
+                                const filteredEntries = Object.entries(review.responses).filter(([key, v]) => {
+                                    if (!v || !String(v).trim()) return false;
+                                    const lowerKey = key.toLowerCase();
+                                    if (lowerKey.includes('id') && String(v).includes('-')) return false;
+                                    if (lowerKey === 'coachid' || lowerKey === 'courseid') return false;
+                                    return true;
+                                });
+                                const allExpanded = filteredEntries.every(([k]) => expandedResponses.has(`${review.id}-${k}`));
+                                return (
+                                    <div className="mt-4 pt-4 border-t border-white/10">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-white/50 text-xs">{t('responsesLabel') || 'Responses:'}</p>
+                                            {filteredEntries.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleAllResponses(review.id, filteredEntries.map(([k]) => k))}
+                                                    className="text-primary/70 hover:text-primary text-xs font-medium transition-colors"
+                                                    aria-expanded={allExpanded}
+                                                >
+                                                    {allExpanded
+                                                        ? t('collapseAll') || 'Collapse All'
+                                                        : t('expandAll') || 'Expand All'}
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            {filteredEntries.map(([key, value]) => {
                                                 const isExpanded = expandedResponses.has(`${review.id}-${key}`);
                                                 return (
                                                     <div key={key} className="bg-white/[0.05] border border-white/10 rounded-lg overflow-hidden">
@@ -301,6 +331,7 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
                                                             type="button"
                                                             className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-white/[0.03] transition-colors"
                                                             onClick={() => toggleResponse(review.id, key)}
+                                                            aria-expanded={isExpanded}
                                                         >
                                                             <p className="text-primary text-xs font-medium">{formatQuestionKey(key)}</p>
                                                             <ChevronDown
@@ -308,17 +339,27 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
                                                                 className={`text-white/40 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                                                             />
                                                         </button>
-                                                        {isExpanded && (
-                                                            <div className="px-3 pb-2">
-                                                                <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{String(value)}</p>
-                                                            </div>
-                                                        )}
+                                                        <AnimatePresence initial={false}>
+                                                            {isExpanded && (
+                                                                <motion.div
+                                                                    initial={{ height: 0, opacity: 0 }}
+                                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                                    exit={{ height: 0, opacity: 0 }}
+                                                                    transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                                                >
+                                                                    <div className="px-3 pb-2">
+                                                                        <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{String(value)}</p>
+                                                                    </div>
+                                                                </motion.div>
+                                                            )}
+                                                        </AnimatePresence>
                                                     </div>
                                                 );
                                             })}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                );
+                            })()}
                         </GlassCard>
                     ))}
                 </div>

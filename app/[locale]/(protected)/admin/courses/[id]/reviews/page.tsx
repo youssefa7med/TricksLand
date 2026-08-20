@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { LuxuryLoader } from '@/components/ui/LuxuryLoader';
 import { Star, User, Calendar, MessageSquare, ChevronLeft, ChevronDown, FileText } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface Review {
     id: string;
@@ -118,6 +119,20 @@ export default function AdminCourseReviewsPage() {
                 next.delete(id);
             } else {
                 next.add(id);
+            }
+            return next;
+        });
+    };
+
+    const toggleAllResponses = (reviewId: string, keys: string[]) => {
+        const ids = keys.map(key => `${reviewId}-${key}`);
+        const allExpanded = ids.every(id => expandedResponses.has(id));
+        setExpandedResponses(prev => {
+            const next = new Set(prev);
+            if (allExpanded) {
+                ids.forEach(id => next.delete(id));
+            } else {
+                ids.forEach(id => next.add(id));
             }
             return next;
         });
@@ -245,7 +260,19 @@ export default function AdminCourseReviewsPage() {
                                     {/* Responses */}
                                     {responseEntries.length > 0 && (
                                         <div className="border-t border-white/10 pt-3 mt-3">
-                                            <p className="text-white/50 text-xs font-medium mb-2">{t('responsesLabel') || 'Responses'}</p>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <p className="text-white/50 text-xs font-medium">{t('responsesLabel') || 'Responses'}</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleAllResponses(review.id, responseEntries.map(([k]) => k))}
+                                                    className="text-primary/70 hover:text-primary text-xs font-medium transition-colors"
+                                                    aria-expanded={responseEntries.every(([k]) => expandedResponses.has(`${review.id}-${k}`))}
+                                                >
+                                                    {responseEntries.every(([k]) => expandedResponses.has(`${review.id}-${k}`))
+                                                        ? t('collapseAll') || 'Collapse All'
+                                                        : t('expandAll') || 'Expand All'}
+                                                </button>
+                                            </div>
                                             <div className="space-y-2">
                                                 {responseEntries.map(([key, value]) => {
                                                     const isExpanded = expandedResponses.has(`${review.id}-${key}`);
@@ -258,6 +285,7 @@ export default function AdminCourseReviewsPage() {
                                                                 type="button"
                                                                 className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-white/[0.03] transition-colors"
                                                                 onClick={() => toggleResponse(review.id, key)}
+                                                                aria-expanded={isExpanded}
                                                             >
                                                                 <p className="text-primary text-xs font-medium">{formatQuestionKey(key)}</p>
                                                                 <ChevronDown
@@ -265,11 +293,20 @@ export default function AdminCourseReviewsPage() {
                                                                     className={`text-white/40 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                                                                 />
                                                             </button>
-                                                            {isExpanded && (
-                                                                <div className="px-3 pb-2">
-                                                                    <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{String(value)}</p>
-                                                                </div>
-                                                            )}
+                                                            <AnimatePresence initial={false}>
+                                                                {isExpanded && (
+                                                                    <motion.div
+                                                                        initial={{ height: 0, opacity: 0 }}
+                                                                        animate={{ height: 'auto', opacity: 1 }}
+                                                                        exit={{ height: 0, opacity: 0 }}
+                                                                        transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                                                    >
+                                                                        <div className="px-3 pb-2">
+                                                                            <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{String(value)}</p>
+                                                                        </div>
+                                                                    </motion.div>
+                                                                )}
+                                                            </AnimatePresence>
                                                         </div>
                                                     );
                                                 })}
