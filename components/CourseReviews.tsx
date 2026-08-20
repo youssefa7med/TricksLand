@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { GlassCard } from '@/components/layout/GlassCard';
 import { AnimatedDropdown } from '@/components/ui/animated-dropdown';
+import { ReviewDetailsModal } from '@/components/ReviewDetailsModal';
 import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
-import { Star, User, Calendar, MessageSquare, Filter, X, ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Star, User, Calendar, Clock, MessageSquare, Filter, X, ChevronRight } from 'lucide-react';
 
 interface CourseReview {
     id: string;
@@ -40,7 +40,7 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
     const [filterCoach, setFilterCoach] = useState('');
     const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
     const [coachOptions, setCoachOptions] = useState<CoachOption[]>([]);
-    const [expandedResponses, setExpandedResponses] = useState<Set<string>>(new Set());
+    const [selectedReview, setSelectedReview] = useState<CourseReview | null>(null);
     const supabase = createClient();
     const t = useTranslations('pages.courses');
 
@@ -112,7 +112,7 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
         Array.from({ length: 5 }, (_, i) => (
             <Star
                 key={i}
-                size={16}
+                size={14}
                 className={i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-white/30'}
             />
         ));
@@ -124,6 +124,12 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
             day: 'numeric',
         });
 
+    const formatTime = (dateString: string) =>
+        new Date(dateString).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+
     const formatQuestionKey = (key: string) => {
         return key
             .replace(/([A-Z])/g, ' $1')
@@ -131,31 +137,15 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
             .trim();
     };
 
-    const toggleResponse = (reviewId: string, key: string) => {
-        const id = `${reviewId}-${key}`;
-        setExpandedResponses(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) {
-                next.delete(id);
-            } else {
-                next.add(id);
-            }
-            return next;
-        });
-    };
-
-    const toggleAllResponses = (reviewId: string, keys: string[]) => {
-        const ids = keys.map(key => `${reviewId}-${key}`);
-        const allExpanded = ids.every(id => expandedResponses.has(id));
-        setExpandedResponses(prev => {
-            const next = new Set(prev);
-            if (allExpanded) {
-                ids.forEach(id => next.delete(id));
-            } else {
-                ids.forEach(id => next.add(id));
-            }
-            return next;
-        });
+    const getResponseCount = (review: CourseReview) => {
+        if (!review.responses) return 0;
+        return Object.entries(review.responses).filter(([key, v]) => {
+            if (!v || !String(v).trim()) return false;
+            const lowerKey = key.toLowerCase();
+            if (lowerKey.includes('id') && String(v).includes('-')) return false;
+            if (lowerKey === 'coachid' || lowerKey === 'courseid') return false;
+            return true;
+        }).length;
     };
 
     if (loading) {
@@ -253,117 +243,81 @@ export function CourseReviews({ courseId, showAll = false, showFilters = false }
                     </div>
                 </GlassCard>
             ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {reviews.map((review, index) => (
-                        <GlassCard key={review.id} delay={index * 0.05}>
-                            <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-2">
-                                    <div className="flex gap-0.5">
-                                        {renderStars(review.rating)}
+                        <GlassCard
+                            key={review.id}
+                            delay={index * 0.05}
+                            hover
+                            className="cursor-pointer !p-4"
+                            onClick={() => setSelectedReview(review)}
+                        >
+                            <div className="flex items-center justify-between gap-4">
+                                {/* Left: Rating + Title + Meta */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <div className="flex gap-0.5">{renderStars(review.rating)}</div>
+                                        <span className="text-white/60 text-sm">({review.rating}/5)</span>
                                     </div>
-                                    <span className="text-white/60 text-sm">({review.rating}/5)</span>
+                                    <h3 className="text-white font-semibold text-sm truncate">{review.title}</h3>
+                                    <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-white/40">
+                                        {review.reviewer_name && (
+                                            <span className="flex items-center gap-1">
+                                                <User size={10} />
+                                                {review.reviewer_name}
+                                            </span>
+                                        )}
+                                        {review.profiles?.full_name && (
+                                            <span className="flex items-center gap-1">
+                                                <span className="text-primary">Coach:</span>
+                                                {review.profiles.full_name}
+                                            </span>
+                                        )}
+                                        {showAll && review.courses?.name && (
+                                            <span className="flex items-center gap-1">
+                                                <span className="text-secondary">Course:</span>
+                                                {review.courses.name}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2 text-white/50 text-sm">
-                                    <Calendar size={14} />
-                                    {formatDate(review.created_at)}
-                                </div>
-                            </div>
 
-                            <h3 className="text-lg font-semibold text-white mb-2">{review.title}</h3>
-
-                            {review.review_text && (
-                                <p className="text-white/70 mb-4">{review.review_text}</p>
-                            )}
-
-                            <div className="flex flex-wrap gap-4 text-sm text-white/60">
-                                {review.reviewer_name && (
-                                    <div className="flex items-center gap-1">
-                                        <User size={14} />
-                                        {review.reviewer_name}
-                                    </div>
-                                )}
-                                {review.profiles?.full_name && (
-                                    <div className="flex items-center gap-1">
-                                        <span className="text-primary">Coach:</span>
-                                        {review.profiles.full_name}
-                                    </div>
-                                )}
-                                {showAll && review.courses?.name && (
-                                    <div className="flex items-center gap-1">
-                                        <span className="text-secondary">Course:</span>
-                                        {review.courses.name}
-                                    </div>
-                                )}
-                            </div>
-
-                            {review.responses && Object.keys(review.responses).length > 0 && (() => {
-                                const filteredEntries = Object.entries(review.responses).filter(([key, v]) => {
-                                    if (!v || !String(v).trim()) return false;
-                                    const lowerKey = key.toLowerCase();
-                                    if (lowerKey.includes('id') && String(v).includes('-')) return false;
-                                    if (lowerKey === 'coachid' || lowerKey === 'courseid') return false;
-                                    return true;
-                                });
-                                const allExpanded = filteredEntries.every(([k]) => expandedResponses.has(`${review.id}-${k}`));
-                                return (
-                                    <div className="mt-4 pt-4 border-t border-white/10">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <p className="text-white/50 text-xs">{t('responsesLabel') || 'Responses:'}</p>
-                                            {filteredEntries.length > 1 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => toggleAllResponses(review.id, filteredEntries.map(([k]) => k))}
-                                                    className="text-primary/70 hover:text-primary text-xs font-medium transition-colors"
-                                                    aria-expanded={allExpanded}
-                                                >
-                                                    {allExpanded
-                                                        ? t('collapseAll') || 'Collapse All'
-                                                        : t('expandAll') || 'Expand All'}
-                                                </button>
-                                            )}
+                                {/* Right: Date + Arrow */}
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <div className="hidden sm:flex flex-col items-end gap-0.5 text-white/40 text-xs">
+                                        <div className="flex items-center gap-1">
+                                            <Calendar size={11} />
+                                            {formatDate(review.created_at)}
                                         </div>
-                                        <div className="space-y-2">
-                                            {filteredEntries.map(([key, value]) => {
-                                                const isExpanded = expandedResponses.has(`${review.id}-${key}`);
-                                                return (
-                                                    <div key={key} className="bg-white/[0.05] border border-white/10 rounded-lg overflow-hidden">
-                                                        <button
-                                                            type="button"
-                                                            className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-white/[0.03] transition-colors"
-                                                            onClick={() => toggleResponse(review.id, key)}
-                                                            aria-expanded={isExpanded}
-                                                        >
-                                                            <p className="text-primary text-xs font-medium">{formatQuestionKey(key)}</p>
-                                                            <ChevronDown
-                                                                size={14}
-                                                                className={`text-white/40 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                                                            />
-                                                        </button>
-                                                        <AnimatePresence initial={false}>
-                                                            {isExpanded && (
-                                                                <motion.div
-                                                                    initial={{ height: 0, opacity: 0 }}
-                                                                    animate={{ height: 'auto', opacity: 1 }}
-                                                                    exit={{ height: 0, opacity: 0 }}
-                                                                    transition={{ duration: 0.2, ease: 'easeInOut' }}
-                                                                >
-                                                                    <div className="px-3 pb-2">
-                                                                        <p className="text-white/90 text-sm leading-relaxed whitespace-pre-line">{String(value)}</p>
-                                                                    </div>
-                                                                </motion.div>
-                                                            )}
-                                                        </AnimatePresence>
-                                                    </div>
-                                                );
-                                            })}
+                                        <div className="flex items-center gap-1">
+                                            <Clock size={11} />
+                                            {formatTime(review.created_at)}
                                         </div>
                                     </div>
-                                );
-                            })()}
+                                    {getResponseCount(review) > 0 && (
+                                        <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                                            {getResponseCount(review)} {t('questionsLabel') || 'Q&A'}
+                                        </span>
+                                    )}
+                                    <ChevronRight size={16} className="text-white/30" />
+                                </div>
+                            </div>
                         </GlassCard>
                     ))}
                 </div>
             )}
+
+            {/* Review Details Modal */}
+            <ReviewDetailsModal
+                review={selectedReview}
+                isOpen={!!selectedReview}
+                onClose={() => setSelectedReview(null)}
+                formatQuestionKey={formatQuestionKey}
+                formatDate={formatDate}
+                formatTime={formatTime}
+                showCoach
+                showCourse={showAll}
+            />
         </div>
     );
 }
