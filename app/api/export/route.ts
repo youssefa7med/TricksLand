@@ -74,6 +74,27 @@ export async function POST(request: NextRequest) {
                 break;
             }
 
+            case 'session-money': {
+                const ws = workbook.addWorksheet('Session Money');
+                addMetaRow(ws, 'Report', 'All Sessions (Money)');
+                addMetaRow(ws, 'Month', month);
+                addMetaRow(ws, 'Generated', new Date().toLocaleString());
+                ws.addRow([]);
+
+                const header = ws.addRow(['Date', 'Course', 'Coach', 'Hours', 'Rate', 'Subtotal']);
+                header.eachCell(cell => Object.assign(cell, headerStyle));
+                ws.columns = [{ width: 14 }, { width: 28 }, { width: 24 }, { width: 10 }, { width: 14 }, { width: 14 }];
+                let totalSubtotal = 0;
+                for (const r of data) {
+                    ws.addRow([r.session_date, r.courses?.name ?? '', r.profiles?.full_name ?? '', r.computed_hours, r.applied_rate, r.subtotal]);
+                    totalSubtotal += Number(r.subtotal || 0);
+                }
+                ws.addRow([]);
+                const totRow = ws.addRow(['TOTAL', '', '', '', '', totalSubtotal]);
+                totRow.font = { bold: true };
+                break;
+            }
+
             case 'coach-payroll': {
                 const ws = workbook.addWorksheet('Coach Payroll');
                 addMetaRow(ws, 'Report', 'Coach Monthly Payroll');

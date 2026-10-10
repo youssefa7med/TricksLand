@@ -716,6 +716,7 @@
             "reportStudentAttendance": "📋 Student Attendance",
             "reportCourseAttendance": "📊 Course Attendance",
             "reportFinancial": "💰 Course Financial",
+            "reportSessionMoney": "💵 Session Money",
             "reportCoachHours": "⏱ Coach Hours",
             "reportCoachPayroll": "💼 Coach Payroll"
         },

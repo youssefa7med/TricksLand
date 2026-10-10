@@ -9,7 +9,7 @@ import { useTranslations } from 'next-intl';
 
 interface Course { id: string; name: string; }
 
-type ReportType = 'student-attendance' | 'course-attendance' | 'financial' | 'coach-hours' | 'coach-payroll';
+type ReportType = 'student-attendance' | 'course-attendance' | 'financial' | 'session-money' | 'coach-hours' | 'coach-payroll';
 
 
 export default function AdminReportsPage() {
@@ -21,6 +21,7 @@ export default function AdminReportsPage() {
         'student-attendance': t('reportStudentAttendance'),
         'course-attendance': t('reportCourseAttendance'),
         'financial': t('reportFinancial'),
+        'session-money': t('reportSessionMoney'),
         'coach-hours': t('reportCoachHours'),
         'coach-payroll': t('reportCoachPayroll'),
     };
@@ -105,6 +106,19 @@ export default function AdminReportsPage() {
                     setReportData(data || []);
                     break;
                 }
+                case 'session-money': {
+                    const { start, end } = getMonthRange(month);
+                    let q = supabase.from('sessions')
+                        .select('session_date, session_type, course_id, courses(name), computed_hours, applied_rate, subtotal, paid_coach_id, profiles!sessions_paid_coach_id_fkey(full_name)')
+                        .gte('session_date', start)
+                        .lte('session_date', end);
+                    if (selectedCourse) q = (q as any).eq('course_id', selectedCourse);
+                    if (selectedCoach) q = (q as any).eq('paid_coach_id', selectedCoach);
+                    const { data, error } = await (q as any).order('session_date');
+                    if (error) throw error;
+                    setReportData(data || []);
+                    break;
+                }
                 case 'coach-hours': {
                     const { start, end } = getMonthRange(month);
                     let q = supabase.from('sessions')
@@ -175,8 +189,8 @@ export default function AdminReportsPage() {
         toast.success('Exported as CSV');
     };
 
-    const showCourseFilter = ['student-attendance', 'course-attendance', 'financial'].includes(reportType);
-    const showCoachFilter = ['coach-hours'].includes(reportType);
+    const showCourseFilter = ['student-attendance', 'course-attendance', 'financial', 'session-money'].includes(reportType);
+    const showCoachFilter = ['coach-hours', 'session-money'].includes(reportType);
 
     return (
         <div className="min-h-screen p-4 md:p-6 space-y-6">
@@ -340,6 +354,36 @@ export default function AdminReportsPage() {
                                         <td className="p-3 text-right text-yellow-400 font-semibold">{formatCurrency(reportData.reduce((a, r) => a + Number(r.pending_income), 0))}</td>
                                         <td className="p-3 text-right text-red-400 font-semibold">{formatCurrency(reportData.reduce((a, r) => a + Number(r.total_expenses), 0))}</td>
                                         <td className="p-3 text-right font-semibold text-primary">{formatCurrency(reportData.reduce((a, r) => a + Number(r.net_profit), 0))}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        )}
+
+                        {/* Session Money Table */}
+                        {reportType === 'session-money' && (
+                            <table className="w-full text-sm">
+                                <thead><tr className="text-white/50 border-b border-white/10">
+                                    <th className="text-left p-3">{t('dateCol')}</th>
+                                    <th className="text-left p-3">{t('courseCol')}</th>
+                                    <th className="text-left p-3">{tc('coach')}</th>
+                                    <th className="text-right p-3">{t('hoursCol')}</th>
+                                    <th className="text-right p-3">{t('rateAmtCol')}</th>
+                                    <th className="text-right p-3">{t('subtotalCol')}</th>
+                                </tr></thead>
+                                <tbody>
+                                    {reportData.map((r, i) => (
+                                        <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                                            <td className="p-3 text-white/80">{r.session_date}</td>
+                                            <td className="p-3 text-white/70">{(r.courses as any)?.name || '—'}</td>
+                                            <td className="p-3 text-white">{(r.profiles as any)?.full_name || '—'}</td>
+                                            <td className="p-3 text-right text-white/80">{r.computed_hours}</td>
+                                            <td className="p-3 text-right text-white/60">{formatCurrency(r.applied_rate)}</td>
+                                            <td className="p-3 text-right text-primary">{formatCurrency(r.subtotal)}</td>
+                                        </tr>
+                                    ))}
+                                    <tr className="border-t border-white/20">
+                                        <td className="p-3 text-white/70 font-semibold" colSpan={5}>{t('totalCol')}</td>
+                                        <td className="p-3 text-right text-primary font-bold text-base">{formatCurrency(reportData.reduce((a, r) => a + Number(r.subtotal || 0), 0))}</td>
                                     </tr>
                                 </tbody>
                             </table>

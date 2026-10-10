@@ -716,6 +716,7 @@
             "reportStudentAttendance": "📋 حضور الطلاب",
             "reportCourseAttendance": "📊 حضور الكورسات",
             "reportFinancial": "💰 مالية الكورسات",
+            "reportSessionMoney": "💵 مالية الجلسات",
             "reportCoachHours": "⏱ ساعات المدربين",
             "reportCoachPayroll": "💼 رواتب المدربين"
         },
