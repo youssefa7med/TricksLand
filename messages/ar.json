@@ -699,6 +699,8 @@
             "avgRateCol": "متوسط النسبة",
             "collectedCol": "المحصّل",
             "pendingCol": "معلق",
+            "incomeThisMonthCol": "الدخل (هذا الشهر)",
+            "expensesThisMonthCol": "النفقات (هذا الشهر)",
             "expensesCol": "النفقات",
             "netProfitCol": "صافي الربح",
             "totalCol": "الإجمالي",

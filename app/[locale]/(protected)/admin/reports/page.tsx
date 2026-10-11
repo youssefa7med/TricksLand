@@ -98,12 +98,53 @@ export default function AdminReportsPage() {
                     break;
                 }
                 case 'financial': {
-                    let q = (supabase as any).from('course_financial_summary').select('*');
-                    if (selectedCourse) q = q.eq('course_id', selectedCourse);
-                    q = q.order('course_name');
-                    const { data, error } = await q;
-                    if (error) throw error;
-                    setReportData(data || []);
+                    const { start, end } = getMonthRange(month);
+                    const [txRes, expRes] = await Promise.all([
+                        (supabase as any)
+                            .from('payment_transactions')
+                            .select('amount, transaction_date, student_payments(course_id)')
+                            .gte('transaction_date', start)
+                            .lte('transaction_date', end),
+                        (supabase as any)
+                            .from('course_expenses')
+                            .select('course_id, amount')
+                            .gte('expense_date', start)
+                            .lte('expense_date', end),
+                    ]);
+                    if (txRes.error) throw txRes.error;
+                    if (expRes.error) throw expRes.error;
+
+                    const nameById: Record<string, string> = {};
+                    courses.forEach(c => { nameById[c.id] = c.name; });
+
+                    const map: Record<string, any> = {};
+                    const ensure = (cid: string) => {
+                        if (!map[cid]) map[cid] = { course_id: cid, course_name: nameById[cid] || '—', total_income: 0, total_expenses: 0, net_profit: 0 };
+                        return map[cid];
+                    };
+                    // Income collected this month (payment transactions)
+                    (txRes.data || []).forEach((tx: any) => {
+                        const cid = tx.student_payments?.course_id;
+                        if (!cid) return;
+                        ensure(cid).total_income += Number(tx.amount || 0);
+                    });
+                    // Expenses this month
+                    (expRes.data || []).forEach((e: any) => {
+                        ensure(e.course_id).total_expenses += Number(e.amount || 0);
+                    });
+
+                    let rows = Object.values(map).map((r: any) => ({
+                        ...r,
+                        net_profit: r.total_income - r.total_expenses,
+                    }));
+                    if (selectedCourse) {
+                        rows = rows.filter((r: any) => r.course_id === selectedCourse);
+                        if (rows.length === 0) {
+                            rows = [{ course_id: selectedCourse, course_name: nameById[selectedCourse] || '—', total_income: 0, total_expenses: 0, net_profit: 0 }];
+                        }
+                    }
+                    rows.sort((a: any, b: any) => String(a.course_name).localeCompare(String(b.course_name)));
+                    setReportData(rows);
                     break;
                 }
                 case 'session-money': {
@@ -326,32 +367,27 @@ export default function AdminReportsPage() {
                             </table>
                         )}
 
-                        {/* Financial Table */}
+                        {/* Financial Table (month-scoped) */}
                         {reportType === 'financial' && (
                             <table className="w-full text-sm">
                                 <thead><tr className="text-white/50 border-b border-white/10">
                                     <th className="text-left p-3">{t('courseCol')}</th>
-                                    <th className="text-right p-3">{t('studentsCol')}</th>
-                                    <th className="text-right p-3">{t('collectedCol')}</th>
-                                    <th className="text-right p-3">{t('pendingCol')}</th>
-                                    <th className="text-right p-3">{t('expensesCol')}</th>
+                                    <th className="text-right p-3">{t('incomeThisMonthCol')}</th>
+                                    <th className="text-right p-3">{t('expensesThisMonthCol')}</th>
                                     <th className="text-right p-3">{t('netProfitCol')}</th>
                                 </tr></thead>
                                 <tbody>
                                     {reportData.map((r, i) => (
                                         <tr key={i} className="border-b border-white/5 hover:bg-white/5">
                                             <td className="p-3 text-white font-medium">{r.course_name}</td>
-                                            <td className="p-3 text-right text-white/80">{r.total_students}</td>
                                             <td className="p-3 text-right text-green-400">{formatCurrency(r.total_income)}</td>
-                                            <td className="p-3 text-right text-yellow-400">{formatCurrency(r.pending_income)}</td>
                                             <td className="p-3 text-right text-red-400">{formatCurrency(r.total_expenses)}</td>
                                             <td className={`p-3 text-right font-semibold ${Number(r.net_profit) >= 0 ? 'text-green-400' : 'text-red-400'}`}>{formatCurrency(r.net_profit)}</td>
                                         </tr>
                                     ))}
                                     <tr className="border-t border-white/20">
-                                        <td className="p-3 text-white/70 font-semibold" colSpan={2}>{t('totalCol')}</td>
+                                        <td className="p-3 text-white/70 font-semibold">{t('totalCol')}</td>
                                         <td className="p-3 text-right text-green-400 font-semibold">{formatCurrency(reportData.reduce((a, r) => a + Number(r.total_income), 0))}</td>
-                                        <td className="p-3 text-right text-yellow-400 font-semibold">{formatCurrency(reportData.reduce((a, r) => a + Number(r.pending_income), 0))}</td>
                                         <td className="p-3 text-right text-red-400 font-semibold">{formatCurrency(reportData.reduce((a, r) => a + Number(r.total_expenses), 0))}</td>
                                         <td className="p-3 text-right font-semibold text-primary">{formatCurrency(reportData.reduce((a, r) => a + Number(r.net_profit), 0))}</td>
                                     </tr>

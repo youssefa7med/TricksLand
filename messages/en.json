@@ -699,6 +699,8 @@
             "avgRateCol": "Avg Rate",
             "collectedCol": "Collected",
             "pendingCol": "Pending",
+            "incomeThisMonthCol": "Income (This Month)",
+            "expensesThisMonthCol": "Expenses (This Month)",
             "expensesCol": "Expenses",
             "netProfitCol": "Net Profit",
             "totalCol": "Total",

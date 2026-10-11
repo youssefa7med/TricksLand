@@ -52,24 +52,23 @@ export async function POST(request: NextRequest) {
 
             case 'financial': {
                 const ws = workbook.addWorksheet('Financial Summary');
-                addMetaRow(ws, 'Report', 'Course Financial Summary');
+                addMetaRow(ws, 'Report', 'Course Financial Summary (Monthly)');
+                addMetaRow(ws, 'Month', month);
                 addMetaRow(ws, 'Generated', new Date().toLocaleString());
                 ws.addRow([]);
 
-                const header = ws.addRow(['Course', 'Students', 'Total Fees', 'Collected', 'Pending', 'Expenses', 'Net Profit', 'Paid', 'Partial', 'Not Paid']);
+                const header = ws.addRow(['Course', 'Income (This Month)', 'Expenses (This Month)', 'Net Profit']);
                 header.eachCell(cell => Object.assign(cell, headerStyle));
-                ws.columns = [
-                    { width: 25 }, { width: 10 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 8 }, { width: 8 }, { width: 10 },
-                ];
+                ws.columns = [{ width: 28 }, { width: 20 }, { width: 20 }, { width: 16 }];
                 let totalIncome = 0, totalExpenses = 0, totalProfit = 0;
                 for (const r of data) {
-                    ws.addRow([r.course_name, r.total_students, r.total_course_fees, r.total_income, r.pending_income, r.total_expenses, r.net_profit, r.students_paid, r.students_partially_paid, r.students_not_paid]);
-                    totalIncome += Number(r.total_income);
-                    totalExpenses += Number(r.total_expenses);
-                    totalProfit += Number(r.net_profit);
+                    ws.addRow([r.course_name, r.total_income, r.total_expenses, r.net_profit]);
+                    totalIncome += Number(r.total_income || 0);
+                    totalExpenses += Number(r.total_expenses || 0);
+                    totalProfit += Number(r.net_profit || 0);
                 }
                 ws.addRow([]);
-                const totRow = ws.addRow(['TOTAL', '', '', totalIncome, '', totalExpenses, totalProfit]);
+                const totRow = ws.addRow(['TOTAL', totalIncome, totalExpenses, totalProfit]);
                 totRow.font = { bold: true };
                 break;
             }
